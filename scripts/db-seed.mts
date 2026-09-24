@@ -6,10 +6,15 @@
  * Uso: npm run db:seed
  */
 import { mkdirSync } from "node:fs";
+import { databaseConfig } from "../src/lib/db/config";
 
-if ((process.env.DATABASE_URL ?? "file:./data/zro.db").startsWith("file:")) {
-  mkdirSync("./data", { recursive: true });
+const { local } = databaseConfig();
+if (!local && process.env.ZRO_SEED_REMOTE !== "1") {
+  // Dados de exemplo nunca vão para o banco de produção por engano.
+  console.error("db:seed só roda no banco local. Para um banco remoto de teste, use ZRO_SEED_REMOTE=1.");
+  process.exit(1);
 }
+if (local) mkdirSync("./data", { recursive: true });
 
 const { db } = await import("../src/lib/db/client");
 const s = await import("../src/lib/db/schema");

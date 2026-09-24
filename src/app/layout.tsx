@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -24,10 +25,8 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "ZRO Filmes · Onde tudo começa e o comum termina.",
     template: "%s · ZRO Filmes",
@@ -40,6 +39,9 @@ export const metadata: Metadata = {
     siteName: "ZRO Filmes",
     title: "ZRO Filmes",
     description: "Onde tudo começa e o comum termina.",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
   icons: {
     icon: "/icon.svg",

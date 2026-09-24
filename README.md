@@ -26,20 +26,15 @@ O `db:reset` mostra no terminal (e salva em `data/credenciais-dev.txt`) o e-mail
 | `npm run lint` / `npm run typecheck` | qualidade do código |
 | `npm run db:migrate` | aplica migrações pendentes |
 | `npm run db:seed` | dados base + dados de exemplo (ids `demo-…`) |
-| `npm run db:setup` | prepara um banco novo para uso real, sem exemplos |
+| `npm run db:setup` | prepara o banco para uso real, sem exemplos (roda sozinho no deploy) |
 | `npm run db:reset` | apaga o banco local e recria com exemplos |
 | `npm run db:generate` | gera migração depois de mudar o schema |
 
 ## Publicar (Vercel + Turso)
 
-1. **Banco:** crie um banco no [Turso](https://turso.tech) (plano gratuito) e gere um token.
-2. **Variáveis:** na Vercel, cadastre as variáveis do `.env.example` (`DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `SESSION_SECRET`, `NEXT_PUBLIC_SITE_URL`).
-3. **Contas dos sócios:** no seu computador, com as mesmas variáveis do banco de produção:
-   ```bash
-   ZRO_VICTOR_EMAIL=... ZRO_VICTOR_PASSWORD=... ZRO_EDU_EMAIL=... ZRO_EDU_PASSWORD=... npm run db:setup
-   ```
-4. **Deploy:** importe o repositório na [Vercel](https://vercel.com) e publique.
-5. **Primeiros ajustes** em `/painel/ajustes`: número do WhatsApp comercial, dados da empresa, alíquota e catálogo de preços. Em `/painel/site`, os links dos vídeos (Vimeo ou YouTube).
+Endereço: **https://zrofilmes.vercel.app**. Passo a passo completo no [`DEPLOY.md`](DEPLOY.md).
+
+Resumo: projeto `zrofilmes` na Vercel → variáveis (`SESSION_SECRET`, `ZRO_*`, `NEXT_PUBLIC_SITE_URL`) → banco Turso conectado pela aba Storage → Redeploy. O build (`npm run vercel-build`) aplica as migrações e cria as contas dos sócios sozinho.
 
 ## Documentação
 

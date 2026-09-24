@@ -20,7 +20,7 @@ export function LoginForm({ next }: { next?: string }) {
           inputMode="email"
           required
           defaultValue={state?.email}
-          placeholder="voce@zrofilmes.com.br"
+          placeholder="voce@email.com"
           aria-invalid={Boolean(state?.error) || undefined}
         />
       </Field>

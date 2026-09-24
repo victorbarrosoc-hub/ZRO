@@ -17,17 +17,19 @@ import {
   DEFAULT_TEMPLATES,
 } from "../../src/lib/db/defaults";
 
-type SeedUser = { name: string; email: string; password?: string };
+type SeedUser = { name: string; envPrefix: string; email: string; password?: string };
 
 function seedUsersFromEnv(): SeedUser[] {
   return [
     {
       name: "Victor Barroso",
+      envPrefix: "ZRO_VICTOR",
       email: process.env.ZRO_VICTOR_EMAIL ?? "victor@zro.local",
       password: process.env.ZRO_VICTOR_PASSWORD,
     },
     {
       name: "Edu Cardoso",
+      envPrefix: "ZRO_EDU",
       email: process.env.ZRO_EDU_EMAIL ?? "edu@zro.local",
       password: process.env.ZRO_EDU_PASSWORD,
     },
@@ -42,11 +44,15 @@ export async function ensureUsers(db: DB, opts: { allowGenerated: boolean }) {
     let password = u.password;
     if (!password) {
       if (!opts.allowGenerated) {
-        throw new Error(
-          `Defina a senha de ${u.name} (ZRO_VICTOR_PASSWORD / ZRO_EDU_PASSWORD) antes de criar os usuários em produção.`,
+        // Não derruba o deploy do site: a conta é criada no próximo deploy com a senha definida.
+        console.warn(
+          `⚠ Conta de ${u.name} não criada: defina ${u.envPrefix}_EMAIL e ${u.envPrefix}_PASSWORD e faça um novo deploy.`,
         );
+        continue;
       }
       password = randomBytes(9).toString("base64url");
+    } else if (!opts.allowGenerated && password.length < 10) {
+      throw new Error(`A senha de ${u.name} (${u.envPrefix}_PASSWORD) precisa de pelo menos 10 caracteres.`);
     }
     await db.insert(s.users).values({
       name: u.name,

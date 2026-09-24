@@ -1,10 +1,9 @@
 /** Aplica as migrações pendentes. Uso: npm run db:migrate */
 import { mkdirSync } from "node:fs";
 import { migrate } from "drizzle-orm/libsql/migrator";
+import { databaseConfig } from "../src/lib/db/config";
 
-if ((process.env.DATABASE_URL ?? "file:./data/zro.db").startsWith("file:")) {
-  mkdirSync("./data", { recursive: true });
-}
+if (databaseConfig().local) mkdirSync("./data", { recursive: true });
 
 const { db } = await import("../src/lib/db/client");
 await migrate(db, { migrationsFolder: "./drizzle" });
