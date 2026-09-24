@@ -1,13 +1,14 @@
 "use client";
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { ConfirmAction, FormModal, fieldError } from "@/components/painel/form";
+import { ConfirmAction, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
 import { centsToInput } from "@/lib/format";
 import { IconButton, OrderButtons, ToggleSwitch } from "../site/_components/list-controls";
+import { StableFormModal } from "../site/_components/stable-form";
 import {
   createCatalogItem,
   deleteCatalogItem,
@@ -70,7 +71,7 @@ function CatalogFields({ state, defaults = {} }: { state: ActionResult | null; d
 
 export function NewCatalogItemButton() {
   return (
-    <FormModal
+    <StableFormModal
       title="Novo item do catálogo"
       description="Entra no fim do grupo escolhido."
       action={createCatalogItem}
@@ -82,14 +83,14 @@ export function NewCatalogItemButton() {
       }
     >
       {(state) => <CatalogFields state={state} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
 /** Nome do item que abre a edição. */
 export function EditCatalogItemButton({ item }: { item: Required<Pick<CatalogDefaults, "id" | "name">> & CatalogDefaults }) {
   return (
-    <FormModal
+    <StableFormModal
       title="Editar item"
       action={updateCatalogItem}
       trigger={
@@ -102,7 +103,7 @@ export function EditCatalogItemButton({ item }: { item: Required<Pick<CatalogDef
       }
     >
       {(state) => <CatalogFields state={state} defaults={item} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
@@ -136,9 +137,9 @@ export function CatalogRowActions({
         offLabel="Inativo"
       />
       <OrderButtons action={moveCatalogItem} id={item.id} first={first} last={last} name={item.name} />
-      <FormModal title="Editar item" action={updateCatalogItem} trigger={<PencilTrigger label={`Editar ${item.name}`} />}>
+      <StableFormModal title="Editar item" action={updateCatalogItem} trigger={<PencilTrigger label={`Editar ${item.name}`} />}>
         {(state) => <CatalogFields state={state} defaults={item} />}
-      </FormModal>
+      </StableFormModal>
       <ConfirmAction
         title={`Excluir “${item.name}”?`}
         description={

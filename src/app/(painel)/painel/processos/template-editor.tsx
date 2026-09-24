@@ -197,7 +197,7 @@ export function TemplateEditor({
             {STAGES.map((stage, si) => {
               const stageRows = rows.filter((r) => r.stage === stage.key);
               return (
-                <section key={stage.key} className="rounded-card border border-line bg-white/[0.015]" aria-labelledby={`stage-${stage.key}`}>
+                <section key={stage.key} className="min-w-0 rounded-card border border-line bg-white/[0.015]" aria-labelledby={`stage-${stage.key}`}>
                   <header className="flex items-start justify-between gap-4 px-4 pt-4 sm:px-5">
                     <div className="min-w-0">
                       <h2 id={`stage-${stage.key}`} className="flex items-baseline gap-2.5">
@@ -219,7 +219,7 @@ export function TemplateEditor({
                         const upLabel = atTop && si > 0 ? `Passar para ${STAGES[si - 1].label}` : "Subir";
                         const downLabel = atBottom && si < STAGES.length - 1 ? `Passar para ${STAGES[si + 1].label}` : "Descer";
                         return (
-                          <li key={r.key} className="group flex items-center gap-1 rounded-xl pr-1 pl-2 transition-colors hover:bg-white/[0.03]">
+                          <li key={r.key} className="group flex min-w-0 items-center gap-1 rounded-xl pr-1 pl-2 transition-colors hover:bg-white/[0.03]">
                             <span className="w-5 shrink-0 text-center font-mono text-[11px] text-mute tabular-nums">{i + 1}</span>
                             <input
                               aria-label={`Tarefa ${i + 1} de ${stage.label}`}

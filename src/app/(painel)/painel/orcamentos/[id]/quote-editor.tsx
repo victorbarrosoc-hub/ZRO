@@ -241,19 +241,28 @@ export function QuoteEditor(props: Props) {
                   </Button>
                 }
               />
-              <ApproveDialog
-                quoteId={quote.id}
-                total={totals.total}
-                today={today}
-                clientLabel={who}
-                hasLead={!!lead}
-                before={before}
-                trigger={
-                  <Button variant="secondary" size="sm" disabled={totals.total <= 0}>
-                    <CheckCircle2 /> Aprovar
-                  </Button>
-                }
-              />
+            </>
+          ) : null}
+
+          {/* Uma instância só: continua montada quando o status vira "aprovado", para mostrar o resultado. */}
+          <ApproveDialog
+            quoteId={quote.id}
+            total={totals.total}
+            today={today}
+            clientLabel={who}
+            hasLead={!!lead}
+            before={before}
+            trigger={
+              s === "rascunho" || s === "enviado" || s === "expirado" ? (
+                <Button variant={s === "rascunho" ? "secondary" : "primary"} size="sm" disabled={totals.total <= 0}>
+                  <CheckCircle2 /> Aprovar
+                </Button>
+              ) : null
+            }
+          />
+
+          {s === "rascunho" ? (
+            <>
               <ConfirmDialog
                 title={`Excluir o rascunho ${code}?`}
                 description="O orçamento e os itens são apagados. Não dá para desfazer."
@@ -271,19 +280,6 @@ export function QuoteEditor(props: Props) {
 
           {s === "enviado" || s === "expirado" ? (
             <>
-              <ApproveDialog
-                quoteId={quote.id}
-                total={totals.total}
-                today={today}
-                clientLabel={who}
-                hasLead={!!lead}
-                before={before}
-                trigger={
-                  <Button variant="primary" size="sm">
-                    <CheckCircle2 /> Aprovar
-                  </Button>
-                }
-              />
               <RefuseDialog
                 quoteId={quote.id}
                 hasLead={!!lead}

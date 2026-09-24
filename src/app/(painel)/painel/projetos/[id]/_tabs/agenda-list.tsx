@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export function ProjectEventList({ events, today, past = false }: { events: AgendaEvent[]; today: string; past?: boolean }) {
   return (
-    <ul className={cn("grid px-3 pb-3", past && "opacity-60")}>
+    <ul className={cn("grid grid-cols-1 px-3 pb-3", past && "opacity-60")}>
       {events.map((ev) => (
         <li key={ev.id}>
           <ProjectEventRow ev={ev} today={today} />

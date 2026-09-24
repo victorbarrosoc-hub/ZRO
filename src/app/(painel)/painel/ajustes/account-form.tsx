@@ -2,9 +2,10 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { ActionForm, SubmitButton, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { Field, Input } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
+import { StableForm, StableSubmit } from "../site/_components/stable-form";
 import { changePassword } from "./actions";
 
 export function ChangePasswordForm({ email }: { email: string }) {
@@ -14,7 +15,7 @@ export function ChangePasswordForm({ email }: { email: string }) {
   const long = next.length >= 10;
 
   return (
-    <ActionForm
+    <StableForm
       key={formKey}
       action={changePassword}
       onSuccess={() => {
@@ -63,10 +64,10 @@ export function ChangePasswordForm({ email }: { email: string }) {
               {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               {show ? "Esconder senhas" : "Mostrar senhas"}
             </button>
-            <SubmitButton>Trocar senha</SubmitButton>
+            <StableSubmit pendingLabel="Trocando…">Trocar senha</StableSubmit>
           </div>
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }

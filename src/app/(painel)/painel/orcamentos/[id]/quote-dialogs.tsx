@@ -98,7 +98,8 @@ export function ApproveDialog({
   today: string;
   clientLabel: string;
   hasLead: boolean;
-  trigger: React.ReactNode;
+  /** Sem gatilho (orçamento já decidido), a janela só continua aberta para mostrar o resultado. */
+  trigger: React.ReactNode | null;
   before?: BeforeAction;
 }) {
   const [open, setOpen] = useState(false);
@@ -153,7 +154,7 @@ export function ApproveDialog({
 
   return (
     <Modal open={open} onOpenChange={reset}>
-      <ModalTrigger asChild>{trigger}</ModalTrigger>
+      {trigger ? <ModalTrigger asChild>{trigger}</ModalTrigger> : null}
       <ModalContent
         title={done ? "Orçamento aprovado" : "Aprovar orçamento"}
         description={done ? undefined : "O projeto e os recebimentos são criados na hora."}

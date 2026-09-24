@@ -34,7 +34,10 @@ export function FilmRowActions({ film, first, last }: { film: RowFilm; first: bo
           <Pencil className="size-4" />
         </Link>
       </Tip>
-      <DeleteFilmButton id={film.id} title={film.title} slug={film.slug} compact />
+      {/* No celular, excluir fica só dentro do filme (a linha não cabe). */}
+      <span className="hidden sm:contents">
+        <DeleteFilmButton id={film.id} title={film.title} slug={film.slug} compact />
+      </span>
     </div>
   );
 }

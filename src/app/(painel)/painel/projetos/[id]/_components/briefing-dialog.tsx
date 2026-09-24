@@ -14,7 +14,7 @@ export function EditBriefingButton({ id, briefing, notes }: { id: string; briefi
       action={saveBriefing}
       size="lg"
       trigger={
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" aria-label={briefing ? "Editar briefing" : "Escrever briefing"}>
           <Pencil /> {briefing ? "Editar" : "Escrever"}
         </Button>
       }

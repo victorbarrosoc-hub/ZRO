@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, use, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 import { Ellipsis, HandCoins, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
 import { ActionForm, ConfirmAction, FormModal, SubmitButton, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,31 @@ import type { EntryPayment, FinanceOptions } from "@/lib/queries/finance";
 import { cn } from "@/lib/utils";
 import { createEntry, deleteEntry, launchDas, payEntry, removePayment, updateEntry } from "./actions";
 import { EntryFields } from "./finance-fields";
+
+/* ---------------- Avisos ---------------- */
+
+type FormAction = (prev: ActionResult | null, fd: FormData) => Promise<ActionResult>;
+
+/**
+ * Mostra o aviso de sucesso assim que o servidor responde. Pagar, editar ou
+ * excluir pode tirar a linha da lista (e o formulário junto) antes do aviso
+ * padrão do ActionForm aparecer. Erros continuam com o ActionForm.
+ */
+function withToast(action: FormAction): FormAction {
+  return async (prev, fd) => {
+    const result = await action(prev, fd);
+    if (!result.ok) return result;
+    if (result.message) toast.success(result.message);
+    return { ...result, message: undefined };
+  };
+}
+
+const createEntryAction = withToast(createEntry);
+const updateEntryAction = withToast(updateEntry);
+const deleteEntryAction = withToast(deleteEntry);
+const payEntryAction = withToast(payEntry);
+const removePaymentAction = withToast(removePayment);
+const launchDasAction = withToast(launchDas);
 
 /* ---------------- Opções dos formulários (uma vez por página) ---------------- */
 
@@ -64,7 +91,7 @@ export function NewEntryButton({
     <FormModal
       title="Novo lançamento"
       description="Entrada, saída ou imposto. Custo fixo pode repetir por alguns meses."
-      action={createEntry}
+      action={createEntryAction}
       submitLabel="Lançar"
       size="lg"
       trigger={
@@ -85,6 +112,11 @@ export function NewEntryButton({
 function PayFields({ state, entry }: { state: ActionResult | null; entry: PayableEntry }) {
   const open = Math.max(0, entry.amount - entry.paidAmount);
   const id = entry.id;
+  // Controlados, para o valor digitado sobreviver a um erro de validação.
+  const [amount, setAmount] = useState(centsToInput(open));
+  const [date, setDate] = useState(todayISO());
+  const [method, setMethod] = useState("pix");
+  const [notes, setNotes] = useState("");
   return (
     <>
       <input type="hidden" name="entryId" value={id} />
@@ -94,14 +126,14 @@ function PayFields({ state, entry }: { state: ActionResult | null; entry: Payabl
         hint={`Pode ser parcial. Falta ${brl(open)}.`}
         error={fieldError(state, "amount")}
       >
-        <MoneyInput id={`p-amount-${id}`} name="amount" defaultValue={centsToInput(open)} autoFocus />
+        <MoneyInput id={`p-amount-${id}`} name="amount" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Data" htmlFor={`p-date-${id}`} error={fieldError(state, "date")}>
-          <Input id={`p-date-${id}`} name="date" type="date" defaultValue={todayISO()} />
+          <Input id={`p-date-${id}`} name="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
         <Field label="Forma" htmlFor={`p-method-${id}`} error={fieldError(state, "method")}>
-          <Select id={`p-method-${id}`} name="method" defaultValue="pix">
+          <Select id={`p-method-${id}`} name="method" value={method} onChange={(e) => setMethod(e.target.value)}>
             {PAYMENT_METHODS.map((m) => (
               <option key={m.key} value={m.key}>
                 {m.label}
@@ -111,7 +143,14 @@ function PayFields({ state, entry }: { state: ActionResult | null; entry: Payabl
         </Field>
       </div>
       <Field label="Observação" htmlFor={`p-notes-${id}`} hint="Opcional." error={fieldError(state, "notes")}>
-        <Input id={`p-notes-${id}`} name="notes" maxLength={300} placeholder="Ex.: adiantamento de metade" />
+        <Input
+          id={`p-notes-${id}`}
+          name="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          maxLength={300}
+          placeholder="Ex.: adiantamento de metade"
+        />
       </Field>
     </>
   );
@@ -132,7 +171,7 @@ export function PayEntryButton({
     <FormModal
       title={payTitle(entry.kind)}
       description={`${entry.description} · falta ${brl(open)}`}
-      action={payEntry}
+      action={payEntryAction}
       submitLabel="Registrar"
       size="sm"
       trigger={
@@ -148,6 +187,16 @@ export function PayEntryButton({
 
 /* ---------------- Ver baixas ---------------- */
 
+/** Botão que envia o formulário da lista com o id desta baixa. */
+function DeletePaymentSubmit({ paymentId }: { paymentId: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" name="paymentId" value={paymentId} variant="danger" size="sm" disabled={pending}>
+      {pending ? "Excluindo…" : "Excluir baixa"}
+    </Button>
+  );
+}
+
 function PaymentRow({ payment }: { payment: EntryPayment }) {
   const [confirming, setConfirming] = useState(false);
   return (
@@ -160,15 +209,12 @@ function PaymentRow({ payment }: { payment: EntryPayment }) {
         </p>
       </div>
       {confirming ? (
-        <ActionForm action={removePayment} className="flex items-center gap-2">
-          <input type="hidden" name="paymentId" value={payment.id} />
+        <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
             Manter
           </Button>
-          <SubmitButton variant="danger" size="sm" pendingLabel="Excluindo…">
-            Excluir baixa
-          </SubmitButton>
-        </ActionForm>
+          <DeletePaymentSubmit paymentId={payment.id} />
+        </div>
       ) : (
         <button
           type="button"
@@ -205,11 +251,15 @@ function PaymentsDialog({
         size="sm"
       >
         {payments.length ? (
-          <ul>
-            {payments.map((p) => (
-              <PaymentRow key={p.id} payment={p} />
-            ))}
-          </ul>
+          // Um formulário só para a lista: a linha excluída some com a atualização,
+          // mas o formulário (e o aviso de sucesso) continua montado.
+          <ActionForm action={removePaymentAction}>
+            <ul>
+              {payments.map((p) => (
+                <PaymentRow key={p.id} payment={p} />
+              ))}
+            </ul>
+          </ActionForm>
         ) : (
           <p className="rounded-2xl border border-line px-4 py-6 text-center text-[14px] text-mute">Nenhuma baixa registrada ainda.</p>
         )}
@@ -250,7 +300,7 @@ function DeleteEntryDialog({
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent title="Excluir este lançamento?" description={description} size="sm">
-        <ActionForm action={deleteEntry} onSuccess={() => onOpenChange(false)}>
+        <ActionForm action={deleteEntryAction} onSuccess={() => onOpenChange(false)}>
           <input type="hidden" name="id" value={entry.id} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -326,7 +376,7 @@ export function EntryActions({
         onOpenChange={toggle("pay")}
         title={payTitle(entry.kind)}
         description={`${entry.description} · falta ${brl(openAmount)}`}
-        action={payEntry}
+        action={payEntryAction}
         submitLabel="Registrar"
         size="sm"
       >
@@ -346,7 +396,7 @@ export function EntryActions({
         onOpenChange={toggle("edit")}
         title="Editar lançamento"
         description={entry.paidAmount > 0 ? `Já baixado: ${brl(entry.paidAmount)}. As baixas não mudam.` : undefined}
-        action={updateEntry}
+        action={updateEntryAction}
         size="lg"
       >
         {(state) => (
@@ -402,7 +452,7 @@ export function LaunchDasButton({
       } Dá para ajustar depois em Lançamentos.`}
       confirmLabel="Lançar DAS"
       destructive={false}
-      action={launchDas}
+      action={launchDasAction}
       fields={{ month }}
       trigger={
         <Button variant="secondary" size="sm" aria-label={`Lançar DAS de ${name}`}>

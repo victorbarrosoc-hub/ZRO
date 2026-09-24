@@ -11,6 +11,11 @@ import type { ActionResult } from "@/lib/actions";
 import { DELIVERABLE_STATUS } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { addDeliverableRevision, createDeliverable, deleteDeliverable, setDeliverableStatus, updateDeliverable } from "../../actions";
+import { toastFirst } from "./toast-first";
+
+// A lista vazia troca de lugar com a primeira entrega, e excluir tira a linha: o aviso vem antes.
+const createDeliverableT = toastFirst(createDeliverable);
+const deleteDeliverableT = toastFirst(deleteDeliverable);
 
 export type DeliverableDefaults = {
   id?: string;
@@ -91,7 +96,7 @@ export function NewDeliverableButton({ projectId, variant = "secondary" }: { pro
     <FormModal
       title="Nova entrega"
       description="Um vídeo, um lote de cortes, um pacote de fotos."
-      action={createDeliverable}
+      action={createDeliverableT}
       submitLabel="Adicionar"
       trigger={
         <Button variant={variant} size="sm">
@@ -131,7 +136,7 @@ export function DeleteDeliverableButton({ id, title }: { id: string; title: stri
       title={`Excluir ${title}?`}
       description="A entrega sai da lista do projeto."
       confirmLabel="Excluir"
-      action={deleteDeliverable}
+      action={deleteDeliverableT}
       fields={{ id }}
       trigger={
         <Button variant="ghost" size="icon" className="text-mute hover:text-danger lg:size-8" aria-label={`Excluir ${title}`}>

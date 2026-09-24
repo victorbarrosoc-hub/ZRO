@@ -2,20 +2,20 @@
 
 import { AlertTriangle, ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useFormStatus } from "react-dom";
-import { ActionForm, SubmitButton, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Modal, ModalContent, ModalTrigger } from "@/components/ui/overlay";
 import type { CompanySettings, QuoteSettings } from "@/lib/db/defaults";
 import { whatsappDigits } from "@/lib/format";
+import { StableForm, StableSubmit } from "../site/_components/stable-form";
 import { deleteDemoData, saveCompany, saveQuoteDefaults, saveTaxes, saveWhatsapp } from "./actions";
 
 function SaveRow({ children = "Salvar", note }: { children?: React.ReactNode; note?: React.ReactNode }) {
   return (
     <div className="flex flex-col-reverse gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[13px] text-mute">{note}</p>
-      <SubmitButton className="sm:w-auto">{children}</SubmitButton>
+      <StableSubmit className="sm:w-auto">{children}</StableSubmit>
     </div>
   );
 }
@@ -36,7 +36,11 @@ export function WhatsappForm({ number }: { number: string }) {
   const valid = digits.length === 12 || digits.length === 13;
 
   return (
-    <ActionForm action={saveWhatsapp} className="grid gap-4 p-5 sm:p-6">
+    <StableForm
+      action={saveWhatsapp}
+      onSuccess={() => setValue(valid ? prettyPhone(digits) : "")}
+      className="grid gap-4 p-5 sm:p-6"
+    >
       {(state) => (
         <>
           <Field
@@ -80,7 +84,7 @@ export function WhatsappForm({ number }: { number: string }) {
           <SaveRow note={number && !value.trim() ? "Salvar vazio tira o WhatsApp do site." : undefined} />
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }
 
@@ -88,7 +92,7 @@ export function WhatsappForm({ number }: { number: string }) {
 
 export function CompanyForm({ company }: { company: CompanySettings }) {
   return (
-    <ActionForm action={saveCompany} className="grid gap-4 p-5 sm:p-6">
+    <StableForm action={saveCompany} resetOnSuccess className="grid gap-4 p-5 sm:p-6">
       {(state) => (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -126,7 +130,7 @@ export function CompanyForm({ company }: { company: CompanySettings }) {
           <SaveRow note="Vale para o rodapé do site, a página de privacidade e as propostas." />
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }
 
@@ -134,7 +138,7 @@ export function CompanyForm({ company }: { company: CompanySettings }) {
 
 export function TaxesForm({ rate }: { rate: number }) {
   return (
-    <ActionForm action={saveTaxes} className="grid gap-4 p-5 sm:p-6">
+    <StableForm action={saveTaxes} resetOnSuccess className="grid gap-4 p-5 sm:p-6">
       {(state) => (
         <>
           <Field
@@ -157,7 +161,7 @@ export function TaxesForm({ rate }: { rate: number }) {
           <SaveRow note="Usada nos orçamentos novos e na estimativa de imposto do financeiro." />
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }
 
@@ -165,7 +169,7 @@ export function TaxesForm({ rate }: { rate: number }) {
 
 export function QuoteDefaultsForm({ quote }: { quote: QuoteSettings }) {
   return (
-    <ActionForm action={saveQuoteDefaults} className="grid gap-4 p-5 sm:p-6">
+    <StableForm action={saveQuoteDefaults} resetOnSuccess className="grid gap-4 p-5 sm:p-6">
       {(state) => (
         <>
           <Field label="Validade padrão" htmlFor="q-days" error={fieldError(state, "validityDays")}>
@@ -188,7 +192,7 @@ export function QuoteDefaultsForm({ quote }: { quote: QuoteSettings }) {
           <SaveRow note="Não muda orçamentos que já existem." />
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }
 
@@ -216,7 +220,7 @@ export function DeleteDemoButton({ total }: { total: number }) {
         description={`${total} registros de exemplo saem de vez: projetos, leads, clientes, freelas, orçamentos e lançamentos com id “demo-”. Não dá para desfazer.`}
         size="sm"
       >
-        <ActionForm action={deleteDemoData} onSuccess={() => setOpen(false)} className="grid gap-5">
+        <StableForm action={deleteDemoData} onSuccess={() => setOpen(false)} className="grid gap-5">
           {(state) => (
             <>
               <p className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger/[0.06] px-3.5 py-3 text-[13px] text-light">
@@ -250,7 +254,7 @@ export function DeleteDemoButton({ total }: { total: number }) {
               </div>
             </>
           )}
-        </ActionForm>
+        </StableForm>
       </ModalContent>
     </Modal>
   );
@@ -258,10 +262,9 @@ export function DeleteDemoButton({ total }: { total: number }) {
 
 /** Só libera o botão depois de digitar APAGAR (o servidor confere de novo). */
 function DemoSubmit({ ready }: { ready: boolean }) {
-  const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="danger" disabled={!ready || pending}>
-      {pending ? "Apagando…" : "Apagar de vez"}
-    </Button>
+    <StableSubmit variant="danger" pendingLabel="Apagando…" disabled={!ready}>
+      Apagar de vez
+    </StableSubmit>
   );
 }

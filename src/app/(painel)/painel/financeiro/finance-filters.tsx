@@ -78,7 +78,7 @@ export function FilterDrawer({ active, children }: { active: number; children: R
           <span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-medium text-void tabular-nums">{active}</span>
         ) : null}
       </button>
-      <div id={id} className={cn("basis-full flex-wrap items-center gap-2 md:flex", open ? "flex" : "hidden")}>
+      <div id={id} className={cn("min-w-0 basis-full flex-wrap items-center gap-2 md:flex", open ? "flex" : "hidden")}>
         {children}
       </div>
     </>

@@ -9,6 +9,12 @@ import { FINANCE_CATEGORIES, FINANCE_KINDS, PAYMENT_METHODS } from "@/lib/domain
 import { brl, centsToInput, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { createProjectEntry, deleteProjectEntry, payProjectEntry } from "../../actions";
+import { toastFirst } from "./toast-first";
+
+// Quitar tira o botão da linha; excluir tira a linha; o primeiro lançamento troca a lista vazia.
+const payProjectEntryT = toastFirst(payProjectEntry);
+const createProjectEntryT = toastFirst(createProjectEntry);
+const deleteProjectEntryT = toastFirst(deleteProjectEntry);
 
 type EntryLike = { id: string; kind: string; description: string; amount: number; paidAmount: number };
 
@@ -20,7 +26,7 @@ export function PayEntryButton({ entry, projectId, className }: { entry: EntryLi
     <FormModal
       title={incoming ? "Registrar recebimento" : "Registrar pagamento"}
       description={`${entry.description} · falta ${brl(open)}`}
-      action={payProjectEntry}
+      action={payProjectEntryT}
       submitLabel="Registrar"
       size="sm"
       trigger={
@@ -123,7 +129,7 @@ export function NewEntryButton({ projectId, defaultDue = todayISO() }: { project
     <FormModal
       title="Novo lançamento"
       description="Entra no financeiro já ligado a este projeto."
-      action={createProjectEntry}
+      action={createProjectEntryT}
       submitLabel="Lançar"
       trigger={
         <Button variant="secondary" size="sm">
@@ -147,7 +153,7 @@ export function DeleteEntryButton({ entry, projectId }: { entry: EntryLike; proj
       title="Excluir este lançamento?"
       description={`${entry.description} · ${brl(entry.amount)}. As baixas registradas nele também são apagadas.`}
       confirmLabel="Excluir"
-      action={deleteProjectEntry}
+      action={deleteProjectEntryT}
       fields={{ entryId: entry.id, projectId }}
       trigger={
         <Button variant="ghost" size="icon" className="text-mute hover:text-danger lg:size-8" aria-label={`Excluir ${entry.description}`}>

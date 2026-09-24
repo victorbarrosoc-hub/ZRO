@@ -51,6 +51,15 @@ export function EntryFields({
   const [projectId, setProjectId] = useState(defaults.projectId ?? "");
   const [clientId, setClientId] = useState(defaults.clientId ?? "");
   const [repeat, setRepeat] = useState("1");
+  // Campos controlados: o React 19 limpa campos não controlados depois de toda
+  // action, até quando ela volta com erro de validação. Assim nada se perde.
+  const [description, setDescription] = useState(defaults.description ?? "");
+  const [amount, setAmount] = useState(centsToInput(defaults.amount));
+  const [dueDate, setDueDate] = useState(defaults.dueDate ?? todayISO());
+  const [installment, setInstallment] = useState(defaults.installment ?? "");
+  const [freelancerId, setFreelancerId] = useState(defaults.freelancerId ?? "");
+  const [competence, setCompetence] = useState(defaults.competence ?? "");
+  const [notes, setNotes] = useState(defaults.notes ?? "");
 
   const categories = FINANCE_CATEGORIES.filter((c) => c.kind === kind);
   const openProjects = options.projects.filter((p) => p.status === "ativo" || p.status === "pausado" || p.id === defaults.projectId);
@@ -104,7 +113,8 @@ export function EntryFields({
           <Input
             id={`e-desc-${uid}`}
             name="description"
-            defaultValue={defaults.description}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             placeholder={PLACEHOLDER[kind]}
             maxLength={200}
             required
@@ -122,7 +132,14 @@ export function EntryFields({
         </Field>
 
         <Field label="Valor" htmlFor={`e-amount-${uid}`} error={fieldError(state, "amount")}>
-          <MoneyInput id={`e-amount-${uid}`} name="amount" defaultValue={centsToInput(defaults.amount)} placeholder="0,00" required />
+          <MoneyInput
+            id={`e-amount-${uid}`}
+            name="amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0,00"
+            required
+          />
         </Field>
 
         <Field
@@ -130,16 +147,22 @@ export function EntryFields({
           htmlFor={`e-due-${uid}`}
           error={fieldError(state, "dueDate")}
         >
-          <Input id={`e-due-${uid}`} name="dueDate" type="date" defaultValue={defaults.dueDate ?? todayISO()} required />
+          <Input id={`e-due-${uid}`} name="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
         </Field>
 
         {allowRepeat && repeat !== "1" ? (
-          <Field label="Parcela" htmlFor={`e-inst-${uid}`} hint={`Numeradas sozinhas: 1/${repeat}, 2/${repeat}…`}>
+          <Field key="auto" label="Parcela" htmlFor={`e-inst-${uid}`} hint={`Numeradas sozinhas: 1/${repeat}, 2/${repeat}…`}>
             <Input id={`e-inst-${uid}`} disabled value={`1/${repeat} a ${repeat}/${repeat}`} readOnly />
           </Field>
         ) : (
-          <Field label="Parcela" htmlFor={`e-inst-${uid}`} hint="Opcional. Ex.: 1/2" error={fieldError(state, "installment")}>
-            <Input id={`e-inst-${uid}`} name="installment" defaultValue={defaults.installment ?? ""} maxLength={20} />
+          <Field key="manual" label="Parcela" htmlFor={`e-inst-${uid}`} hint="Opcional. Ex.: 1/2" error={fieldError(state, "installment")}>
+            <Input
+              id={`e-inst-${uid}`}
+              name="installment"
+              value={installment}
+              onChange={(e) => setInstallment(e.target.value)}
+              maxLength={20}
+            />
           </Field>
         )}
 
@@ -180,7 +203,7 @@ export function EntryFields({
           </Field>
         ) : kind === "saida" ? (
           <Field label="Freela" htmlFor={`e-freela-${uid}`} hint="Opcional. Liga o pagamento à ficha do freela.">
-            <Select id={`e-freela-${uid}`} name="freelancerId" defaultValue={defaults.freelancerId ?? ""}>
+            <Select id={`e-freela-${uid}`} name="freelancerId" value={freelancerId} onChange={(e) => setFreelancerId(e.target.value)}>
               <option value="">Nenhum</option>
               {freelas.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -197,7 +220,14 @@ export function EntryFields({
             hint="Mês a que o imposto se refere. Em branco, o mês anterior ao vencimento."
             error={fieldError(state, "competence")}
           >
-            <Input id={`e-comp-${uid}`} name="competence" type="month" defaultValue={defaults.competence ?? ""} placeholder="AAAA-MM" />
+            <Input
+              id={`e-comp-${uid}`}
+              name="competence"
+              type="month"
+              value={competence}
+              onChange={(e) => setCompetence(e.target.value)}
+              placeholder="AAAA-MM"
+            />
           </Field>
         )}
 
@@ -220,7 +250,7 @@ export function EntryFields({
         ) : null}
 
         <Field label="Observações" htmlFor={`e-notes-${uid}`} className="sm:col-span-2" error={fieldError(state, "notes")}>
-          <Textarea id={`e-notes-${uid}`} name="notes" rows={2} defaultValue={defaults.notes ?? ""} />
+          <Textarea id={`e-notes-${uid}`} name="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </div>
     </>

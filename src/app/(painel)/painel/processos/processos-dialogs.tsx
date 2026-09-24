@@ -2,11 +2,12 @@
 
 import { ArrowDown, ArrowUp, Copy, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useRef, useState } from "react";
-import { ActionForm, ConfirmAction, FormModal, SubmitButton, fieldError } from "@/components/painel/form";
+import { ActionForm, ConfirmAction, SubmitButton, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { IconButton } from "../site/_components/list-controls";
+import { StableFormModal } from "../site/_components/stable-form";
 import { createKit, deleteKit, deleteTemplate, duplicateTemplate, updateKit } from "./actions";
 
 /* ============================== Modelos ============================== */
@@ -175,7 +176,7 @@ function KitFields({ state, defaults = {} }: { state: ActionResult | null; defau
 
 export function NewKitButton() {
   return (
-    <FormModal
+    <StableFormModal
       title="Novo kit"
       description="Lista pronta para o checklist de equipamento dos projetos."
       action={createKit}
@@ -188,14 +189,14 @@ export function NewKitButton() {
       }
     >
       {(state) => <KitFields state={state} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
 export function KitActions({ kit }: { kit: Required<Pick<KitDefaults, "id" | "name">> & KitDefaults }) {
   return (
     <div className="flex items-center gap-1">
-      <FormModal
+      <StableFormModal
         title={`Editar ${kit.name}`}
         action={updateKit}
         size="lg"
@@ -206,7 +207,7 @@ export function KitActions({ kit }: { kit: Required<Pick<KitDefaults, "id" | "na
         }
       >
         {(state) => <KitFields state={state} defaults={kit} />}
-      </FormModal>
+      </StableFormModal>
       <ConfirmAction
         title={`Excluir o kit “${kit.name}”?`}
         description="Checklists que já foram montados nos projetos continuam como estão."

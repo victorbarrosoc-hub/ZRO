@@ -33,7 +33,7 @@ export default async function CatalogoPage() {
       <AjustesTabs active="catalogo" />
 
       {groups.length ? (
-        <Card className="pt-2">
+        <Card className="min-w-0 pt-2">
           <Table minWidth={880} className="[&_tbody_tr:last-child>td]:border-b-0">
             <thead>
               <tr>

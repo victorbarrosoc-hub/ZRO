@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- prévia do painel, sem otimizador */
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { ConfirmAction, FormModal, fieldError } from "@/components/painel/form";
+import { ConfirmAction, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
@@ -26,6 +26,7 @@ import {
   updateTeamMember,
 } from "./actions";
 import { IconButton, OrderButtons, ToggleSwitch, type ServerAction } from "./_components/list-controls";
+import { StableFormModal } from "./_components/stable-form";
 import { imageSrcProblem, normalizeImageUrl, type ImagePolicy } from "./_lib/image-policy";
 
 /* ---------------- Peças comuns ---------------- */
@@ -144,7 +145,7 @@ function TeamFields({ state, defaults = {}, policy }: { state: ActionResult | nu
 
 export function NewTeamMemberButton({ policy }: { policy: ImagePolicy }) {
   return (
-    <FormModal
+    <StableFormModal
       title="Nova pessoa na equipe"
       description="Aparece em “Quem dirige”, na página inicial e em Sobre."
       action={createTeamMember}
@@ -156,7 +157,7 @@ export function NewTeamMemberButton({ policy }: { policy: ImagePolicy }) {
       }
     >
       {(state) => <TeamFields state={state} policy={policy} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
@@ -182,13 +183,13 @@ export function TeamRowActions({
         offLabel="Fora do site"
       />
       <OrderButtons action={moveTeamMember} id={member.id} first={first} last={last} name={member.name} />
-      <FormModal
+      <StableFormModal
         title="Editar pessoa"
         action={updateTeamMember}
         trigger={<EditTrigger label={`Editar ${member.name}`} />}
       >
         {(state) => <TeamFields state={state} defaults={member} policy={policy} />}
-      </FormModal>
+      </StableFormModal>
       <DeleteButton
         action={deleteTeamMember}
         id={member.id}
@@ -225,7 +226,7 @@ function ShowcaseFields({ state, defaults = {} }: { state: ActionResult | null; 
 
 export function NewShowcaseClientButton() {
   return (
-    <FormModal
+    <StableFormModal
       title="Novo cliente no site"
       description="Nome que aparece em “Quem confia na ZRO”."
       action={createShowcaseClient}
@@ -238,7 +239,7 @@ export function NewShowcaseClientButton() {
       }
     >
       {(state) => <ShowcaseFields state={state} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
@@ -262,9 +263,9 @@ export function ShowcaseRowActions({
         offLabel="Fora do site"
       />
       <OrderButtons action={moveShowcaseClient} id={client.id} first={first} last={last} name={client.name} />
-      <FormModal title="Editar cliente" action={updateShowcaseClient} size="sm" trigger={<EditTrigger label={`Editar ${client.name}`} />}>
+      <StableFormModal title="Editar cliente" action={updateShowcaseClient} size="sm" trigger={<EditTrigger label={`Editar ${client.name}`} />}>
         {(state) => <ShowcaseFields state={state} defaults={client} />}
-      </FormModal>
+      </StableFormModal>
       <DeleteButton
         action={deleteShowcaseClient}
         id={client.id}
@@ -301,7 +302,7 @@ function FaqFields({
 
 export function NewFaqButton() {
   return (
-    <FormModal
+    <StableFormModal
       title="Nova pergunta"
       description="Entra no fim da lista de perguntas frequentes."
       action={createFaq}
@@ -313,7 +314,7 @@ export function NewFaqButton() {
       }
     >
       {(state) => <FaqFields state={state} />}
-    </FormModal>
+    </StableFormModal>
   );
 }
 
@@ -337,9 +338,9 @@ export function FaqRowActions({
         offLabel="Fora do site"
       />
       <OrderButtons action={moveFaq} id={faq.id} first={first} last={last} name="pergunta" />
-      <FormModal title="Editar pergunta" action={updateFaq} trigger={<EditTrigger label="Editar pergunta" />}>
+      <StableFormModal title="Editar pergunta" action={updateFaq} trigger={<EditTrigger label="Editar pergunta" />}>
         {(state) => <FaqFields state={state} defaults={faq} />}
-      </FormModal>
+      </StableFormModal>
       <DeleteButton
         action={deleteFaq}
         id={faq.id}

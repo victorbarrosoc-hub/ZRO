@@ -28,7 +28,7 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
           action={<NewDocButton action={newCallSheet} projectId={projectId} label="Nova" />}
         />
         {docs.callSheets.length ? (
-          <ul className="mt-3 grid px-3 pb-3">
+          <ul className="mt-3 grid grid-cols-1 px-3 pb-3">
             {docs.callSheets.map((s) => {
               const past = s.date < today;
               return (
@@ -73,7 +73,7 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
           action={<NewDocButton action={newChecklist} projectId={projectId} label="Novo" />}
         />
         {docs.checklists.length ? (
-          <ul className="mt-3 grid px-3 pb-3">
+          <ul className="mt-3 grid grid-cols-1 px-3 pb-3">
             {docs.checklists.map((c) => {
               const late = c.missing > 0 && !!c.date && c.date < today;
               return (
@@ -122,7 +122,7 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
           action={<NewScriptMenu projectId={projectId} />}
         />
         {docs.scripts.length ? (
-          <ul className="mt-3 grid px-3 pb-3">
+          <ul className="mt-3 grid grid-cols-1 px-3 pb-3">
             {docs.scripts.map((s) => (
               <li key={s.id}>
                 <Link

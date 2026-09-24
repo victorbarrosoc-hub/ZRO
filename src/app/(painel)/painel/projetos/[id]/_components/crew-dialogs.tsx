@@ -9,6 +9,12 @@ import type { ActionResult } from "@/lib/actions";
 import { FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
 import { brl, centsToInput, dateBR } from "@/lib/format";
 import { addCrewMember, deleteCrewMember, generateCrewPayment, updateCrewMember } from "../../actions";
+import { toastFirst } from "./toast-first";
+
+// Estas respostas mudam a própria linha (ou a lista vazia): o aviso sai antes da tela mudar.
+const addCrewMemberT = toastFirst(addCrewMember);
+const deleteCrewMemberT = toastFirst(deleteCrewMember);
+const generateCrewPaymentT = toastFirst(generateCrewPayment);
 
 export type CrewOption = {
   id: string;
@@ -228,7 +234,7 @@ export function AddCrewButton({ projectId, options, category }: { projectId: str
     <FormModal
       title="Adicionar à equipe"
       description="Escolha no banco de freelas: o valor padrão entra preenchido."
-      action={addCrewMember}
+      action={addCrewMemberT}
       submitLabel="Adicionar"
       size="lg"
       trigger={
@@ -271,7 +277,7 @@ export function DeleteCrewButton({ id, label }: { id: string; label: string }) {
       title={`Tirar ${label} da equipe?`}
       description="Pagamento gerado e ainda sem nenhuma baixa sai do financeiro junto. O que já foi pago continua registrado."
       confirmLabel="Tirar da equipe"
-      action={deleteCrewMember}
+      action={deleteCrewMemberT}
       fields={{ id }}
       trigger={
         <Button variant="ghost" size="icon" className="text-mute hover:text-danger lg:size-8" aria-label={`Tirar ${label} da equipe`}>
@@ -299,7 +305,7 @@ export function GeneratePaymentButton({
       description={`Cria uma saída de ${brl(amount)} para ${label} no financeiro, com vencimento em ${dateBR(dueDate)}.`}
       confirmLabel="Gerar pagamento"
       destructive={false}
-      action={generateCrewPayment}
+      action={generateCrewPaymentT}
       fields={{ id }}
       trigger={
         <Button variant="subtle" size="sm" className="h-10 lg:h-8">
