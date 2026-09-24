@@ -2,7 +2,7 @@
 
 # ZRO: contexto do projeto
 
-Este repositório vai virar **o site da ZRO e a plataforma interna da produtora**.
+Este repositório é **o site da ZRO e a plataforma interna da produtora** (Next.js 16).
 
 Antes de propor ou construir qualquer coisa, leia:
 
@@ -10,6 +10,8 @@ Antes de propor ou construir qualquer coisa, leia:
 2. `docs/briefing.md`: o que o site e a área interna precisam ter, dados que já existem e pendências
 3. `docs/marca/identidade-visual.md`: leitura técnica do logo, das cores, da tipografia e do filme manifesto
 4. `docs/referencias-ui/README.md`: as referências de UI/UX e o que levar de cada uma
+5. `docs/dev/area-interna.md`: padrões de código da área interna (obrigatório antes de mexer em `/painel`)
+6. `docs/marca/mood.md`, `voice.md` e `tokens.md`: usados pelas skills de crítica de marca
 
 ## Quem é a ZRO
 
@@ -51,23 +53,41 @@ Antes de propor ou construir qualquer coisa, leia:
 
 ## Status
 
-- [x] Contexto, documento-mestre, identidade visual e briefing registrados
-- [ ] Referências de UI/UX: lote 1 recebido, o Victor vai mandar mais
-- [ ] Definir a stack e começar pelo site público + funil do WhatsApp
-- [ ] Área interna (CRM, orçamentos, freelas, financeiro, agenda, processos)
+- [x] Contexto, documento-mestre, identidade visual, briefing e referências de UI registrados
+- [x] Stack: Next.js 16 + Tailwind 4 + Drizzle/libSQL (SQLite local, Turso em produção), login próprio com sessão assinada
+- [x] Site público (início, filmes, sobre, Absolute ZRO, privacidade) e funil de orçamento até o WhatsApp
+- [x] Área interna: painel, freelas; CRM, projetos, agenda e documentos, orçamentos com PDF, financeiro, processos, site e ajustes
+- [ ] Publicar (Vercel + Turso) e configurar WhatsApp, links dos vídeos e dados reais
 
-**Não começar a construir telas antes de receber as referências visuais.**
+## Escolhas provisórias (a confirmar com o Victor)
+
+- **Categorias do portfólio:** Filmes de marca, Campanhas, Conteúdo, Documental, Experiências (eventos) e Direção criativa
+- **Preço no site:** não aparece por enquanto; o valor fica para o funil e para o orçamento
+- **Casamentos:** fora das categorias da ZRO até o Victor dizer o contrário
+- **Dados de exemplo:** ids começando com `demo-`, apagáveis em Ajustes
 
 ## Estrutura
 
 ```
-brand/
-  logo/          logo oficial (cinza claro, fundo transparente)
-  referencias/   filme manifesto, story da marca e quadros-chave do filme
+brand/                 logo oficial e referências (filme manifesto, story, quadros)
 docs/
-  briefing.md    site + área interna: escopo, dados existentes, pendências
-  referencias-ui/  prints de referência de UI/UX + notas (README.md)
-  marca/
-    documento-mestre.md   texto oficial da marca
-    identidade-visual.md  cores, tipografia, textura e movimento
+  briefing.md          escopo do site e da área interna
+  dev/area-interna.md  padrões de código da área interna
+  marca/               documento-mestre, identidade visual, mood, voz e tokens
+  referencias-ui/      prints de referência + notas
+drizzle/               migrações do banco
+scripts/               banco (migrate, seed, setup) e screenshots (Playwright)
+src/
+  app/(site)/          site público
+  app/orcamento/       funil até o WhatsApp
+  app/entrar/          login
+  app/(painel)/painel/ área interna (um diretório por módulo)
+  components/          brand, site, painel, ui
+  lib/                 db (schema), domain, format, queries, services, settings
 ```
+
+## Comandos
+
+- `npm run dev` · `npm run lint` · `npm run typecheck`
+- `npm run db:reset` recria o banco local com dados de exemplo (credenciais em `data/credenciais-dev.txt`)
+- Screenshots: `node scripts/shot.mjs <url> <saida.png> [largura] [altura] --full` e `node scripts/shot-auth.mjs /painel/... <saida.png>`
