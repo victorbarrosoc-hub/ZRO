@@ -1,0 +1,85 @@
+# Tokens: ZRO
+
+Tokens de design do site e da área interna. A implementação fica em `src/app/globals.css` (variáveis CSS + tema do Tailwind).
+Qualquer valor novo nasce aqui primeiro.
+
+## Cor
+
+### Base (preto e branco)
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--void` | `#050505` | fundo da página (o vazio) |
+| `--ink` | `#0B0B0B` | superfície 1 (seções, sidebar) |
+| `--graphite` | `#121212` | superfície 2 (cartões) |
+| `--smoke` | `#1A1A1A` | superfície 3 (hover, campos) |
+| `--line` | `rgb(255 255 255 / 0.08)` | filetes e divisórias |
+| `--line-strong` | `rgb(255 255 255 / 0.16)` | bordas de campo e cápsulas |
+| `--mute` | `#858585` | texto terciário (contraste mínimo 4,5:1 até sobre `--smoke`) |
+| `--ash` | `#A3A3A3` | texto secundário |
+| `--light` | `#E6E6E6` | texto principal |
+| `--white` | `#FFFFFF` | luz: destaques, halo, estado ativo |
+| `--logo` | `#D2D2D2` | cor do logo oficial |
+
+### Seção invertida ("a luz")
+
+| Token | Valor |
+| --- | --- |
+| `--paper` | `#F2F2F0` |
+| `--paper-ink` | `#0B0B0B` |
+| `--paper-mute` | `#5C5C5C` |
+
+### Absolute ZRO (provisório, até a identidade própria)
+
+| Token | Valor | Uso |
+| --- | --- | --- |
+| `--abs-ice` | `#A9C8FF` | texto e brilho |
+| `--abs-blue` | `#4C8DFF` | detalhe e estado ativo |
+| `--abs-deep` | `#06101F` | fundo |
+
+### Status (só na área interna)
+
+| Token | Valor | Significado |
+| --- | --- | --- |
+| `--ok` | `#5FBF8A` | recebido, pago, concluído |
+| `--warn` | `#D9A441` | pendente, a vencer |
+| `--danger` | `#E5484D` | atrasado, recusado, perdido |
+
+Status sempre com texto junto. Cor nunca é o único sinal.
+
+## Tipografia
+
+| Família | Uso |
+| --- | --- |
+| **Inter** (variável, com eixo óptico) | títulos, texto e interface |
+| **Instrument Serif** itálico | acento raro em uma palavra de título |
+| **Geist Mono** | rótulos pequenos em caixa alta, números de etapa, códigos |
+
+| Token | Tamanho | Entrelinha | Espaçamento |
+| --- | --- | --- | --- |
+| `display` | `clamp(56px, 10vw, 168px)` | 0.9 | -0.045em |
+| `h1` | `clamp(40px, 6vw, 96px)` | 0.95 | -0.04em |
+| `h2` | `clamp(30px, 3.6vw, 56px)` | 1.02 | -0.035em |
+| `h3` | `clamp(20px, 1.8vw, 28px)` | 1.2 | -0.02em |
+| `manifesto` | `clamp(36px, 6.4vw, 104px)` | 1.0 | -0.04em |
+| `body-lg` | `19px` | 1.55 | -0.005em |
+| `body` | `16px` | 1.6 | 0 |
+| `small` | `14px` | 1.5 | 0 |
+| `label` | `11px`, mono, caixa alta | 1.4 | 0.16em |
+
+## Espaço e forma
+
+- **Grade de 4px.** Espaços usados: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192
+- **Seções:** `clamp(96px, 14vw, 192px)` de respiro vertical
+- **Contêiner:** até 1440px, margem lateral de 20px no celular, 32px no tablet e 48px no desktop
+- **Raios:** cápsula `999px` · cartão `24px` · campo `14px` · miniatura `16px`
+- **Bordas:** sempre 1px, com `--line` ou `--line-strong`
+
+## Luz, grão e movimento
+
+- **Grão:** ruído SVG sobre a página inteira, opacidade 0,07, levemente animado (parado quando o sistema pede menos movimento)
+- **Halo:** `radial-gradient` branco de 6% a 0% atrás do que está sendo revelado
+- **Curva padrão:** `cubic-bezier(0.16, 1, 0.3, 1)`
+- **Durações:** 200ms (interação), 500ms (entrada de elemento), 1200ms (revelação de seção)
+- **Revelação ("a luz revela"):** o elemento entra saindo do desfoque (8px → 0) e do cinza para o branco, sem deslizar muito (máximo 24px)
+- **Menos movimento:** com `prefers-reduced-motion`, tudo aparece sem animação e os vídeos não tocam sozinhos

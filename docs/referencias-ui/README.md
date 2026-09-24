@@ -62,3 +62,44 @@ Cada nota diz o que levar pra ZRO, sempre filtrado pelo documento-mestre (preto 
 - **Luz e halo** como protagonistas, não como enfeite
 - **Detalhes finos:** bordas de 1px, cápsulas, setas em círculo, divisórias sutis
 - **Cor de destaque controlada:** o azul-acinzentado do Azentos serve de pista pro azul da **Absolute ZRO**
+
+## Lote 2 (24/09/2026): área interna
+
+| Arquivo | Origem | O que é |
+| --- | --- | --- |
+| `06-academy-sidebar-recolhivel.png` | Instagram @mehrnazraoufi | Sidebar escura com efeito de vidro, aberta e recolhida (só ícones, submenu flutuante) |
+| `07-ron-painel-de-arquivos-e-nos.png` | Instagram (RON Design) | Painel de arquivos em árvore, cartões de avatar, integrações e canvas de nós com grade pontilhada |
+| `08-taskflow-dashboard.png` | Instagram (TaskFlow / Falconx) | Dashboard escuro com trilho de ícones, árvore de projetos, cartão de número com brilho, gráfico com pico iluminado |
+
+### 06 · Academy: sidebar recolhível
+
+- **Sidebar de vidro escuro** com cantos bem arredondados, flutuando sobre o fundo
+- **Duas versões:** aberta (ícone + nome) e recolhida (só ícone, com submenu flutuante ao passar o mouse)
+- **Item ativo** com fundo claro sutil e um filete na borda esquerda
+- **Submenu em árvore** com linha guia fina
+- **Botão de ação tracejado** ("Upload new class"). Pra ZRO: **"Novo orçamento"** ou **"Novo projeto"**
+- **Usuário no rodapé** da sidebar (Victor ou Edu)
+
+### 07 · RON: arquivos e nós
+
+- **Painel de arquivos em árvore** com pastas, contadores e checkbox. Pra ZRO: os arquivos e entregas de cada projeto (links do Drive).
+- **Cartões com miniatura** em grade. Pra ZRO: o banco de freelas ou os vídeos do portfólio.
+- **Linha de integrações** ("Connect" / "Turn off"). Pra ZRO, depois: Google Agenda, Drive, WhatsApp.
+- **Canvas com grade pontilhada** e conexões. Inspiração pro **fluxo das 7 etapas** do projeto.
+- **Não levar:** o laranja. Na ZRO, cor só pra status.
+
+### 08 · TaskFlow: dashboard
+
+- **Trilho de ícones** + **árvore de projetos** ao lado (dois níveis de navegação)
+- **Cartão de número com brilho** ("23 Active Task"). Pra ZRO: projetos ativos, a receber no mês, diárias da semana.
+- **Gráfico de linha com o pico iluminado** e um rótulo flutuante ("Best week"). Pra ZRO: **fluxo de caixa** com o mês atual em destaque.
+- **Abas em cápsula** (Overview / Board / List). Pra ZRO: alternar a visão entre **quadro e lista** nos projetos e no CRM.
+- **Avatares empilhados** da equipe de cada projeto
+- **Não levar:** o amarelo e o cartão promocional com moedas 3D
+
+## Padrões em comum (lote 2)
+
+- **Escuro de verdade**, com camadas de cinza bem próximas (fundo, painel, cartão) em vez de bordas fortes
+- **Vidro e luz:** brilho suave só no que importa (número principal, item ativo, pico do gráfico)
+- **Navegação em dois níveis:** trilho de ícones + lista, recolhível
+- **Cor só como sinal:** na ZRO, verde, âmbar e vermelho discretos pra status (recebido, pendente, atrasado) e o azul reservado à Absolute ZRO
