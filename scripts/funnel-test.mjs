@@ -23,7 +23,7 @@ await page.waitForTimeout(700);
 await page.getByRole("radio", { name: "2 diárias" }).click();
 await page.waitForTimeout(900);
 await page.getByRole("radio", { name: "2 a 4 vídeos" }).click();
-await page.getByRole("radio", { name: "Os dois" }).click();
+await page.getByRole("radio", { name: "Horizontal e vertical" }).click();
 await page.screenshot({ path: `${out}/funil-videos.png` });
 await page.getByRole("button", { name: "Continuar" }).click();
 await page.waitForTimeout(700);

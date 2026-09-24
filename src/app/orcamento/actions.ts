@@ -1,7 +1,9 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { and, count, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import {
@@ -58,32 +60,35 @@ export type LeadResult =
   | { ok: true; message: string; whatsappUrl: string | null; mailtoUrl: string | null; protocol: string }
   | { ok: false; error: string; field?: string };
 
-// Limite simples por IP, em memória: no máximo 5 pedidos por hora por instância.
+/*
+ * Freio contra spam. Acima do limite o pedido não entra no CRM, mas a pessoa
+ * recebe o link do WhatsApp do mesmo jeito: cliente de verdade nunca é barrado.
+ * - por IP, em memória: 5 pedidos por hora (vale por instância do servidor);
+ * - no site todo, pelo banco: 30 pedidos em 10 minutos.
+ */
+const HOUR = 60 * 60 * 1000;
 const hits = new Map<string, number[]>();
-function tooMany(ip: string) {
+function tooManyFromIp(ip: string) {
   const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 60 * 60 * 1000);
+  if (hits.size > 5000) {
+    for (const [key, times] of hits) if (times.every((t) => now - t > HOUR)) hits.delete(key);
+  }
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < HOUR);
   recent.push(now);
   hits.set(ip, recent);
   return recent.length > 5;
 }
 
-export async function submitLead(input: unknown): Promise<LeadResult> {
-  const parsed = LeadSchema.safeParse(input);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    return { ok: false, error: issue?.message ?? "Confira os dados.", field: String(issue?.path[0] ?? "") };
-  }
-  const data = parsed.data;
-  if (!data.phone && !data.email) {
-    return { ok: false, error: "Deixe um WhatsApp ou e-mail para a gente responder.", field: "phone" };
-  }
+async function tooManyOnSite() {
+  const since = new Date(Date.now() - 10 * 60 * 1000);
+  const [row] = await db
+    .select({ n: count() })
+    .from(schema.leads)
+    .where(and(eq(schema.leads.source, "site"), gt(schema.leads.createdAt, since)));
+  return (row?.n ?? 0) >= 30;
+}
 
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  if (tooMany(ip)) {
-    return { ok: false, error: "Recebemos vários pedidos seguidos. Tente de novo em alguns minutos." };
-  }
-
+async function saveLead(data: z.infer<typeof LeadSchema>) {
   const [lead] = await db
     .insert(schema.leads)
     .values({
@@ -106,15 +111,35 @@ export async function submitLead(input: unknown): Promise<LeadResult> {
       consentAt: new Date(),
     })
     .returning({ id: schema.leads.id });
+  return lead;
+}
 
-  const protocol = lead.id.slice(0, 4).toUpperCase();
+export async function submitLead(input: unknown): Promise<LeadResult> {
+  const parsed = LeadSchema.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { ok: false, error: issue?.message ?? "Confira os dados.", field: String(issue?.path[0] ?? "") };
+  }
+  const data = parsed.data;
+  if (!data.phone && !data.email) {
+    return { ok: false, error: "Deixe um WhatsApp ou e-mail para a gente responder.", field: "phone" };
+  }
+
+  const h = await headers();
+  const ip = h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  const limited = tooManyFromIp(ip) || (await tooManyOnSite());
+
+  const lead = limited ? null : await saveLead(data);
+  const protocol = (lead?.id ?? randomUUID()).slice(0, 4).toUpperCase();
   const message = buildLeadMessage(data, protocol);
   const [whatsapp, company] = await Promise.all([getSetting("whatsapp"), getSetting("company")]);
   const number = whatsappDigits(whatsapp.number);
   const text = encodeURIComponent(message);
 
-  revalidatePath("/painel");
-  revalidatePath("/painel/crm");
+  if (lead) {
+    revalidatePath("/painel");
+    revalidatePath("/painel/crm");
+  }
 
   return {
     ok: true,
