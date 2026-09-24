@@ -369,220 +369,159 @@ export function QuoteEditor(props: Props) {
         <input type="hidden" name="id" value={quote.id} />
         <input type="hidden" name="items" value={JSON.stringify(serializeItems(items))} />
 
-        <Card className="p-5 sm:p-6 xl:col-span-8">
-          <SectionTitle title="Dados do orçamento" />
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-            <Field label="Título" htmlFor="q-title" className="sm:col-span-2 lg:col-span-6" error={err("title")}>
-              <Input id="q-title" name="title" defaultValue={quote.title} disabled={!editable} maxLength={160} />
-            </Field>
-            <Field
-              label="Cliente"
-              htmlFor="q-client"
-              className="lg:col-span-3"
-              error={err("clientId")}
-              hint={!quote.clientId && lead ? "Sem cliente: ao aprovar, ele é cadastrado com os dados do lead." : undefined}
-            >
-              <Select id="q-client" name="clientId" defaultValue={quote.clientId ?? ""} disabled={!editable}>
-                {lead ? <option value="">Pelo lead ({lead.label})</option> : <option value="">Escolha…</option>}
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Categoria" htmlFor="q-cat" className="lg:col-span-3" error={err("category")}>
-              <Select id="q-cat" name="category" defaultValue={quote.category} disabled={!editable}>
-                {CATEGORIES.map((c) => (
-                  <option key={c.key} value={c.key}>
-                    {c.short}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Emissão" htmlFor="q-issue" className="lg:col-span-2" error={err("issueDate")}>
-              <Input id="q-issue" name="issueDate" type="date" defaultValue={quote.issueDate} disabled={!editable} />
-            </Field>
-            <Field
-              label="Validade"
-              htmlFor="q-valid"
-              className="lg:col-span-2"
-              error={err("validUntil")}
-              hint={validity ? (validity.tone ? validity.label : `Vence ${validity.label}`) : undefined}
-            >
-              <Input id="q-valid" name="validUntil" type="date" defaultValue={quote.validUntil ?? ""} disabled={!editable} />
-            </Field>
-            <Field label="Período (cronograma)" htmlFor="q-period" className="sm:col-span-2 lg:col-span-2" error={err("period")}>
-              <Input id="q-period" name="period" defaultValue={quote.period ?? ""} placeholder="Ex.: novembro de 2026" disabled={!editable} maxLength={200} />
-            </Field>
-          </div>
-        </Card>
-
-        <Card className="p-5 sm:p-6 xl:col-span-4">
-          <SectionTitle title="Totais" />
-          <dl className="mt-5 grid gap-3 text-[14px]">
-            <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-ash">Subtotal</dt>
-              <dd className="text-light tabular-nums">{brl(totals.subtotal)}</dd>
+        <div className="grid content-start gap-4 xl:col-span-8">
+          <Card className="p-5 sm:p-6">
+            <SectionTitle title="Dados do orçamento" />
+            <div className="mt-5 grid grid-cols-2 items-start gap-4 lg:grid-cols-6">
+              <Field label="Título" htmlFor="q-title" className="col-span-2 lg:col-span-6" error={err("title")}>
+                <Input id="q-title" name="title" defaultValue={quote.title} disabled={!editable} maxLength={160} />
+              </Field>
+              <Field
+                label="Cliente"
+                htmlFor="q-client"
+                className="col-span-2 sm:col-span-1 lg:col-span-3"
+                error={err("clientId")}
+                hint={!quote.clientId && lead ? "Sem cliente: ao aprovar, ele é cadastrado com os dados do lead." : undefined}
+              >
+                <Select id="q-client" name="clientId" defaultValue={quote.clientId ?? ""} disabled={!editable}>
+                  {lead ? <option value="">Pelo lead ({lead.label})</option> : <option value="">Escolha…</option>}
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Categoria" htmlFor="q-cat" className="col-span-2 sm:col-span-1 lg:col-span-3" error={err("category")}>
+                <Select id="q-cat" name="category" defaultValue={quote.category} disabled={!editable}>
+                  {CATEGORIES.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.short}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Emissão" htmlFor="q-issue" className="lg:col-span-2" error={err("issueDate")}>
+                <Input id="q-issue" name="issueDate" type="date" defaultValue={quote.issueDate} disabled={!editable} />
+              </Field>
+              <Field
+                label="Validade"
+                htmlFor="q-valid"
+                className="lg:col-span-2"
+                error={err("validUntil")}
+                hint={validity ? (validity.tone ? validity.label : `Vence ${validity.label}`) : undefined}
+              >
+                <Input id="q-valid" name="validUntil" type="date" defaultValue={quote.validUntil ?? ""} disabled={!editable} />
+              </Field>
+              <Field label="Período (cronograma)" htmlFor="q-period" className="col-span-2 lg:col-span-2" error={err("period")}>
+                <Input id="q-period" name="period" defaultValue={quote.period ?? ""} placeholder="Ex.: novembro de 2026" disabled={!editable} maxLength={200} />
+              </Field>
             </div>
-            <div className="grid grid-cols-[1fr_minmax(0,160px)] items-center gap-3">
-              <dt>
-                <label htmlFor="q-discount" className="text-ash">
-                  Desconto
-                </label>
-              </dt>
-              <dd>
-                <MoneyInput
-                  id="q-discount"
-                  name="discount"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                  onBlur={(e) => {
-                    const c = parseBRL(e.target.value);
-                    setDiscount(c ? centsToInput(c) : "");
-                  }}
-                  placeholder="0,00"
-                  disabled={!editable}
-                  aria-invalid={err("discount") ? true : undefined}
-                  className="h-10 pr-3 pl-9 text-right text-[14px]"
-                />
-              </dd>
-            </div>
-            {err("discount") ? <p className="text-[13px] text-danger">{err("discount")}</p> : null}
-            <div className="mt-1 flex items-end justify-between gap-4 border-t border-line pt-4">
-              <dt className="pb-1 text-ash">Total</dt>
-              <dd className="text-[clamp(26px,2.4vw,34px)] leading-none font-semibold tracking-[-0.03em] text-white">{brl(totals.total)}</dd>
-            </div>
-            <p className="text-right text-[12px] text-mute">É o valor que o cliente vê.</p>
-          </dl>
+          </Card>
 
-          <div className="mt-6 rounded-2xl border border-line bg-white/[0.02] p-4">
-            <p className="label text-mute">Conta interna · só vocês veem</p>
-            <dl className="mt-4 grid gap-3 text-[14px]">
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-ash">Custo estimado</dt>
-                <dd className="text-light tabular-nums">{brl(totals.cost)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt className="flex items-center gap-2 text-ash">
-                  <label htmlFor="q-tax">Imposto</label>
-                  <span className="relative">
-                    <input
-                      id="q-tax"
-                      name="taxRate"
-                      inputMode="decimal"
-                      value={taxRate}
-                      onChange={(e) => setTaxRate(e.target.value)}
-                      disabled={!editable}
-                      aria-describedby="q-tax-hint"
-                      className="h-8 w-16 rounded-lg border border-line-strong bg-white/[0.03] pr-6 pl-2.5 text-right text-[13px] text-light tabular-nums focus:border-white/50 focus:outline-none disabled:opacity-50"
-                    />
-                    <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[12px] text-mute">%</span>
-                  </span>
-                </dt>
-                <dd className="text-light tabular-nums">{brl(totals.tax)}</dd>
-              </div>
-              <p id="q-tax-hint" className="-mt-1 text-[12px] text-mute">
-                Alíquota estimada sobre o total.
-              </p>
-              {err("taxRate") ? <p className="text-[13px] text-danger">{err("taxRate")}</p> : null}
-              <div className="flex items-baseline justify-between gap-4 border-t border-line pt-3">
-                <dt className="text-ash">Margem</dt>
-                <dd className={cn("font-medium tabular-nums", toneText(health))}>
-                  {brl(totals.margin)} <span className="text-[13px] font-normal">· {percentLabel(totals.marginPct)}</span>
-                </dd>
-              </div>
-            </dl>
-            <MarginMeter pct={totals.marginPct} health={health} />
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge tone={health.tone === "neutral" ? "neutral" : health.tone} dot>
-                {health.label}
-              </Badge>
-              <span className="text-[12px] text-mute">Saudável a partir de {percentLabel(MARGIN_MIN)}</span>
-            </div>
-            {health.hint ? <p className="mt-2 text-[12px] text-mute">{health.hint}</p> : null}
-          </div>
-        </Card>
-
-        <Card className="p-5 sm:p-6 xl:col-span-12">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <SectionTitle
-              title="Itens"
-              description="O valor unitário é o que o cliente vê. O custo é interno e nunca sai no timbrado."
-            />
-            <p className="text-right text-[13px] text-mute">
-              {items.length} {items.length === 1 ? "item" : "itens"} · subtotal{" "}
-              <span className="text-[15px] text-light tabular-nums">{brl(totals.subtotal)}</span>
-            </p>
-          </div>
-          <ItemsEditor items={items} onChange={changeItems} catalog={catalog} disabled={!editable} error={err("items")} />
-        </Card>
-
-        <Card className="p-5 sm:p-6 xl:col-span-8">
-          <SectionTitle title="Textos da proposta" description="Saem no timbrado do jeito que estiverem aqui." />
-          <div className="mt-5 grid gap-5">
-            <Field label="Escopo" htmlFor="q-scope" hint="O que está incluso. Uma linha por tópico, se quiser." error={err("scope")}>
-              <Textarea id="q-scope" name="scope" rows={7} defaultValue={quote.scope ?? ""} disabled={!editable} />
-            </Field>
-            <Field
-              label={
-                <span className="flex items-center justify-between gap-3">
-                  Forma de pagamento
-                  {editable && paymentTerms.trim() !== defaults.paymentTerms.trim() ? (
-                    <UseDefault onClick={() => { setPaymentTerms(defaults.paymentTerms); setDirty(true); }} />
-                  ) : null}
-                </span>
-              }
-              htmlFor="q-pay"
-              error={err("paymentTerms")}
-            >
-              <Textarea
-                id="q-pay"
-                name="paymentTerms"
-                rows={2}
-                value={paymentTerms}
-                onChange={(e) => setPaymentTerms(e.target.value)}
-                disabled={!editable}
-                className="min-h-16"
-              />
-            </Field>
-            <Field
-              label={
-                <span className="flex items-center justify-between gap-3">
-                  Condições
-                  {editable && conditions.trim() !== defaults.conditions.trim() ? (
-                    <UseDefault onClick={() => { setConditions(defaults.conditions); setDirty(true); }} />
-                  ) : null}
-                </span>
-              }
-              htmlFor="q-cond"
-              hint="Uma por linha. O padrão vem dos Ajustes."
-              error={err("conditions")}
-            >
-              <Textarea
-                id="q-cond"
-                name="conditions"
-                rows={6}
-                value={conditions}
-                onChange={(e) => setConditions(e.target.value)}
-                disabled={!editable}
-              />
-            </Field>
-          </div>
-        </Card>
-
-        <div className="grid content-start gap-4 xl:col-span-4">
           <Card className="p-5 sm:p-6">
             <SectionTitle title="Notas internas" description="Só vocês veem. Não saem no timbrado." />
             <Textarea
               name="internalNotes"
               aria-label="Notas internas"
-              rows={6}
+              rows={3}
               defaultValue={quote.internalNotes ?? ""}
-              className="mt-4"
+              className="mt-4 min-h-20"
               maxLength={4000}
             />
             {!editable ? <p className="mt-2 text-[12px] text-mute">Continuam editáveis depois do envio.</p> : null}
+          </Card>
+        </div>
+
+        <div className="grid content-start gap-4 xl:col-span-4">
+          <Card className="p-5 sm:p-6">
+            <SectionTitle title="Totais" />
+            <dl className="mt-5 grid gap-3 text-[14px]">
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-ash">Subtotal</dt>
+                <dd className="text-light tabular-nums">{brl(totals.subtotal)}</dd>
+              </div>
+              <div className="grid grid-cols-[1fr_minmax(0,160px)] items-center gap-x-3 gap-y-1.5">
+                <dt>
+                  <label htmlFor="q-discount" className="text-ash">
+                    Desconto
+                  </label>
+                </dt>
+                <dd>
+                  <MoneyInput
+                    id="q-discount"
+                    name="discount"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    onBlur={(e) => {
+                      const c = parseBRL(e.target.value);
+                      setDiscount(c ? centsToInput(c) : "");
+                    }}
+                    placeholder="0,00"
+                    disabled={!editable}
+                    aria-invalid={err("discount") ? true : undefined}
+                    className="h-10 pr-3 pl-9 text-right text-[14px]"
+                  />
+                </dd>
+                {err("discount") ? <dd className="col-span-2 text-[13px] text-danger">{err("discount")}</dd> : null}
+              </div>
+              <div className="mt-1 grid gap-1.5 border-t border-line pt-4">
+                <div className="flex items-end justify-between gap-4">
+                  <dt className="pb-1 text-ash">Total</dt>
+                  <dd className="text-[clamp(26px,2.4vw,34px)] leading-none font-semibold tracking-[-0.03em] text-white">{brl(totals.total)}</dd>
+                </div>
+                <dd className="text-right text-[12px] text-mute">É o valor que o cliente vê.</dd>
+              </div>
+            </dl>
+
+            <div className="mt-6 rounded-2xl border border-line bg-white/[0.02] p-4">
+              <p className="label text-mute">Conta interna · só vocês veem</p>
+              <dl className="mt-4 grid gap-3 text-[14px]">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-ash">Custo estimado</dt>
+                  <dd className="text-light tabular-nums">{brl(totals.cost)}</dd>
+                </div>
+                <div className="grid gap-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="flex items-center gap-2 text-ash">
+                      <label htmlFor="q-tax">Imposto</label>
+                      <span className="relative">
+                        <input
+                          id="q-tax"
+                          name="taxRate"
+                          inputMode="decimal"
+                          value={taxRate}
+                          onChange={(e) => setTaxRate(e.target.value)}
+                          disabled={!editable}
+                          aria-describedby="q-tax-hint"
+                          className="h-8 w-16 rounded-lg border border-line-strong bg-white/[0.03] pr-6 pl-2.5 text-right text-[13px] text-light tabular-nums focus:border-white/50 focus:outline-none disabled:opacity-50"
+                        />
+                        <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[12px] text-mute">%</span>
+                      </span>
+                    </dt>
+                    <dd className="text-light tabular-nums">{brl(totals.tax)}</dd>
+                  </div>
+                  <dd id="q-tax-hint" className="text-[12px] text-mute">
+                    Alíquota estimada sobre o total.
+                  </dd>
+                  {err("taxRate") ? <dd className="text-[13px] text-danger">{err("taxRate")}</dd> : null}
+                </div>
+                <div className="flex items-baseline justify-between gap-4 border-t border-line pt-3">
+                  <dt className="text-ash">Margem</dt>
+                  <dd className={cn("font-medium tabular-nums", toneText(health))}>
+                    {brl(totals.margin)} <span className="text-[13px] font-normal">· {percentLabel(totals.marginPct)}</span>
+                  </dd>
+                </div>
+              </dl>
+              <MarginMeter pct={totals.marginPct} health={health} />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge tone={health.tone === "neutral" ? "neutral" : health.tone} dot>
+                  {health.label}
+                </Badge>
+                <span className="text-[12px] text-mute">Saudável a partir de {percentLabel(MARGIN_MIN)}</span>
+              </div>
+              {health.hint ? <p className="mt-2 text-[12px] text-mute">{health.hint}</p> : null}
+            </div>
           </Card>
 
           {project || entries.length ? (
@@ -624,6 +563,85 @@ export function QuoteEditor(props: Props) {
             </Card>
           ) : null}
         </div>
+
+        <Card className="p-5 sm:p-6 xl:col-span-12">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <SectionTitle
+              title="Itens"
+              description="O valor unitário é o que o cliente vê. O custo é interno e nunca sai no timbrado."
+            />
+            <p className="text-right text-[13px] text-mute">
+              {items.length} {items.length === 1 ? "item" : "itens"} · subtotal{" "}
+              <span className="text-[15px] text-light tabular-nums">{brl(totals.subtotal)}</span>
+            </p>
+          </div>
+          <ItemsEditor items={items} onChange={changeItems} catalog={catalog} disabled={!editable} error={err("items")} />
+        </Card>
+
+        <Card className="p-5 sm:p-6 xl:col-span-12">
+          <SectionTitle title="Textos da proposta" description="Saem no timbrado do jeito que estiverem aqui." />
+          <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
+            <Field label="Escopo" htmlFor="q-scope" hint="O que está incluso. Uma linha por tópico, se quiser." error={err("scope")}>
+              <Textarea id="q-scope" name="scope" rows={11} defaultValue={quote.scope ?? ""} disabled={!editable} />
+            </Field>
+            <div className="grid gap-5">
+              <Field
+                label={
+                  <span className="flex items-center justify-between gap-3">
+                    Forma de pagamento
+                    {editable && paymentTerms.trim() !== defaults.paymentTerms.trim() ? (
+                      <UseDefault
+                        onClick={() => {
+                          setPaymentTerms(defaults.paymentTerms);
+                          setDirty(true);
+                        }}
+                      />
+                    ) : null}
+                  </span>
+                }
+                htmlFor="q-pay"
+                error={err("paymentTerms")}
+              >
+                <Textarea
+                  id="q-pay"
+                  name="paymentTerms"
+                  rows={2}
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  disabled={!editable}
+                  className="min-h-16"
+                />
+              </Field>
+              <Field
+                label={
+                  <span className="flex items-center justify-between gap-3">
+                    Condições
+                    {editable && conditions.trim() !== defaults.conditions.trim() ? (
+                      <UseDefault
+                        onClick={() => {
+                          setConditions(defaults.conditions);
+                          setDirty(true);
+                        }}
+                      />
+                    ) : null}
+                  </span>
+                }
+                htmlFor="q-cond"
+                hint="Uma por linha. O padrão vem dos Ajustes."
+                error={err("conditions")}
+              >
+                <Textarea
+                  id="q-cond"
+                  name="conditions"
+                  rows={6}
+                  value={conditions}
+                  onChange={(e) => setConditions(e.target.value)}
+                  disabled={!editable}
+                />
+              </Field>
+            </div>
+          </div>
+        </Card>
       </form>
 
       {/* ---------------- Barra de salvar ---------------- */}
@@ -632,14 +650,18 @@ export function QuoteEditor(props: Props) {
           <span className="flex min-w-0 items-center gap-2 text-[13px]" aria-live="polite">
             <span className={cn("size-2 shrink-0 rounded-full", dirty ? "bg-warn" : "bg-white/25")} aria-hidden />
             <span className={cn("truncate", dirty ? "text-light" : "text-mute")}>
-              {saving ? "Salvando…" : dirty ? "Alterações não salvas" : editable ? "Tudo salvo" : "Só as notas internas são editáveis"}
+              <span className="sm:hidden">{saving ? "Salvando…" : dirty ? "Não salvo" : "Salvo"}</span>
+              <span className="hidden sm:inline">
+                {saving ? "Salvando…" : dirty ? "Alterações não salvas" : editable ? "Tudo salvo" : "Só as notas internas são editáveis"}
+              </span>
             </span>
           </span>
-          <span className="ml-auto hidden items-baseline gap-2 text-[13px] text-mute sm:flex">
-            Total <span className="text-[16px] font-medium text-white tabular-nums">{brl(totals.total)}</span>
+          <span className="ml-auto flex items-baseline gap-2 text-[13px] text-mute">
+            <span className="hidden sm:inline">Total</span>
+            <span className="text-[16px] font-medium text-white tabular-nums">{brl(totals.total)}</span>
           </span>
           <span className={cn("hidden text-[13px] md:inline", toneText(health))}>Margem {percentLabel(totals.marginPct)}</span>
-          <Button type="submit" form="quote-form" variant="primary" disabled={saving} className="ml-auto sm:ml-2">
+          <Button type="submit" form="quote-form" variant="primary" disabled={saving} className="sm:ml-2">
             {saving ? "Salvando…" : "Salvar"}
           </Button>
         </div>

@@ -5,9 +5,10 @@
  * chave "no site" e botões de ícone que rodam uma action sem abrir janela.
  */
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Tip } from "@/components/ui/overlay";
+import { Button } from "@/components/ui/button";
+import { Modal, ModalContent, ModalTrigger, Tip } from "@/components/ui/overlay";
 import type { ActionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +63,62 @@ export function IconButton({
   );
   if (!tip || props.disabled) return button;
   return <Tip content={label}>{button}</Tip>;
+}
+
+/**
+ * Confirmação para excluir um item de lista. Diferente do ConfirmAction, o
+ * aviso sai mesmo quando a linha some da tela ao revalidar (o toast é chamado
+ * depois do await, não num efeito do componente que foi desmontado).
+ */
+export function ConfirmQuick({
+  trigger,
+  title,
+  description,
+  confirmLabel = "Excluir",
+  action,
+  fields,
+}: {
+  trigger: React.ReactNode;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  action: ServerAction;
+  fields: Record<string, string>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  function confirm() {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+    startTransition(async () => {
+      try {
+        const res = await action(null, fd);
+        if (res.ok) {
+          if (res.message) toast.success(res.message);
+          setOpen(false);
+        } else {
+          toast.error(res.error);
+        }
+      } catch {
+        toast.error("Não foi possível excluir. Tente de novo.");
+      }
+    });
+  }
+  return (
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalTrigger asChild>{trigger}</ModalTrigger>
+      <ModalContent title={title} description={description} size="sm">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" disabled={pending} onClick={confirm}>
+            {pending ? "Aguarde…" : confirmLabel}
+          </Button>
+        </div>
+      </ModalContent>
+    </Modal>
+  );
 }
 
 /** Setas para mudar a posição de um item na lista (a ordem vale no site). */
