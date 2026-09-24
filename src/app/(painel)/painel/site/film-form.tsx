@@ -238,8 +238,8 @@ export function FilmForm({
                     placeholder="2026"
                   />
                 </Field>
-                <Field label="Duração" htmlFor="film-duration" error={fieldError(state, "duration")} hint="Ex.: 1:30">
-                  <Input id="film-duration" name="duration" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="0:60" />
+                <Field label="Duração" htmlFor="film-duration" error={fieldError(state, "duration")}>
+                  <Input id="film-duration" name="duration" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="1:30" />
                 </Field>
                 <fieldset className="sm:col-span-2">
                   <legend className="mb-1.5 text-[13px] font-medium text-ash">Formato</legend>
@@ -316,7 +316,7 @@ export function FilmForm({
                         : "Sem vídeo, o site mostra “Vídeo em breve”."}
                   </span>
                 </div>
-                {video ? <VideoPreview url={videoUrl} format={format} /> : null}
+                {video ? <VideoPreview url={videoUrl} format={format} poster={posterUrl && !posterProblem ? posterUrl : undefined} /> : null}
 
                 <Field
                   label="Loop de prévia (opcional)"
@@ -458,7 +458,7 @@ export function FilmForm({
 
                 <p className="rounded-2xl border border-line bg-white/[0.02] px-4 py-3 text-[13px] leading-relaxed text-mute">
                   Ainda não há envio de arquivos: imagens e vídeos entram por link. Arquivo do próprio site: caminho em
-                  /media (ex.: /media/manifesto-poster.jpg). Link externo de imagem só aparece se o domínio estiver
+                  /media (ex.: /media/nome-do-filme.jpg). Link externo de imagem só aparece se o domínio estiver
                   liberado no site
                   {hosts.length ? ` (hoje: ${hosts.join(", ")})` : " (hoje: nenhum)"}. Link de compartilhamento do Google
                   Drive é convertido sozinho.
@@ -680,7 +680,7 @@ export function FilmForm({
   );
 }
 
-function VideoPreview({ url, format }: { url: string; format: string }) {
+function VideoPreview({ url, format, poster }: { url: string; format: string; poster?: string }) {
   const video = parseVideo(url);
   if (!video) return null;
   const vertical = format === "9:16";
@@ -691,7 +691,7 @@ function VideoPreview({ url, format }: { url: string; format: string }) {
   if (video.kind === "file") {
     return (
       <div className={frame}>
-        <video src={video.src} controls preload="metadata" playsInline className="size-full object-contain" />
+        <video src={video.src} poster={poster} controls preload="metadata" playsInline className="size-full object-contain" />
       </div>
     );
   }

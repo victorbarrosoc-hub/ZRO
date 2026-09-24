@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
+import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { listShowcaseClientsAdmin } from "@/lib/queries/admin-content";
 import { NewShowcaseClientButton, ShowcaseRowActions } from "../content-dialogs";
@@ -45,18 +45,15 @@ export default async function SiteClientesPage() {
                   <span className="hidden font-mono text-[12px] text-mute tabular-nums lg:block">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-                    <p className={c.published ? "text-[20px] font-semibold tracking-[-0.03em] text-white" : "text-[20px] font-semibold tracking-[-0.03em] text-white/40"}>
-                      {c.name}
-                    </p>
-                    {c.published ? (
-                      <Badge tone="ok" dot>
-                        No site
-                      </Badge>
-                    ) : (
-                      <Badge>Fora do site</Badge>
-                    )}
-                  </div>
+                  <p
+                    className={
+                      c.published
+                        ? "min-w-0 truncate text-[20px] font-semibold tracking-[-0.03em] text-white"
+                        : "min-w-0 truncate text-[20px] font-semibold tracking-[-0.03em] text-white/40"
+                    }
+                  >
+                    {c.name}
+                  </p>
                   <div className="-ml-1 lg:ml-0">
                     <ShowcaseRowActions client={{ id: c.id, name: c.name, published: c.published }} first={i === 0} last={i === clients.length - 1} />
                   </div>
@@ -64,7 +61,7 @@ export default async function SiteClientesPage() {
               ))}
             </ol>
           </Card>
-          <Card className="p-5 xl:col-span-4">
+          <Card className="p-5 xl:col-span-4 xl:self-start">
             <p className="label mb-4 text-mute">Como aparece no site</p>
             {published.length ? (
               <p className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[26px] leading-tight font-semibold tracking-[-0.05em] text-white/40">

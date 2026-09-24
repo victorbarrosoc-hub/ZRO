@@ -42,17 +42,10 @@ export default async function SiteEquipePage() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-medium text-white">{m.name}</p>
+                  <p className={m.published ? "truncate text-[15px] font-medium text-white" : "truncate text-[15px] font-medium text-white/50"}>{m.name}</p>
                   <p className="truncate text-[13px] text-ash">{m.role}</p>
                   {m.quote ? <p className="mt-1 line-clamp-2 text-[13px] text-mute">“{m.quote}”</p> : null}
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {m.published ? (
-                      <Badge tone="ok" dot>
-                        No site
-                      </Badge>
-                    ) : (
-                      <Badge>Fora do site</Badge>
-                    )}
                     {!m.photoUrl ? <Badge>Sem foto</Badge> : null}
                   </div>
                 </div>

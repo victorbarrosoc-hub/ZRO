@@ -86,7 +86,7 @@ export function StageStepper({
       <ol
         ref={listRef}
         aria-label="Etapas do processo criativo"
-        className="relative -mx-5 mt-7 flex overflow-x-auto px-5 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0"
+        className="relative -mx-5 mt-3 flex overflow-x-auto px-5 py-4 [scrollbar-width:none] sm:-mx-6 sm:px-6"
       >
         {STAGES.map((s, i) => {
           const state = i < idx ? "done" : i === idx ? "current" : "next";
@@ -135,7 +135,7 @@ export function StageStepper({
       </ol>
 
       {gated ? (
-        <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-line-strong bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-line-strong bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <LockKeyhole className="mt-0.5 size-4 shrink-0 text-ash" aria-hidden />
             <div>
@@ -152,7 +152,7 @@ export function StageStepper({
           ) : null}
         </div>
       ) : idx === CONCEITO ? (
-        <p className="mt-5 flex items-center gap-2 text-[13px] text-ok">
+        <p className="mt-2 flex items-center gap-2 text-[13px] text-ok">
           <Check className="size-4 shrink-0" aria-hidden /> Regra criativa respondida. O projeto pode avançar para Direção.
         </p>
       ) : null}

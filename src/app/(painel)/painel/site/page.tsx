@@ -90,13 +90,6 @@ export default async function SiteFilmesPage() {
                       {[f.client ?? "ZRO", categoryLabel(f.category), f.year].filter(Boolean).join(" · ")}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {f.published ? (
-                        <Badge tone="ok" dot>
-                          Publicado
-                        </Badge>
-                      ) : (
-                        <Badge>Rascunho</Badge>
-                      )}
                       {f.featured ? <Badge tone="light">Destaque</Badge> : null}
                       {video ? (
                         <Badge>{VIDEO_KIND[video.kind]}</Badge>

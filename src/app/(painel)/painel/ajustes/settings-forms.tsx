@@ -183,7 +183,7 @@ export function QuoteDefaultsForm({ quote }: { quote: QuoteSettings }) {
             error={fieldError(state, "conditions")}
             hint="Uma por linha. Entram em todo orçamento novo e podem ser ajustadas em cada um."
           >
-            <Textarea id="q-conditions" name="conditions" rows={7} defaultValue={quote.conditions.join("\n")} />
+            <Textarea id="q-conditions" name="conditions" rows={10} defaultValue={quote.conditions.join("\n")} />
           </Field>
           <SaveRow note="Não muda orçamentos que já existem." />
         </>

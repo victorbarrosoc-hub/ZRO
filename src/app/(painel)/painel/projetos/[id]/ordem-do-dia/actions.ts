@@ -191,6 +191,8 @@ export async function saveCallSheet(_prev: ActionResult | null, fd: FormData): P
     .where(eq(callSheets.id, id));
 
   revalidateSheet(projectId, id);
+  // "Imprimir" com alteração pendente: salva e já abre a versão de impressão.
+  if (str(fd, "then") === "print") redirect(`/painel/projetos/${projectId}/ordem-do-dia/${id}/imprimir`);
   return ok("Ordem do dia salva.");
 }
 

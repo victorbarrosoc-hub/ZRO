@@ -120,30 +120,31 @@ export async function getAccount(id: string) {
  */
 export async function countDemoData() {
   const tables = [
-    { label: "lançamentos financeiros", table: schema.financeEntries, id: schema.financeEntries.id },
-    { label: "baixas de pagamento", table: schema.financePayments, id: schema.financePayments.id },
-    { label: "projetos", table: schema.projects, id: schema.projects.id },
-    { label: "tarefas de projeto", table: schema.projectTasks, id: schema.projectTasks.id },
-    { label: "entregas", table: schema.projectDeliverables, id: schema.projectDeliverables.id },
-    { label: "pessoas escaladas", table: schema.projectCrew, id: schema.projectCrew.id },
-    { label: "eventos da agenda", table: schema.events, id: schema.events.id },
-    { label: "escalas de diária", table: schema.eventCrew, id: schema.eventCrew.id },
-    { label: "ordens do dia", table: schema.callSheets, id: schema.callSheets.id },
-    { label: "checklists", table: schema.projectChecklists, id: schema.projectChecklists.id },
-    { label: "roteiros e shot lists", table: schema.scripts, id: schema.scripts.id },
-    { label: "orçamentos", table: schema.quotes, id: schema.quotes.id },
-    { label: "itens de orçamento", table: schema.quoteItems, id: schema.quoteItems.id },
-    { label: "leads", table: schema.leads, id: schema.leads.id },
-    { label: "interações", table: schema.activities, id: schema.activities.id },
-    { label: "clientes", table: schema.clients, id: schema.clients.id },
-    { label: "freelas", table: schema.freelancers, id: schema.freelancers.id },
-    { label: "valores de freela", table: schema.freelancerRates, id: schema.freelancerRates.id },
-    { label: "clientes no site", table: schema.showcaseClients, id: schema.showcaseClients.id },
+    { label: ["lançamento financeiro", "lançamentos financeiros"], table: schema.financeEntries, id: schema.financeEntries.id },
+    { label: ["baixa de pagamento", "baixas de pagamento"], table: schema.financePayments, id: schema.financePayments.id },
+    { label: ["projeto", "projetos"], table: schema.projects, id: schema.projects.id },
+    { label: ["tarefa de projeto", "tarefas de projeto"], table: schema.projectTasks, id: schema.projectTasks.id },
+    { label: ["entrega", "entregas"], table: schema.projectDeliverables, id: schema.projectDeliverables.id },
+    { label: ["pessoa escalada", "pessoas escaladas"], table: schema.projectCrew, id: schema.projectCrew.id },
+    { label: ["evento da agenda", "eventos da agenda"], table: schema.events, id: schema.events.id },
+    { label: ["escala de diária", "escalas de diária"], table: schema.eventCrew, id: schema.eventCrew.id },
+    { label: ["ordem do dia", "ordens do dia"], table: schema.callSheets, id: schema.callSheets.id },
+    { label: ["checklist", "checklists"], table: schema.projectChecklists, id: schema.projectChecklists.id },
+    { label: ["roteiro ou shot list", "roteiros e shot lists"], table: schema.scripts, id: schema.scripts.id },
+    { label: ["orçamento", "orçamentos"], table: schema.quotes, id: schema.quotes.id },
+    { label: ["item de orçamento", "itens de orçamento"], table: schema.quoteItems, id: schema.quoteItems.id },
+    { label: ["lead", "leads"], table: schema.leads, id: schema.leads.id },
+    { label: ["interação", "interações"], table: schema.activities, id: schema.activities.id },
+    { label: ["cliente", "clientes"], table: schema.clients, id: schema.clients.id },
+    { label: ["freela", "freelas"], table: schema.freelancers, id: schema.freelancers.id },
+    { label: ["valor de freela", "valores de freela"], table: schema.freelancerRates, id: schema.freelancerRates.id },
+    { label: ["cliente no site", "clientes no site"], table: schema.showcaseClients, id: schema.showcaseClients.id },
   ] as const;
   const counts = await Promise.all(
     tables.map(async (t) => {
       const [row] = await db.select({ n: sql<number>`count(*)` }).from(t.table).where(like(t.id, "demo-%"));
-      return { label: t.label, count: Number(row?.n ?? 0) };
+      const count = Number(row?.n ?? 0);
+      return { label: count === 1 ? t.label[0] : t.label[1], count };
     }),
   );
   const present = counts.filter((c) => c.count > 0);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
+import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { listFaqsAdmin } from "@/lib/queries/admin-content";
 import { FaqRowActions, NewFaqButton } from "../content-dialogs";
@@ -38,11 +38,6 @@ export default async function SitePerguntasPage() {
                     {f.question}
                   </p>
                   <p className="mt-1 line-clamp-2 max-w-3xl text-[13px] leading-relaxed text-mute">{f.answer}</p>
-                  {!f.published ? (
-                    <div className="mt-2">
-                      <Badge>Fora do site</Badge>
-                    </div>
-                  ) : null}
                 </div>
                 <div className="-ml-1 lg:ml-0">
                   <FaqRowActions

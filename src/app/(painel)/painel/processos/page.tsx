@@ -65,7 +65,7 @@ export default async function ProcessosPage() {
                             {s.count}
                           </span>
                           <span className="font-mono text-[10px] text-mute">{s.n}</span>
-                          <span className="hidden max-w-full truncate text-[11px] text-mute sm:block">{s.label}</span>
+                          <span className="hidden max-w-full truncate text-[10px] text-mute sm:block">{s.label}</span>
                         </li>
                       ))}
                     </ol>
