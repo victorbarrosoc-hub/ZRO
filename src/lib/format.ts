@@ -4,21 +4,24 @@ import type { EntryStatus } from "./domain";
 export const TIMEZONE = "America/Fortaleza"; // Natal/RN, UTC-3
 
 const brlFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const brlCompactFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
 
 /** 150000 → "R$ 1.500,00" */
 export function brl(cents: number | null | undefined) {
   return brlFormatter.format((cents ?? 0) / 100);
 }
 
-/** 1500000 → "R$ 15 mil" */
+/**
+ * 1500000 → "R$ 15 mil". Feito à mão (sem Intl compacto) para sair igual
+ * no servidor e no navegador.
+ */
 export function brlCompact(cents: number | null | undefined) {
-  return brlCompactFormatter.format((cents ?? 0) / 100);
+  const value = (cents ?? 0) / 100;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  const one = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+  if (abs >= 1_000_000) return `${sign}R$ ${one(abs / 1_000_000)} mi`;
+  if (abs >= 1_000) return `${sign}R$ ${one(abs / 1_000)} mil`;
+  return `${sign}R$ ${Math.round(abs)}`;
 }
 
 /** "1.500,00", "1500", "R$ 1.500,5" → 150000 (centavos). Vazio → null. */
