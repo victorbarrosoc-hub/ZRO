@@ -188,11 +188,7 @@ export async function updateLeadControl(_prev: ActionResult | null, fd: FormData
   if (!id) return fail("Lead não encontrado.");
   const parsed = LeadControlSchema.safeParse(readControl(fd));
   if (!parsed.success) return fromZod(parsed.error);
-  const [row] = await db
-    .update(leads)
-    .set(orNull(parsed.data))
-    .where(eq(leads.id, id))
-    .returning({ clientId: leads.clientId });
+  const [row] = await db.update(leads).set(orNull(parsed.data)).where(eq(leads.id, id)).returning({ clientId: leads.clientId });
   if (!row) return fail("Lead não encontrado.");
   revalidateLead(id, row.clientId);
   return ok("Controle atualizado.");
@@ -291,10 +287,7 @@ const ActivitySchema = z.object({
   leadId: z.string().optional(),
   clientId: z.string().optional(),
   type: z.enum(keysOf(ACTIVITY_TYPES), { message: "Escolha o tipo." }),
-  content: z
-    .string({ message: "Escreva o que aconteceu." })
-    .min(2, "Escreva o que aconteceu.")
-    .max(4000, "Texto longo demais."),
+  content: z.string({ message: "Escreva o que aconteceu." }).min(2, "Escreva o que aconteceu.").max(4000, "Texto longo demais."),
 });
 
 export async function addActivity(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
@@ -366,12 +359,14 @@ const ClientSchema = z.object({
 
 /** "@zro", "instagram.com/zro/" ou "https://www.instagram.com/zro" → "zro". */
 function instagramHandle(value: string | undefined) {
-  return value
-    ?.replace(/^https?:\/\//i, "")
-    .replace(/^(www\.)?instagram\.com\//i, "")
-    .replace(/^@/, "")
-    .replace(/[/?#].*$/, "")
-    .trim() || undefined;
+  return (
+    value
+      ?.replace(/^https?:\/\//i, "")
+      .replace(/^(www\.)?instagram\.com\//i, "")
+      .replace(/^@/, "")
+      .replace(/[/?#].*$/, "")
+      .trim() || undefined
+  );
 }
 
 function readClient(fd: FormData) {

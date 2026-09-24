@@ -54,6 +54,7 @@ export function LeadBoard({ leads, today }: { leads: BoardLead[]; today: string 
   const [over, setOver] = useState<string | null>(null);
   const [lost, setLost] = useState<{ open: boolean; lead: BoardLead | null }>({ open: false, lead: null });
   const canDrag = useFinePointer();
+  const anyValue = items.some((l) => l.estimatedValue);
 
   function move(lead: BoardLead, stage: string) {
     if (lead.stage === stage) return;
@@ -122,13 +123,24 @@ export function LeadBoard({ leads, today }: { leads: BoardLead[]; today: string 
                   dropOn(stage.key);
                 }}
               >
-                <div className="flex items-center justify-between gap-3 px-2.5 pt-2 pb-3">
-                  <h2 className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-light">
-                    <StageDot stage={stage.key} />
-                    <span className="truncate">{stage.label}</span>
-                    <span className="text-[12px] font-normal text-mute tabular-nums">{column.length}</span>
-                  </h2>
-                  <span className="shrink-0 text-[12px] text-mute tabular-nums">{total ? brlCompact(total) : ""}</span>
+                <div className="px-2.5 pt-2 pb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-light">
+                      <StageDot stage={stage.key} />
+                      <span className="truncate">{stage.label}</span>
+                    </h2>
+                    <span
+                      className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-white/[0.07] px-1.5 text-[11px] text-ash tabular-nums"
+                      aria-label={`${column.length} lead${column.length === 1 ? "" : "s"}`}
+                    >
+                      {column.length}
+                    </span>
+                  </div>
+                  {anyValue ? (
+                    <p className="mt-1 h-4 pl-3.5 text-[12px] leading-4 text-mute">
+                      {total ? `${brlCompact(total)} estimado` : ""}
+                    </p>
+                  ) : null}
                 </div>
 
                 <ul className="flex min-h-24 flex-1 flex-col gap-2">

@@ -60,7 +60,7 @@ export default async function ProjetosPage({ searchParams }: PageProps<"/painel/
     .join(" · ");
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-1 gap-8">
       <PageHeader label="Processo criativo" title="Projetos" description={description} actions={<NewProjectButton options={options} />} />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -123,7 +123,11 @@ function Board({ items, today }: { items: ProjectListItem[]; today: string }) {
           return (
             <li
               key={stage.key}
-              className="flex w-[82vw] max-w-[296px] shrink-0 snap-start flex-col rounded-card border border-line bg-white/[0.012] p-2 sm:w-[272px]"
+              className={cn(
+                "flex shrink-0 snap-start flex-col rounded-card border border-line bg-white/[0.012] p-2",
+                // Coluna vazia fica estreita: sobra espaço para as etapas que têm projeto.
+                list.length ? "w-[82vw] max-w-[296px] sm:w-[272px]" : "w-[46vw] max-w-[196px] sm:w-[188px]",
+              )}
             >
               <div className="flex items-baseline justify-between gap-3 px-3 pt-2.5 pb-3" title={stage.hint}>
                 <h2 className="flex min-w-0 items-baseline gap-2">
@@ -143,8 +147,8 @@ function Board({ items, today }: { items: ProjectListItem[]; today: string }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mx-1 mb-1 grid min-h-24 place-items-center rounded-[18px] border border-dashed border-line px-4 text-center text-[13px] text-mute">
-                  Nenhum projeto aqui
+                <p className="mx-1 mb-1 grid min-h-24 place-items-center rounded-[18px] border border-dashed border-line px-3 text-center text-[13px] text-mute">
+                  Nenhum projeto
                 </p>
               )}
             </li>
@@ -195,7 +199,7 @@ function BoardCard({ p, today }: { p: ProjectListItem; today: string }) {
         </div>
       </div>
 
-      <div className="mt-4 flex min-h-7 items-center justify-between gap-3 border-t border-line pt-3">
+      <div className="mt-4 flex min-h-8 items-center justify-between gap-3 border-t border-line pt-3">
         {late ? (
           <Badge tone="warn" dot>
             Atrasado · {dateShort(p.dueDate)}
@@ -209,13 +213,13 @@ function BoardCard({ p, today }: { p: ProjectListItem; today: string }) {
               <span
                 key={name}
                 title={name}
-                className="grid size-7 place-items-center rounded-full border-2 border-[#101010] bg-smoke text-[10px] font-medium text-light"
+                className="grid size-8 place-items-center rounded-full border-2 border-[#121212] bg-smoke text-[11px] font-medium text-light"
               >
                 {initials(name)}
               </span>
             ))}
             {extra > 0 ? (
-              <span className="grid size-7 place-items-center rounded-full border-2 border-[#101010] bg-mist text-[10px] text-ash">+{extra}</span>
+              <span className="grid size-8 place-items-center rounded-full border-2 border-[#121212] bg-mist text-[11px] text-ash">+{extra}</span>
             ) : null}
           </span>
         ) : null}
@@ -263,7 +267,7 @@ function ProjectTable({ items, today }: { items: ProjectListItem[]; today: strin
                 </Td>
                 <Td className={cn("whitespace-nowrap", late ? "text-warn" : "text-ash")}>
                   {dateBR(p.dueDate)}
-                  {late ? <span className="sr-only"> (atrasado)</span> : null}
+                  {late ? <span className="ml-2 text-[12px]">atrasado</span> : null}
                 </Td>
                 <Td align="right">{p.value ? brl(p.value) : <span className="text-mute">—</span>}</Td>
               </tr>

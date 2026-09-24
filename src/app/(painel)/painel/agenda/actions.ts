@@ -19,7 +19,7 @@ const time = z.iso.time({ precision: -1, message: "Use o formato 00:00." });
 const EventSchema = z
   .object({
     type: z.enum(EVENT_TYPE_KEYS, { message: "Escolha o tipo." }),
-    title: z.string().min(2, "Digite o título.").max(120, "Título longo demais."),
+    title: z.string({ message: "Digite o título." }).min(2, "Digite o título.").max(120, "Título longo demais."),
     projectId: z.string().optional(),
     date: z.iso.date({ message: "Escolha a data." }),
     endDate: z.iso.date({ message: "Data final inválida." }).optional(),

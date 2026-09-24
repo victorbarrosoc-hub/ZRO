@@ -44,13 +44,7 @@ export function ChoiceChips({
       <div className="flex flex-wrap gap-2">
         {options.map((o) => (
           <label key={o.key} className="cursor-pointer">
-            <input
-              type={type}
-              name={name}
-              value={o.key}
-              defaultChecked={selected.includes(o.key)}
-              className="peer sr-only"
-            />
+            <input type={type} name={name} value={o.key} defaultChecked={selected.includes(o.key)} className="peer sr-only" />
             <span
               className={cn(
                 "inline-flex h-9 items-center rounded-full border border-line-strong px-3.5 text-[13px] text-ash transition-colors hover:border-white/30 hover:text-light",
@@ -94,7 +88,15 @@ function OptionSelect({
 }
 
 /** Data de retorno com atalhos (amanhã, 3 dias, 1 semana). */
-export function FollowUpInput({ id, name = "followUpAt", defaultValue }: { id: string; name?: string; defaultValue?: string | null }) {
+export function FollowUpInput({
+  id,
+  name = "followUpAt",
+  defaultValue,
+}: {
+  id: string;
+  name?: string;
+  defaultValue?: string | null;
+}) {
   const [value, setValue] = useState(defaultValue ?? "");
   const today = todayISO();
   const shortcuts = [
@@ -113,7 +115,9 @@ export function FollowUpInput({ id, name = "followUpAt", defaultValue }: { id: s
             onClick={() => setValue(s.value)}
             className={cn(
               "inline-flex h-8 items-center rounded-full border px-3 text-[12px] transition-colors",
-              value === s.value ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
+              value === s.value
+                ? "border-white bg-white text-void"
+                : "border-line-strong text-ash hover:border-white/30 hover:text-light",
             )}
           >
             {s.label}
@@ -190,10 +194,21 @@ export function LeadFields({
             <Input id="l-email" name="email" type="email" defaultValue={defaults.email ?? ""} />
           </Field>
           <Field label="Segmento" htmlFor="l-segment" error={err("segment")}>
-            <Input id="l-segment" name="segment" defaultValue={defaults.segment ?? ""} placeholder="Ex.: hotelaria, saúde, moda" />
+            <Input
+              id="l-segment"
+              name="segment"
+              defaultValue={defaults.segment ?? ""}
+              placeholder="Ex.: hotelaria, saúde, moda"
+            />
           </Field>
           <Field label="Como chegou" htmlFor="l-source" error={err("source")}>
-            <OptionSelect id="l-source" name="source" options={LEAD_SOURCES} defaultValue={defaults.source ?? "whatsapp"} emptyLabel={null} />
+            <OptionSelect
+              id="l-source"
+              name="source"
+              options={LEAD_SOURCES}
+              defaultValue={defaults.source ?? "whatsapp"}
+              emptyLabel={null}
+            />
           </Field>
         </div>
       </FormSection>
@@ -230,7 +245,14 @@ export function LeadFields({
           ) : null}
         </div>
         {mode === "edit" ? (
-          <ChoiceChips type="checkbox" name="extras" legend="Extras" options={FUNNEL_EXTRAS} defaultValue={defaults.extras ?? []} error={err("extras")} />
+          <ChoiceChips
+            type="checkbox"
+            name="extras"
+            legend="Extras"
+            options={FUNNEL_EXTRAS}
+            defaultValue={defaults.extras ?? []}
+            error={err("extras")}
+          />
         ) : null}
       </FormSection>
 
@@ -246,7 +268,12 @@ function LeadControlInputs({ state, defaults }: { state: ActionResult | null; de
   const err = (name: string) => fieldError(state, name);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Valor estimado" htmlFor="l-value" hint="Quanto você imagina que o projeto vale." error={err("estimatedValue")}>
+      <Field
+        label="Valor estimado"
+        htmlFor="l-value"
+        hint="Quanto você imagina que o projeto vale."
+        error={err("estimatedValue")}
+      >
         <MoneyInput id="l-value" name="estimatedValue" defaultValue={centsToInput(defaults.estimatedValue)} placeholder="0,00" />
       </Field>
       <Field label="Retornar em" htmlFor="l-follow" error={err("followUpAt")}>
@@ -281,7 +308,9 @@ export function LostReasonField({ state, defaultValue }: { state: ActionResult |
             onClick={() => setValue(r)}
             className={cn(
               "inline-flex h-8 items-center rounded-full border px-3 text-[12px] transition-colors",
-              value === r ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
+              value === r
+                ? "border-white bg-white text-void"
+                : "border-line-strong text-ash hover:border-white/30 hover:text-light",
             )}
           >
             {r}
@@ -335,10 +364,22 @@ export function ClientFields({ state, defaults = {} }: { state: ActionResult | n
             <Input id="c-city" name="city" defaultValue={defaults.city ?? (defaults.id ? "" : "Natal/RN")} />
           </Field>
           <Field label="CNPJ ou CPF" htmlFor="c-doc" error={err("document")}>
-            <Input id="c-doc" name="document" inputMode="numeric" defaultValue={defaults.document ?? ""} placeholder="Só números ou com pontuação" />
+            <Input
+              id="c-doc"
+              name="document"
+              inputMode="numeric"
+              defaultValue={defaults.document ?? ""}
+              placeholder="Só números ou com pontuação"
+            />
           </Field>
           <Field label="Como chegou" htmlFor="c-source" error={err("source")}>
-            <OptionSelect id="c-source" name="source" options={LEAD_SOURCES} defaultValue={defaults.source ?? "indicacao"} emptyLabel={null} />
+            <OptionSelect
+              id="c-source"
+              name="source"
+              options={LEAD_SOURCES}
+              defaultValue={defaults.source ?? "indicacao"}
+              emptyLabel={null}
+            />
           </Field>
         </div>
       </FormSection>

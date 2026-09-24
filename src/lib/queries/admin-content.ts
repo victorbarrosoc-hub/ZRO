@@ -24,8 +24,12 @@ const {
 
 export type TemplateTask = { stage: string; title: string };
 
+/**
+ * Modelos na ordem em que foram criados (rowid): é a mesma ordem em que o
+ * createProject acha "o primeiro modelo da categoria".
+ */
 export async function listTemplates() {
-  const rows = await db.select().from(projectTemplates).orderBy(asc(projectTemplates.createdAt), asc(projectTemplates.name));
+  const rows = await db.select().from(projectTemplates).orderBy(sql`rowid`);
   return rows.map((t) => ({
     ...t,
     total: t.tasks.length,
@@ -38,7 +42,7 @@ export async function getTemplate(id: string) {
 }
 
 export async function listKits() {
-  const rows = await db.select().from(equipmentKits).orderBy(asc(equipmentKits.createdAt), asc(equipmentKits.name));
+  const rows = await db.select().from(equipmentKits).orderBy(sql`rowid`);
   return rows.map((k) => ({ ...k, pieces: k.items.reduce((s, i) => s + (Number(i.qty) || 0), 0) }));
 }
 

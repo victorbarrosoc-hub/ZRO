@@ -60,7 +60,7 @@ export function EditLeadButton({ defaults }: { defaults: LeadDefaults }) {
       action={updateLead}
       size="lg"
       trigger={
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" className="h-10 sm:h-8">
           <Pencil /> Editar
         </Button>
       }
@@ -77,7 +77,7 @@ export function EditLeadControlButton({ defaults }: { defaults: LeadDefaults }) 
       description="Valor estimado, data para retornar e observações internas."
       action={updateLeadControl}
       trigger={
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="h-10 sm:h-8">
           <Pencil /> Editar
         </Button>
       }
@@ -96,7 +96,7 @@ export function DeleteLeadButton({ id, name }: { id: string; name: string }) {
       action={deleteLead}
       fields={{ id }}
       trigger={
-        <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10 hover:text-danger">
+        <Button variant="ghost" size="sm" className="h-10 text-danger hover:bg-danger/10 hover:text-danger sm:h-8">
           <Trash2 /> Excluir
         </Button>
       }
@@ -123,7 +123,7 @@ export function ConvertLeadButton({
       action={convertLeadToClient}
       submitLabel="Confirmar"
       trigger={
-        <Button variant={prominent ? "primary" : "secondary"} size="sm">
+        <Button variant={prominent ? "primary" : "secondary"} size="sm" className="h-10 sm:h-8">
           <UserPlus /> Converter em cliente
         </Button>
       }
@@ -134,7 +134,11 @@ export function ConvertLeadButton({
           <Field
             label="Cliente"
             htmlFor="cv-client"
-            hint={suggestedClientId ? "Já existe um cliente com esse nome. Ligue a ele para não duplicar." : "Ou escolha um cliente que já está cadastrado."}
+            hint={
+              suggestedClientId
+                ? "Já existe um cliente com esse nome. Ligue a ele para não duplicar."
+                : "Ou escolha um cliente que já está cadastrado."
+            }
             error={fieldError(state, "clientId")}
           >
             <Select id="cv-client" name="clientId" defaultValue={suggestedClientId ?? ""}>
@@ -266,7 +270,11 @@ export function LeadStageControl({
       {current === "perdido" && lostReason ? (
         <p className="text-[14px] text-ash">
           <span className="text-mute">Motivo:</span> {lostReason}{" "}
-          <button type="button" onClick={() => setLostOpen(true)} className="ml-1 text-[13px] text-mute underline decoration-white/20 underline-offset-4 hover:text-light">
+          <button
+            type="button"
+            onClick={() => setLostOpen(true)}
+            className="ml-1 text-[13px] text-mute underline decoration-white/20 underline-offset-4 hover:text-light"
+          >
             alterar
           </button>
         </p>
@@ -302,7 +310,7 @@ export function ActivityForm({ leadId, clientId }: { leadId?: string; clientId?:
             />
           </Field>
           <div className="flex justify-end">
-            <SubmitButton size="sm" pendingLabel="Registrando…">
+            <SubmitButton size="sm" pendingLabel="Registrando…" className="h-10 sm:h-8">
               Registrar
             </SubmitButton>
           </div>
@@ -361,7 +369,7 @@ export function EditClientButton({ defaults }: { defaults: ClientDefaults }) {
       action={updateClient}
       size="lg"
       trigger={
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" className="h-10 sm:h-8">
           <Pencil /> Editar
         </Button>
       }
@@ -380,7 +388,7 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
       action={deleteClient}
       fields={{ id }}
       trigger={
-        <Button variant="ghost" size="sm" className="text-danger hover:bg-danger/10 hover:text-danger">
+        <Button variant="ghost" size="sm" className="h-10 text-danger hover:bg-danger/10 hover:text-danger sm:h-8">
           <Trash2 /> Excluir
         </Button>
       }

@@ -1,0 +1,15 @@
+/**
+ * Desenho do logo para o PDF: os mesmos caminhos de src/components/brand/logo.tsx.
+ * Se o logo mudar lá, mude aqui também.
+ */
+export const LOGO_VIEWBOX = { width: 914, height: 327 };
+
+export const LOGO_PATHS = [
+  "M9 1H275V9L109 269H275V326H0V318L165 58H9Z",
+  "M307 1H422C497 1 540 38 540 100C540 150 510 183 457 193L554 326H473L388 199H375V326H307ZM375 60H414C450 60 471 75 471 100C471 125 450 141 414 141H375Z",
+  "M607 0H894A20 20 0 0 1 914 20V307A20 20 0 0 1 894 327H607A20 20 0 0 1 587 307V20A20 20 0 0 1 607 0ZM750.5 42A121.5 121.5 0 1 0 750.5 285A121.5 121.5 0 1 0 750.5 42Z",
+];
+
+/** O símbolo "O" sozinho (quadrado arredondado com o círculo vazado). */
+export const SYMBOL_PATH =
+  "M20 0H307A20 20 0 0 1 327 20V307A20 20 0 0 1 307 327H20A20 20 0 0 1 0 307V20A20 20 0 0 1 20 0ZM163.5 42A121.5 121.5 0 1 0 163.5 285A121.5 121.5 0 1 0 163.5 42Z";

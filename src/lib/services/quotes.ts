@@ -141,7 +141,37 @@ export function quantityLabel(quantity: number) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(quantity);
 }
 
+/* ------------------------------ Timbrado ------------------------------ */
+
+/** Assinatura oficial (documento-mestre §03). Usar exatamente assim. */
+export const BRAND_SIGNATURE = "Onde tudo começa e o comum termina.";
+
+/** Fecho da proposta, igual no timbrado e no PDF. */
+export const QUOTE_CLOSING =
+  "Para aprovar, é só responder a esta proposta. Daí em diante, começamos pela origem: a ideia, o briefing e a intenção.";
+
+/** Rodapé do timbrado: razão social e CNPJ, endereço, contatos. */
+export function companyLines(c: {
+  legalName: string;
+  cnpj: string;
+  address: string;
+  email: string;
+  phone?: string;
+  instagram: string;
+  website?: string;
+}) {
+  const join = (parts: (string | null | undefined)[]) => parts.map((p) => p?.trim()).filter(Boolean).join(" · ");
+  return [
+    join([c.legalName, c.cnpj ? `CNPJ ${c.cnpj}` : null]),
+    join([c.address]),
+    join([c.email, c.phone, c.instagram ? `@${c.instagram.replace(/^@/, "")}` : null, c.website]),
+  ].filter(Boolean);
+}
+
 /* ------------------------------ Lead → orçamento ------------------------------ */
+
+/** Valor do seletor de cliente que pede um cadastro novo, só com o nome. */
+export const NEW_CLIENT_VALUE = "__novo__";
 
 /** Tipo de projeto do funil → categoria do orçamento. */
 export function categoryFromProjectType(projectType: string | null | undefined): CategoryKey {

@@ -1,9 +1,10 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, like, ne, notInArray } from "drizzle-orm";
+import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 import { getSetting } from "@/lib/settings";
-import { effectiveQuoteStatus, quoteTotals, type QuoteTotals } from "@/lib/services/quotes";
+import { effectiveQuoteStatus, lineTotal, quoteTotals, type QuoteTotals } from "@/lib/services/quotes";
 
 const { quotes, quoteItems, clients, leads, projects, catalogItems, financeEntries } = schema;
 
@@ -149,7 +150,7 @@ export function summarizeQuotes(rows: QuoteListRow[], today = todayISO()) {
 
 /* ------------------------------ Detalhe (editor) ------------------------------ */
 
-export async function getQuote(id: string) {
+export const getQuote = cache(async (id: string) => {
   const quote = await db.query.quotes.findFirst({ where: eq(quotes.id, id) });
   if (!quote) return null;
   const [items, client, lead, project, versions, entries] = await Promise.all([
@@ -170,7 +171,7 @@ export async function getQuote(id: string) {
     db.select().from(financeEntries).where(eq(financeEntries.quoteId, id)).orderBy(asc(financeEntries.dueDate)),
   ]);
   return { quote, items, client: client ?? null, lead: lead ?? null, project: project ?? null, versions, entries };
-}
+});
 
 export type QuoteDetail = NonNullable<Awaited<ReturnType<typeof getQuote>>>;
 
@@ -273,7 +274,7 @@ export type QuoteDocumentData = {
 };
 
 /** Dados do timbrado (HTML e PDF). Custos e margem ficam de fora aqui, de propósito. */
-export async function getQuoteDocument(id: string): Promise<QuoteDocumentData | null> {
+export const getQuoteDocument = cache(async (id: string): Promise<QuoteDocumentData | null> => {
   const quote = await db.query.quotes.findFirst({ where: eq(quotes.id, id) });
   if (!quote) return null;
   const [items, client, lead, company] = await Promise.all([
@@ -306,7 +307,7 @@ export async function getQuoteDocument(id: string): Promise<QuoteDocumentData | 
       quantity: i.quantity,
       unit: i.unit,
       unitPrice: i.unitPrice,
-      total: Math.round(i.quantity * i.unitPrice),
+      total: lineTotal(i),
     })),
     subtotal: totals.subtotal,
     discount: totals.discount,
@@ -322,4 +323,4 @@ export async function getQuoteDocument(id: string): Promise<QuoteDocumentData | 
       website: company.website,
     },
   };
-}
+});

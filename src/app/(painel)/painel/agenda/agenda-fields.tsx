@@ -103,7 +103,7 @@ export function EventFields({
         </div>
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 [&>div]:content-start">
         <Field label="Título" htmlFor="ev-title" error={fieldError(state, "title")} className="sm:col-span-2">
           <Input
             id="ev-title"

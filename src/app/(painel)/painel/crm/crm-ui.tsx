@@ -42,15 +42,13 @@ const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>
 
 export function ActivityTimeline({ items, showLead }: { items: ActivityRow[]; showLead?: boolean }) {
   return (
-    <ol className="grid">
+    <ol className="grid grid-cols-1">
       {items.map((a, i) => {
         const Icon = ACTIVITY_ICONS[a.type] ?? StickyNote;
         const system = a.type === STAGE_ACTIVITY;
         return (
           <li key={a.id} className="relative flex gap-4 pb-6 last:pb-0">
-            {i < items.length - 1 ? (
-              <span aria-hidden className="absolute top-11 bottom-1 left-[19px] w-px bg-line" />
-            ) : null}
+            {i < items.length - 1 ? <span aria-hidden className="absolute top-11 bottom-1 left-[19px] w-px bg-line" /> : null}
             <span
               className={cn(
                 "relative grid size-10 shrink-0 place-items-center rounded-full border bg-ink",
@@ -67,7 +65,12 @@ export function ActivityTimeline({ items, showLead }: { items: ActivityRow[]; sh
                 </p>
                 <DeleteActivityButton id={a.id} />
               </div>
-              <p className={cn("mt-1 text-[14px] leading-relaxed whitespace-pre-line", system ? "text-mute" : "text-ash")}>
+              <p
+                className={cn(
+                  "mt-1 text-[14px] leading-relaxed whitespace-pre-line wrap-anywhere",
+                  system ? "text-mute" : "text-ash",
+                )}
+              >
                 {a.content}
               </p>
               {showLead && a.leadId ? (
@@ -90,7 +93,7 @@ export function ActivityTimeline({ items, showLead }: { items: ActivityRow[]; sh
 
 export function QuoteList({ quotes }: { quotes: QuoteRow[] }) {
   return (
-    <ul className="grid gap-0.5">
+    <ul className="grid grid-cols-1 gap-0.5">
       {quotes.map((q) => (
         <li key={q.id}>
           <Link
@@ -98,7 +101,7 @@ export function QuoteList({ quotes }: { quotes: QuoteRow[] }) {
             className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
           >
             <span className="min-w-0">
-              <span className="block truncate text-[14px] text-light">{q.title}</span>
+              <span className="line-clamp-2 block text-[14px] leading-snug text-light">{q.title}</span>
               <span className="font-mono text-[11px] text-mute">
                 {q.number}
                 {q.version > 1 ? ` v${q.version}` : ""} · {dateShort(q.issueDate)}
@@ -117,7 +120,7 @@ export function QuoteList({ quotes }: { quotes: QuoteRow[] }) {
 
 export function ProjectList({ projects }: { projects: ProjectRow[] }) {
   return (
-    <ul className="grid gap-0.5">
+    <ul className="grid grid-cols-1 gap-0.5">
       {projects.map((p) => (
         <li key={p.id}>
           <Link
@@ -125,7 +128,7 @@ export function ProjectList({ projects }: { projects: ProjectRow[] }) {
             className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
           >
             <span className="min-w-0">
-              <span className="block truncate text-[14px] text-light">{p.title}</span>
+              <span className="line-clamp-2 block text-[14px] leading-snug text-light">{p.title}</span>
               <span className="font-mono text-[11px] text-mute">{p.code}</span>
             </span>
             <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">

@@ -10,10 +10,7 @@ const { leads, clients, activities, users, quotes, quoteItems, projects, finance
 
 /** Minúsculas e sem acento, para a busca achar "clinica" em "Clínica". */
 function normalize(s: string | null | undefined) {
-  return (s ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+  return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
 /** Todas as palavras da busca aparecem em algum campo (telefone também só pelos dígitos). */
@@ -60,8 +57,7 @@ export type LeadRow = Awaited<ReturnType<typeof listLeads>>[number];
 export function filterLeads(rows: LeadRow[], filters: { q?: string; origem?: string }) {
   return rows.filter(
     (l) =>
-      (!filters.origem || l.source === filters.origem) &&
-      matches(filters.q, [l.name, l.company, l.email, l.phone, l.clientName]),
+      (!filters.origem || l.source === filters.origem) && matches(filters.q, [l.name, l.company, l.email, l.phone, l.clientName]),
   );
 }
 
@@ -108,9 +104,7 @@ export async function listClients() {
 export type ClientRow = Awaited<ReturnType<typeof listClients>>[number];
 
 export function filterClients(rows: ClientRow[], q?: string) {
-  return rows.filter((c) =>
-    matches(q, [c.name, c.segment, c.city, c.contactName, c.email, c.phone, c.document, c.instagram]),
-  );
+  return rows.filter((c) => matches(q, [c.name, c.segment, c.city, c.contactName, c.email, c.phone, c.document, c.instagram]));
 }
 
 /** Para escolher um cliente existente (ex.: ligar um lead). */
@@ -219,9 +213,14 @@ async function quotesWhere(where: SQL | undefined) {
     .orderBy(desc(quotes.issueDate), desc(quotes.number), desc(quotes.version));
   if (!rows.length) return [];
   const totals = await db
-    .select({ quoteId: quoteItems.quoteId, total: sql<number>`sum(${quoteItems.quantity} * ${quoteItems.unitPrice})` })
+    .select({ quoteId: quoteItems.quoteId, total: sql<number>`sum(round(${quoteItems.quantity} * ${quoteItems.unitPrice}))` })
     .from(quoteItems)
-    .where(inArray(quoteItems.quoteId, rows.map((r) => r.id)))
+    .where(
+      inArray(
+        quoteItems.quoteId,
+        rows.map((r) => r.id),
+      ),
+    )
     .groupBy(quoteItems.quoteId);
   return rows.map((r) => {
     const items = Math.round(Number(totals.find((t) => t.quoteId === r.id)?.total ?? 0));

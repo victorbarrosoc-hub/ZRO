@@ -35,16 +35,22 @@ export function useQuickAction(action: ServerAction) {
   return { pending, run };
 }
 
+/**
+ * Botão redondo só com ícone. `tip={false}` quando for gatilho de janela
+ * (ConfirmAction/FormModal), porque o gatilho precisa receber as props direto.
+ */
 export function IconButton({
   label,
+  tip = true,
   className,
   children,
   ...props
-}: React.ComponentProps<"button"> & { label: string }) {
+}: React.ComponentProps<"button"> & { label: string; tip?: boolean }) {
   const button = (
     <button
       type="button"
       aria-label={label}
+      title={tip ? undefined : label}
       className={cn(
         "grid size-10 shrink-0 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.06] hover:text-light focus-visible:outline-2 focus-visible:outline-white disabled:pointer-events-none disabled:opacity-25 sm:size-9 [&_svg]:size-4",
         className,
@@ -54,7 +60,7 @@ export function IconButton({
       {children}
     </button>
   );
-  if (props.disabled) return button;
+  if (!tip || props.disabled) return button;
   return <Tip content={label}>{button}</Tip>;
 }
 

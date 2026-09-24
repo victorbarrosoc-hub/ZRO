@@ -1,5 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { STAGES } from "@/lib/domain";
 import { getSetting } from "@/lib/settings";
@@ -140,7 +141,8 @@ export async function countProjectsByFilter(): Promise<Record<ProjectStatusFilte
 
 /* ============================== Detalhe ============================== */
 
-export async function getProject(id: string) {
+/** Projeto completo para a ficha. Em cache por requisição (metadata e página usam o mesmo). */
+export const getProject = cache(async (id: string) => {
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, id),
     with: { client: { columns: { id: true, name: true } } },
@@ -200,7 +202,7 @@ export async function getProject(id: string) {
     crew: crew.map((c) => ({ ...c, displayName: c.freelancerName ?? c.name ?? "Sem nome" })),
     entries,
   };
-}
+});
 
 export type ProjectDetail = NonNullable<Awaited<ReturnType<typeof getProject>>>;
 export type ProjectCrewMember = ProjectDetail["crew"][number];
