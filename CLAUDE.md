@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # ZRO: contexto do projeto
 
 Este repositório vai virar **o site da ZRO e a plataforma interna da produtora**.
