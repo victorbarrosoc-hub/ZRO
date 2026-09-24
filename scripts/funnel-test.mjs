@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-const out = process.argv[2];
+const out = process.argv[2] ?? (await import("node:os")).tmpdir();
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 const errors = [];
