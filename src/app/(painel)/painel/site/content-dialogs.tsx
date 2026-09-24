@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- prévia do painel, sem otimizador */
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { ConfirmAction, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
@@ -25,7 +25,7 @@ import {
   updateShowcaseClient,
   updateTeamMember,
 } from "./actions";
-import { IconButton, OrderButtons, ToggleSwitch, type ServerAction } from "./_components/list-controls";
+import { ConfirmQuick, IconButton, OrderButtons, ToggleSwitch, type ServerAction } from "./_components/list-controls";
 import { StableFormModal } from "./_components/stable-form";
 import { imageSrcProblem, normalizeImageUrl, type ImagePolicy } from "./_lib/image-policy";
 
@@ -54,7 +54,7 @@ function DeleteButton({
   label: string;
 }) {
   return (
-    <ConfirmAction
+    <ConfirmQuick
       title={title}
       description={description}
       confirmLabel="Excluir"

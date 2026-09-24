@@ -6,7 +6,7 @@ import { ActionForm, ConfirmAction, SubmitButton, fieldError } from "@/component
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
-import { IconButton } from "../site/_components/list-controls";
+import { ConfirmQuick, IconButton } from "../site/_components/list-controls";
 import { StableFormModal } from "../site/_components/stable-form";
 import { createKit, deleteKit, deleteTemplate, duplicateTemplate, updateKit } from "./actions";
 
@@ -208,7 +208,7 @@ export function KitActions({ kit }: { kit: Required<Pick<KitDefaults, "id" | "na
       >
         {(state) => <KitFields state={state} defaults={kit} />}
       </StableFormModal>
-      <ConfirmAction
+      <ConfirmQuick
         title={`Excluir o kit “${kit.name}”?`}
         description="Checklists que já foram montados nos projetos continuam como estão."
         confirmLabel="Excluir kit"

@@ -17,13 +17,17 @@ export type BeforeAction = () => Promise<boolean>;
 
 function useRunner(before?: BeforeAction) {
   const [pending, start] = useTransition();
-  function run(task: () => Promise<ActionResult | undefined | void>, onOk?: (r: Extract<ActionResult, { ok: true }>) => void) {
+  function run(
+    task: () => Promise<ActionResult | undefined | void>,
+    onOk?: (r: Extract<ActionResult, { ok: true }>) => void,
+    opts: { silent?: boolean } = {},
+  ) {
     start(async () => {
       if (before && !(await before())) return;
       const result = await task();
       if (!result) return; // redirecionou
       if (result.ok) {
-        if (result.message) toast.success(result.message);
+        if (result.message && !opts.silent) toast.success(result.message);
         onOk?.(result);
       } else {
         toast.error(result.error);
@@ -146,9 +150,11 @@ export function ApproveDialog({
     const fd = new FormData();
     fd.set("id", quoteId);
     fd.set("installments", JSON.stringify(rows.map((r, i) => ({ amount: cents[i], dueDate: r.dueDate }))));
+    // A própria janela mostra o resultado (com o link do projeto): sem toast repetido.
     run(
       () => approveQuote(null, fd),
       (r) => setDone({ projectId: r.id, message: r.message }),
+      { silent: true },
     );
   }
 

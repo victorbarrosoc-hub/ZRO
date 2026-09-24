@@ -249,6 +249,7 @@ export async function launchDas(_prev: ActionResult | null, fd: FormData): Promi
   if ((await dasEntriesFor(month)).length) return fail(`O DAS de ${monthLong(month)} já foi lançado.`);
   const [revenue, taxes] = await Promise.all([revenueInMonth(month), getSetting("taxes")]);
   const rate = Number(taxes.rate) || 0;
+  if (rate <= 0) return fail("Defina a alíquota efetiva em Ajustes antes de lançar o DAS.");
   const amount = Math.round((revenue * rate) / 100);
   if (amount <= 0) return fail(`Não há receita recebida em ${monthLong(month)} para calcular o DAS.`);
   const dueDate = dasDueDate(month);

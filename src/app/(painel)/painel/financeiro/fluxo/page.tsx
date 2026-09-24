@@ -46,8 +46,10 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
   const name = monthLong(mes);
   const past = mes < current;
 
-  const [flow, results, toPay, paid] = await Promise.all([
+  const [flow, flowShort, results, toPay, paid] = await Promise.all([
     getCashFlow(-5, 6, `${mes}-15`),
+    // No celular, 12 meses não cabem: a mesma janela do painel (2 para trás, 3 para frente).
+    getCashFlow(-2, 3, `${mes}-15`),
     projectResults(),
     freelasToPay(today),
     paidToFreelas(mes),
@@ -108,9 +110,18 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
       <Card className="min-w-0">
         <CardHeader
           title="Fluxo de caixa"
-          description="Entradas acima da linha, saídas e impostos abaixo. Cinco meses para trás e seis para frente."
+          description={
+            <>
+              Entradas acima da linha, saídas e impostos abaixo.{" "}
+              <span className="sm:hidden">Dois meses para trás e três para frente.</span>
+              <span className="hidden sm:inline">Cinco meses para trás e seis para frente.</span>
+            </>
+          }
         />
-        <div className="px-3 pt-5 pb-4 sm:px-6">
+        <div className="px-3 pt-5 pb-4 sm:hidden">
+          <CashflowChart months={flowShort.months} current={mes} />
+        </div>
+        <div className="hidden px-6 pt-5 pb-4 sm:block">
           <CashflowChart months={flow.months} current={mes} />
         </div>
       </Card>
@@ -165,20 +176,21 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
                     {g.entries.map((e) => (
                       <li
                         key={e.id}
-                        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl border border-line px-4 py-3"
+                        className="grid gap-3 rounded-2xl border border-line px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4"
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0">
                           <p className="text-[14px] text-light">{withoutName(e.description, g.name)}</p>
                           <p className="mt-0.5 text-[12px] text-mute">
                             {e.projectCode ? `${e.projectCode} · ` : ""}vence {dateBR(e.dueDate)}
                             {e.paidAmount > 0 ? ` · ${brl(e.paidAmount)} de ${brl(e.amount)} já pago` : ""}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex shrink-0 items-center gap-3">
                           <EntryStatusBadge status={e.status} />
-                          <span className="text-[14px] text-white tabular-nums">{brl(e.open)}</span>
+                          <span className="ml-auto text-[14px] text-white tabular-nums sm:ml-0">{brl(e.open)}</span>
                           <PayEntryButton
                             entry={{ id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount }}
+                            className="h-10 sm:h-8"
                           />
                         </div>
                       </li>

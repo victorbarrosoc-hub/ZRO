@@ -263,7 +263,7 @@ function PaymentsDialog({
         ) : (
           <p className="rounded-2xl border border-line px-4 py-6 text-center text-[14px] text-mute">Nenhuma baixa registrada ainda.</p>
         )}
-        <div className="mt-5 flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-5 flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-mute">{remaining > 0 ? `Falta ${brl(remaining)}` : "Quitado"}</p>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>

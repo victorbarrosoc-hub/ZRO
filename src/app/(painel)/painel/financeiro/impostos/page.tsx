@@ -230,18 +230,24 @@ export default async function ImpostosPage({ searchParams }: PageProps<"/painel/
             <CardHeader title="Outros impostos em aberto" description="ISS e demais impostos lançados, de qualquer mês." />
             <ul className="mt-3 border-t border-line">
               {overview.others.map((e) => (
-                <li key={e.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-3.5 last:border-b-0 sm:px-6">
-                  <div className="min-w-0 flex-1">
+                <li
+                  key={e.id}
+                  className="grid gap-3 border-b border-line px-5 py-3.5 last:border-b-0 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-6"
+                >
+                  <div className="min-w-0">
                     <p className="text-[14px] text-light">{e.description}</p>
                     <p className="mt-0.5 text-[12px] text-mute">
                       {FINANCE_CATEGORIES.find((c) => c.key === e.category)?.label ?? e.category}
                       {e.competence && isMonthKey(e.competence) ? ` · competência ${monthLong(e.competence)}` : ""} · vence {dateBR(e.dueDate)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-3">
                     <EntryStatusBadge status={e.status} />
-                    <span className="text-[14px] text-white tabular-nums">{brl(e.open)}</span>
-                    <PayEntryButton entry={{ id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount }} />
+                    <span className="ml-auto text-[14px] text-white tabular-nums sm:ml-0">{brl(e.open)}</span>
+                    <PayEntryButton
+                      entry={{ id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount }}
+                      className="h-10 sm:h-8"
+                    />
                   </div>
                 </li>
               ))}

@@ -1,13 +1,13 @@
 "use client";
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { ConfirmAction, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
 import { centsToInput } from "@/lib/format";
-import { IconButton, OrderButtons, ToggleSwitch } from "../site/_components/list-controls";
+import { ConfirmQuick, IconButton, OrderButtons, ToggleSwitch } from "../site/_components/list-controls";
 import { StableFormModal } from "../site/_components/stable-form";
 import {
   createCatalogItem,
@@ -140,7 +140,7 @@ export function CatalogRowActions({
       <StableFormModal title="Editar item" action={updateCatalogItem} trigger={<PencilTrigger label={`Editar ${item.name}`} />}>
         {(state) => <CatalogFields state={state} defaults={item} />}
       </StableFormModal>
-      <ConfirmAction
+      <ConfirmQuick
         title={`Excluir “${item.name}”?`}
         description={
           quotes

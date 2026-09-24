@@ -306,6 +306,7 @@ export function ActivityForm({ leadId, clientId }: { leadId?: string; clientId?:
               name="content"
               rows={3}
               aria-label="O que aconteceu"
+              maxLength={4000}
               placeholder="O que foi conversado e qual é o próximo passo?"
             />
           </Field>

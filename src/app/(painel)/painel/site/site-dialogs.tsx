@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tip } from "@/components/ui/overlay";
 import { cn } from "@/lib/utils";
 import { deleteFilm, moveFilm, toggleFilmFeatured, toggleFilmPublished } from "./actions";
-import { IconButton, OrderButtons, ToggleSwitch, useQuickAction } from "./_components/list-controls";
+import { ConfirmQuick, IconButton, OrderButtons, ToggleSwitch, useQuickAction } from "./_components/list-controls";
 
 type RowFilm = { id: string; title: string; slug: string; published: boolean; featured: boolean };
 
@@ -71,15 +71,17 @@ export function DeleteFilmButton({
   compact?: boolean;
   fromEditor?: boolean;
 }) {
-  const manifesto = slug === "manifesto";
+  const description =
+    slug === "manifesto"
+      ? "Este é o filme do manifesto: a seção do manifesto na página inicial fica sem vídeo. Não dá para desfazer."
+      : "O filme sai do site na hora e a página dele deixa de existir. Não dá para desfazer.";
+  // Na lista, a linha some ao excluir: o aviso sai pelo ConfirmQuick.
+  // No editor, a action manda de volta para a lista.
+  const Confirm = fromEditor ? ConfirmAction : ConfirmQuick;
   return (
-    <ConfirmAction
+    <Confirm
       title={`Excluir “${title}”?`}
-      description={
-        manifesto
-          ? "Este é o filme do manifesto: a seção do manifesto na página inicial fica sem vídeo. Não dá para desfazer."
-          : "O filme sai do site na hora e a página dele deixa de existir. Não dá para desfazer."
-      }
+      description={description}
       confirmLabel="Excluir filme"
       action={deleteFilm}
       fields={fromEditor ? { id, from: "editor" } : { id }}

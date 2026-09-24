@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormSection, fieldError } from "@/components/painel/form";
 import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
@@ -18,6 +18,31 @@ import { cn } from "@/lib/utils";
 import { LOST_REASONS } from "./crm-options";
 
 type Option = { key: string; label: string };
+
+/* ---------------- O que foi digitado não se perde ---------------- */
+
+/**
+ * O React 19 limpa o formulário quando a action termina, mesmo se ela devolveu
+ * erro de validação. Guardamos o que foi enviado e remontamos os campos com
+ * esses valores como padrão: a limpeza passa a voltar para o que a pessoa digitou.
+ */
+function useKeptValues() {
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const [kept, setKept] = useState<{ n: number; data: FormData } | null>(null);
+  useEffect(() => {
+    const form = anchorRef.current?.closest("form");
+    if (!form) return;
+    const onSubmit = () => setKept((k) => ({ n: (k?.n ?? 0) + 1, data: new FormData(form) }));
+    form.addEventListener("submit", onSubmit);
+    return () => form.removeEventListener("submit", onSubmit);
+  }, []);
+  return { anchor: <span ref={anchorRef} hidden />, key: kept?.n ?? 0, data: kept?.data ?? null };
+}
+
+/** Lê um campo do que foi enviado (ou cai no valor padrão). */
+function reader(data: FormData | null) {
+  return (name: string, fallback: string | null | undefined) => (data ? String(data.get(name) ?? "") : (fallback ?? ""));
+}
 
 /* ---------------- Peças ---------------- */
 
@@ -88,15 +113,7 @@ function OptionSelect({
 }
 
 /** Data de retorno com atalhos (amanhã, 3 dias, 1 semana). */
-export function FollowUpInput({
-  id,
-  name = "followUpAt",
-  defaultValue,
-}: {
-  id: string;
-  name?: string;
-  defaultValue?: string | null;
-}) {
+export function FollowUpInput({ id, name = "followUpAt", defaultValue }: { id: string; name?: string; defaultValue?: string | null }) {
   const [value, setValue] = useState(defaultValue ?? "");
   const today = todayISO();
   const shortcuts = [
@@ -115,9 +132,7 @@ export function FollowUpInput({
             onClick={() => setValue(s.value)}
             className={cn(
               "inline-flex h-8 items-center rounded-full border px-3 text-[12px] transition-colors",
-              value === s.value
-                ? "border-white bg-white text-void"
-                : "border-line-strong text-ash hover:border-white/30 hover:text-light",
+              value === s.value ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
             )}
           >
             {s.label}
@@ -161,6 +176,17 @@ export type LeadDefaults = {
   notes?: string | null;
 };
 
+type ControlValues = { estimatedValue: string; followUpAt: string; notes: string };
+
+function controlValues(d: LeadDefaults, data: FormData | null): ControlValues {
+  const get = reader(data);
+  return {
+    estimatedValue: get("estimatedValue", centsToInput(d.estimatedValue)),
+    followUpAt: get("followUpAt", d.followUpAt),
+    notes: get("notes", d.notes),
+  };
+}
+
 /**
  * Campos do lead. "create" é o cadastro manual (curto); "edit" traz também
  * as respostas do funil, para completar o que o cliente contou.
@@ -174,123 +200,121 @@ export function LeadFields({
   defaults?: LeadDefaults;
   mode: "create" | "edit";
 }) {
+  const kept = useKeptValues();
+  const get = reader(kept.data);
   const err = (name: string) => fieldError(state, name);
+  const d = defaults;
+  const extras = kept.data ? kept.data.getAll("extras").map(String) : (d.extras ?? []);
+
   return (
     <>
-      {defaults.id ? <input type="hidden" name="id" value={defaults.id} /> : null}
+      {kept.anchor}
+      {d.id ? <input type="hidden" name="id" value={d.id} /> : null}
+      <div key={kept.key} className="grid gap-5">
+        <FormSection title="Contato">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nome" htmlFor="l-name" error={err("name")}>
+              <Input
+                id="l-name"
+                name="name"
+                defaultValue={get("name", d.name)}
+                autoFocus={mode === "create" && kept.key === 0}
+                autoComplete="off"
+              />
+            </Field>
+            <Field label="Empresa" htmlFor="l-company" error={err("company")}>
+              <Input id="l-company" name="company" defaultValue={get("company", d.company)} autoComplete="off" />
+            </Field>
+            <Field label="WhatsApp" htmlFor="l-phone" error={err("phone")}>
+              <Input id="l-phone" name="phone" inputMode="tel" defaultValue={get("phone", d.phone)} placeholder="(84) 90000-0000" />
+            </Field>
+            <Field label="E-mail" htmlFor="l-email" error={err("email")}>
+              <Input id="l-email" name="email" type="email" defaultValue={get("email", d.email)} />
+            </Field>
+            <Field label="Segmento" htmlFor="l-segment" error={err("segment")}>
+              <Input id="l-segment" name="segment" defaultValue={get("segment", d.segment)} placeholder="Ex.: hotelaria, saúde, moda" />
+            </Field>
+            <Field label="Como chegou" htmlFor="l-source" error={err("source")}>
+              <OptionSelect
+                id="l-source"
+                name="source"
+                options={LEAD_SOURCES}
+                defaultValue={get("source", d.source ?? "whatsapp")}
+                emptyLabel={null}
+              />
+            </Field>
+          </div>
+        </FormSection>
 
-      <FormSection title="Contato">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nome" htmlFor="l-name" error={err("name")}>
-            <Input id="l-name" name="name" defaultValue={defaults.name} autoFocus={mode === "create"} autoComplete="off" />
-          </Field>
-          <Field label="Empresa" htmlFor="l-company" error={err("company")}>
-            <Input id="l-company" name="company" defaultValue={defaults.company ?? ""} autoComplete="off" />
-          </Field>
-          <Field label="WhatsApp" htmlFor="l-phone" error={err("phone")}>
-            <Input id="l-phone" name="phone" inputMode="tel" defaultValue={defaults.phone ?? ""} placeholder="(84) 90000-0000" />
-          </Field>
-          <Field label="E-mail" htmlFor="l-email" error={err("email")}>
-            <Input id="l-email" name="email" type="email" defaultValue={defaults.email ?? ""} />
-          </Field>
-          <Field label="Segmento" htmlFor="l-segment" error={err("segment")}>
-            <Input
-              id="l-segment"
-              name="segment"
-              defaultValue={defaults.segment ?? ""}
-              placeholder="Ex.: hotelaria, saúde, moda"
-            />
-          </Field>
-          <Field label="Como chegou" htmlFor="l-source" error={err("source")}>
-            <OptionSelect
-              id="l-source"
-              name="source"
-              options={LEAD_SOURCES}
-              defaultValue={defaults.source ?? "whatsapp"}
-              emptyLabel={null}
-            />
-          </Field>
-        </div>
-      </FormSection>
-
-      <FormSection title={mode === "create" ? "Pedido" : "O que o cliente contou"}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tipo de projeto" htmlFor="l-type" error={err("projectType")}>
-            <OptionSelect id="l-type" name="projectType" options={FUNNEL_PROJECT_TYPES} defaultValue={defaults.projectType} />
-          </Field>
-          <Field label="Investimento" htmlFor="l-budget" error={err("budget")}>
-            <OptionSelect id="l-budget" name="budget" options={FUNNEL_BUDGETS} defaultValue={defaults.budget} />
-          </Field>
+        <FormSection title={mode === "create" ? "Pedido" : "O que o cliente contou"}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Tipo de projeto" htmlFor="l-type" error={err("projectType")}>
+              <OptionSelect id="l-type" name="projectType" options={FUNNEL_PROJECT_TYPES} defaultValue={get("projectType", d.projectType)} />
+            </Field>
+            <Field label="Investimento" htmlFor="l-budget" error={err("budget")}>
+              <OptionSelect id="l-budget" name="budget" options={FUNNEL_BUDGETS} defaultValue={get("budget", d.budget)} />
+            </Field>
+            {mode === "edit" ? (
+              <>
+                <Field label="A ideia" htmlFor="l-idea" error={err("idea")} className="sm:col-span-2">
+                  <Textarea id="l-idea" name="idea" rows={3} defaultValue={get("idea", d.idea)} />
+                </Field>
+                <Field label="Quando" htmlFor="l-timing" error={err("timing")}>
+                  <Input id="l-timing" name="timing" defaultValue={get("timing", d.timing)} placeholder="Ex.: novembro/2026" />
+                </Field>
+                <Field label="Onde" htmlFor="l-city" error={err("city")}>
+                  <Input id="l-city" name="city" defaultValue={get("city", d.city)} placeholder="Ex.: Natal/RN" />
+                </Field>
+                <Field label="Diárias" htmlFor="l-days" error={err("days")}>
+                  <OptionSelect id="l-days" name="days" options={FUNNEL_DAYS} defaultValue={get("days", d.days)} />
+                </Field>
+                <Field label="Vídeos" htmlFor="l-videos" error={err("videos")}>
+                  <OptionSelect id="l-videos" name="videos" options={FUNNEL_VIDEOS} defaultValue={get("videos", d.videos)} />
+                </Field>
+                <Field label="Formato" htmlFor="l-format" error={err("format")} className="sm:col-span-2">
+                  <OptionSelect id="l-format" name="format" options={FUNNEL_FORMATS} defaultValue={get("format", d.format)} />
+                </Field>
+              </>
+            ) : null}
+          </div>
           {mode === "edit" ? (
-            <>
-              <Field label="A ideia" htmlFor="l-idea" error={err("idea")} className="sm:col-span-2">
-                <Textarea id="l-idea" name="idea" rows={3} defaultValue={defaults.idea ?? ""} />
-              </Field>
-              <Field label="Quando" htmlFor="l-timing" error={err("timing")}>
-                <Input id="l-timing" name="timing" defaultValue={defaults.timing ?? ""} placeholder="Ex.: novembro/2026" />
-              </Field>
-              <Field label="Onde" htmlFor="l-city" error={err("city")}>
-                <Input id="l-city" name="city" defaultValue={defaults.city ?? ""} placeholder="Ex.: Natal/RN" />
-              </Field>
-              <Field label="Diárias" htmlFor="l-days" error={err("days")}>
-                <OptionSelect id="l-days" name="days" options={FUNNEL_DAYS} defaultValue={defaults.days} />
-              </Field>
-              <Field label="Vídeos" htmlFor="l-videos" error={err("videos")}>
-                <OptionSelect id="l-videos" name="videos" options={FUNNEL_VIDEOS} defaultValue={defaults.videos} />
-              </Field>
-              <Field label="Formato" htmlFor="l-format" error={err("format")} className="sm:col-span-2">
-                <OptionSelect id="l-format" name="format" options={FUNNEL_FORMATS} defaultValue={defaults.format} />
-              </Field>
-            </>
+            <ChoiceChips type="checkbox" name="extras" legend="Extras" options={FUNNEL_EXTRAS} defaultValue={extras} error={err("extras")} />
           ) : null}
-        </div>
-        {mode === "edit" ? (
-          <ChoiceChips
-            type="checkbox"
-            name="extras"
-            legend="Extras"
-            options={FUNNEL_EXTRAS}
-            defaultValue={defaults.extras ?? []}
-            error={err("extras")}
-          />
-        ) : null}
-      </FormSection>
+        </FormSection>
 
-      <FormSection title="Controle">
-        <LeadControlInputs state={state} defaults={defaults} />
-      </FormSection>
+        <FormSection title="Controle">
+          <ControlInputs state={state} values={controlValues(d, kept.data)} />
+        </FormSection>
+      </div>
     </>
   );
 }
 
 /** Valor estimado, retorno e observações (usados no cadastro e no cartão "Controle"). */
-function LeadControlInputs({ state, defaults }: { state: ActionResult | null; defaults: LeadDefaults }) {
+function ControlInputs({ state, values }: { state: ActionResult | null; values: ControlValues }) {
   const err = (name: string) => fieldError(state, name);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field
-        label="Valor estimado"
-        htmlFor="l-value"
-        hint="Quanto você imagina que o projeto vale."
-        error={err("estimatedValue")}
-      >
-        <MoneyInput id="l-value" name="estimatedValue" defaultValue={centsToInput(defaults.estimatedValue)} placeholder="0,00" />
+      <Field label="Valor estimado" htmlFor="l-value" hint="Quanto você imagina que o projeto vale." error={err("estimatedValue")}>
+        <MoneyInput id="l-value" name="estimatedValue" defaultValue={values.estimatedValue} placeholder="0,00" />
       </Field>
       <Field label="Retornar em" htmlFor="l-follow" error={err("followUpAt")}>
-        <FollowUpInput id="l-follow" defaultValue={defaults.followUpAt} />
+        <FollowUpInput id="l-follow" defaultValue={values.followUpAt} />
       </Field>
       <Field label="Observações" htmlFor="l-notes" error={err("notes")} className="sm:col-span-2">
-        <Textarea id="l-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
+        <Textarea id="l-notes" name="notes" rows={3} defaultValue={values.notes} />
       </Field>
     </div>
   );
 }
 
 export function LeadControlFields({ state, defaults }: { state: ActionResult | null; defaults: LeadDefaults }) {
+  const kept = useKeptValues();
   return (
     <>
+      {kept.anchor}
       {defaults.id ? <input type="hidden" name="id" value={defaults.id} /> : null}
-      <LeadControlInputs state={state} defaults={defaults} />
+      <ControlInputs key={kept.key} state={state} values={controlValues(defaults, kept.data)} />
     </>
   );
 }
@@ -308,9 +332,7 @@ export function LostReasonField({ state, defaultValue }: { state: ActionResult |
             onClick={() => setValue(r)}
             className={cn(
               "inline-flex h-8 items-center rounded-full border px-3 text-[12px] transition-colors",
-              value === r
-                ? "border-white bg-white text-void"
-                : "border-line-strong text-ash hover:border-white/30 hover:text-light",
+              value === r ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
             )}
           >
             {r}
@@ -322,6 +344,7 @@ export function LostReasonField({ state, defaultValue }: { state: ActionResult |
           id="lost-reason"
           name="lostReason"
           rows={3}
+          maxLength={500}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="O que aconteceu? Ajuda a entender o funil depois."
@@ -348,62 +371,68 @@ export type ClientDefaults = {
 };
 
 export function ClientFields({ state, defaults = {} }: { state: ActionResult | null; defaults?: ClientDefaults }) {
+  const kept = useKeptValues();
+  const get = reader(kept.data);
   const err = (name: string) => fieldError(state, name);
+  const d = defaults;
   return (
     <>
-      {defaults.id ? <input type="hidden" name="id" value={defaults.id} /> : null}
-      <FormSection title="Empresa">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nome" htmlFor="c-name" error={err("name")} className="sm:col-span-2">
-            <Input id="c-name" name="name" defaultValue={defaults.name} autoFocus={!defaults.id} autoComplete="off" />
-          </Field>
-          <Field label="Segmento" htmlFor="c-segment" error={err("segment")}>
-            <Input id="c-segment" name="segment" defaultValue={defaults.segment ?? ""} placeholder="Ex.: hotelaria" />
-          </Field>
-          <Field label="Cidade" htmlFor="c-city" error={err("city")}>
-            <Input id="c-city" name="city" defaultValue={defaults.city ?? (defaults.id ? "" : "Natal/RN")} />
-          </Field>
-          <Field label="CNPJ ou CPF" htmlFor="c-doc" error={err("document")}>
-            <Input
-              id="c-doc"
-              name="document"
-              inputMode="numeric"
-              defaultValue={defaults.document ?? ""}
-              placeholder="Só números ou com pontuação"
-            />
-          </Field>
-          <Field label="Como chegou" htmlFor="c-source" error={err("source")}>
-            <OptionSelect
-              id="c-source"
-              name="source"
-              options={LEAD_SOURCES}
-              defaultValue={defaults.source ?? "indicacao"}
-              emptyLabel={null}
-            />
-          </Field>
-        </div>
-      </FormSection>
+      {kept.anchor}
+      {d.id ? <input type="hidden" name="id" value={d.id} /> : null}
+      <div key={kept.key} className="grid gap-5">
+        <FormSection title="Empresa">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nome" htmlFor="c-name" error={err("name")} className="sm:col-span-2">
+              <Input id="c-name" name="name" defaultValue={get("name", d.name)} autoFocus={!d.id && kept.key === 0} autoComplete="off" />
+            </Field>
+            <Field label="Segmento" htmlFor="c-segment" error={err("segment")}>
+              <Input id="c-segment" name="segment" defaultValue={get("segment", d.segment)} placeholder="Ex.: hotelaria" />
+            </Field>
+            <Field label="Cidade" htmlFor="c-city" error={err("city")}>
+              <Input id="c-city" name="city" defaultValue={get("city", d.id ? d.city : "Natal/RN")} />
+            </Field>
+            <Field label="CNPJ ou CPF" htmlFor="c-doc" error={err("document")}>
+              <Input
+                id="c-doc"
+                name="document"
+                inputMode="numeric"
+                defaultValue={get("document", d.document)}
+                placeholder="Só números ou com pontuação"
+              />
+            </Field>
+            <Field label="Como chegou" htmlFor="c-source" error={err("source")}>
+              <OptionSelect
+                id="c-source"
+                name="source"
+                options={LEAD_SOURCES}
+                defaultValue={get("source", d.source ?? "indicacao")}
+                emptyLabel={null}
+              />
+            </Field>
+          </div>
+        </FormSection>
 
-      <FormSection title="Contato">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Pessoa de contato" htmlFor="c-contact" error={err("contactName")}>
-            <Input id="c-contact" name="contactName" defaultValue={defaults.contactName ?? ""} autoComplete="off" />
-          </Field>
-          <Field label="WhatsApp" htmlFor="c-phone" error={err("phone")}>
-            <Input id="c-phone" name="phone" inputMode="tel" defaultValue={defaults.phone ?? ""} placeholder="(84) 90000-0000" />
-          </Field>
-          <Field label="E-mail" htmlFor="c-email" error={err("email")}>
-            <Input id="c-email" name="email" type="email" defaultValue={defaults.email ?? ""} />
-          </Field>
-          <Field label="Instagram" htmlFor="c-ig" error={err("instagram")}>
-            <Input id="c-ig" name="instagram" defaultValue={defaults.instagram ?? ""} placeholder="usuario" />
-          </Field>
-        </div>
-      </FormSection>
+        <FormSection title="Contato">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Pessoa de contato" htmlFor="c-contact" error={err("contactName")}>
+              <Input id="c-contact" name="contactName" defaultValue={get("contactName", d.contactName)} autoComplete="off" />
+            </Field>
+            <Field label="WhatsApp" htmlFor="c-phone" error={err("phone")}>
+              <Input id="c-phone" name="phone" inputMode="tel" defaultValue={get("phone", d.phone)} placeholder="(84) 90000-0000" />
+            </Field>
+            <Field label="E-mail" htmlFor="c-email" error={err("email")}>
+              <Input id="c-email" name="email" type="email" defaultValue={get("email", d.email)} />
+            </Field>
+            <Field label="Instagram" htmlFor="c-ig" error={err("instagram")}>
+              <Input id="c-ig" name="instagram" defaultValue={get("instagram", d.instagram)} placeholder="usuario" />
+            </Field>
+          </div>
+        </FormSection>
 
-      <Field label="Observações" htmlFor="c-notes" error={err("notes")}>
-        <Textarea id="c-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
-      </Field>
+        <Field label="Observações" htmlFor="c-notes" error={err("notes")}>
+          <Textarea id="c-notes" name="notes" rows={3} defaultValue={get("notes", d.notes)} />
+        </Field>
+      </div>
     </>
   );
 }
