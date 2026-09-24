@@ -9,10 +9,10 @@ import type { ImagePolicy } from "./image-policy";
  */
 export function getImagePolicy(): ImagePolicy {
   const images = nextConfig.images ?? {};
-  const remotePatterns = (images.remotePatterns ?? []).map((p) => {
+  const remotePatterns: ImagePolicy["remotePatterns"] = (images.remotePatterns ?? []).map((p) => {
     const protocol = p.protocol?.replace(/:$/, "");
     return {
-      protocol: protocol === "http" || protocol === "https" ? protocol : undefined,
+      protocol: protocol === "http" ? "http" : protocol === "https" ? "https" : undefined,
       hostname: p.hostname,
       port: p.port,
       pathname: p.pathname,
