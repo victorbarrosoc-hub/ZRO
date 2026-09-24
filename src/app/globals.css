@@ -266,3 +266,17 @@
   from { transform: translateY(-4px) scale(0.98); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
+
+@keyframes scroll-cue {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(220%); }
+}
+
+@keyframes accordion-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}

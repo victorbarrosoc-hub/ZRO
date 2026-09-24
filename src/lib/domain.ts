@@ -121,6 +121,7 @@ export const FUNNEL_PROJECT_TYPES = [
   { key: "conteudo", label: "Conteúdo pra redes", hint: "Série de vídeos com direção" },
   { key: "documental", label: "Documental", hint: "Pessoas, empresas, territórios" },
   { key: "experiencia", label: "Evento", hint: "Aftermovie, cobertura, tempo real" },
+  { key: "finalizacao", label: "Finalização e color", hint: "Absolute ZRO" },
   { key: "nao-sei", label: "Ainda não sei", hint: "Vamos descobrir juntos" },
 ] as const;
 
