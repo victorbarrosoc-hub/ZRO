@@ -143,7 +143,7 @@ export const FUNNEL_VIDEOS = [
 export const FUNNEL_FORMATS = [
   { key: "horizontal", label: "Horizontal (16:9)" },
   { key: "vertical", label: "Vertical (9:16)" },
-  { key: "ambos", label: "Os dois" },
+  { key: "ambos", label: "Horizontal e vertical" },
 ] as const;
 
 export const FUNNEL_EXTRAS = [
