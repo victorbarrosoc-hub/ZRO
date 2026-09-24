@@ -65,7 +65,7 @@ export function FilmPlayer({
         <D.Content className="fixed inset-0 z-[101] flex flex-col p-4 focus:outline-none data-[state=open]:animate-[fade-in_400ms] sm:p-8">
           <div className="flex items-center justify-between gap-4 pb-4">
             <div className="min-w-0">
-              <D.Title className="truncate text-[15px] font-medium text-white">{film.title}</D.Title>
+              <D.Title className="truncate text-ui font-medium text-white">{film.title}</D.Title>
               <D.Description className="label mt-1 text-mute">{film.client ?? "ZRO Filmes"}</D.Description>
             </div>
             <D.Close

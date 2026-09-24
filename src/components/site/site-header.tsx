@@ -70,7 +70,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <Link
             href="/orcamento"
-            className="hidden h-9 items-center rounded-full bg-white px-4 text-[13px] font-medium text-void transition-colors hover:bg-light sm:inline-flex"
+            className="hidden h-9 items-center rounded-full bg-white px-4 text-caption font-medium text-void transition-colors hover:bg-light sm:inline-flex"
           >
             Começar um projeto
           </Link>

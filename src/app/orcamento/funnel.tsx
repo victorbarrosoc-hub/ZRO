@@ -65,6 +65,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
     website: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [errorField, setErrorField] = useState<string | null>(null);
   const [result, setResult] = useState<Extract<LeadResult, { ok: true }> | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -85,16 +86,17 @@ export function Funnel({ initialType }: { initialType?: string }) {
   const set = <K extends keyof Answers>(key: K, value: Answers[K]) => {
     setAnswers((a) => ({ ...a, [key]: value }));
     setError(null);
+    setErrorField(null);
   };
 
-  function validate(current: StepId): string | null {
-    if (current === "tipo" && !answers.projectType) return "Escolha uma opção para continuar.";
+  function validate(current: StepId): { message: string; field: string } | null {
+    if (current === "tipo" && !answers.projectType) return { message: "Escolha uma opção para continuar.", field: "projectType" };
     if (current === "contato") {
-      if (answers.name.trim().length < 2) return "Faltou o seu nome. Como a gente te chama?";
+      if (answers.name.trim().length < 2) return { message: "Faltou o seu nome. Como a gente te chama?", field: "name" };
       const digits = answers.phone.replace(/\D/g, "");
-      if (!digits && !answers.email.trim()) return "Deixe um WhatsApp ou e-mail para a gente responder.";
-      if (digits && digits.length < 10) return "Confira o número com DDD.";
-      if (!answers.consent) return "Precisamos do seu ok para guardar esses dados.";
+      if (!digits && !answers.email.trim()) return { message: "Deixe um WhatsApp ou e-mail para a gente responder.", field: "phone" };
+      if (digits && digits.length < 10) return { message: "Confira o número com DDD.", field: "phone" };
+      if (!answers.consent) return { message: "Precisamos do seu ok para guardar esses dados.", field: "consent" };
     }
     return null;
   }
@@ -102,7 +104,8 @@ export function Funnel({ initialType }: { initialType?: string }) {
   function next() {
     const problem = validate(step);
     if (problem) {
-      setError(problem);
+      setError(problem.message);
+      setErrorField(problem.field);
       return;
     }
     setError(null);
@@ -123,7 +126,8 @@ export function Funnel({ initialType }: { initialType?: string }) {
   function submit() {
     const problem = validate("contato");
     if (problem) {
-      setError(problem);
+      setError(problem.message);
+      setErrorField(problem.field);
       setIndex(steps.indexOf("contato"));
       return;
     }
@@ -137,6 +141,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
       });
       if (!res.ok) {
         setError(res.error);
+        setErrorField(res.field ?? null);
         return;
       }
       setResult(res);
@@ -164,7 +169,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
 
   const title: Record<StepId, string> = {
     tipo: "Que tipo de projeto você tem em mente?",
-    ideia: "Conta rapidinho a ideia.",
+    ideia: "Conte a ideia em poucas linhas.",
     quando: "Quando e onde?",
     diarias: "Quantas diárias de gravação você imagina?",
     videos: isFinishing ? "Quantos vídeos para finalizar?" : "Quantos vídeos finais, e em qual formato?",
@@ -198,7 +203,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
           <p className="label text-mute">
             {String(Math.min(index, steps.length - 1) + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
           </p>
-          <Link href="/" className="label text-mute transition-colors hover:text-white">
+          <Link href="/" className="label -mr-3 inline-flex h-11 items-center px-3 text-mute transition-colors hover:text-white">
             Fechar
           </Link>
         </div>
@@ -253,14 +258,14 @@ export function Funnel({ initialType }: { initialType?: string }) {
                       <TextField label="Segmento" value={answers.segment} onChange={(v) => set("segment", v)} placeholder="Ex.: hotelaria" />
                     </div>
                     <label className="grid gap-2">
-                      <span className="text-[13px] text-ash">A ideia ou o objetivo</span>
+                      <span className="text-caption text-ash">A ideia ou o objetivo</span>
                       <textarea
                         value={answers.idea}
                         onChange={(e) => set("idea", e.target.value)}
                         rows={4}
                         maxLength={1200}
                         placeholder="Ex.: um filme para o lançamento da nova unidade, pensado para Instagram e YouTube."
-                        className="w-full rounded-[18px] border border-line-strong bg-white/[0.03] px-4 py-3.5 text-[17px] leading-relaxed text-light placeholder:text-mute focus:border-white/50 focus:outline-none"
+                        className="w-full rounded-field border border-line-strong bg-white/[0.03] px-4 py-3.5 text-[17px] leading-relaxed text-light placeholder:text-mute focus:border-white/50 focus:outline-none"
                       />
                     </label>
                   </div>
@@ -325,7 +330,14 @@ export function Funnel({ initialType }: { initialType?: string }) {
 
                 {step === "contato" ? (
                   <div className="grid gap-5">
-                    <TextField label="Seu nome" value={answers.name} onChange={(v) => set("name", v)} autoComplete="name" autoFocus />
+                    <TextField
+                      label="Seu nome"
+                      value={answers.name}
+                      onChange={(v) => set("name", v)}
+                      autoComplete="name"
+                      autoFocus
+                      aria-invalid={errorField === "name" || undefined}
+                    />
                     <div className="grid gap-5 sm:grid-cols-2">
                       <TextField
                         label="WhatsApp"
@@ -334,6 +346,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                         placeholder="(84) 90000-0000"
                         inputMode="tel"
                         autoComplete="tel"
+                        aria-invalid={errorField === "phone" || undefined}
                       />
                       <TextField
                         label="E-mail (opcional)"
@@ -342,6 +355,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                         inputMode="email"
                         autoComplete="email"
                         type="email"
+                        aria-invalid={errorField === "email" || errorField === "phone" || undefined}
                       />
                     </div>
                     <label className="mt-2 flex cursor-pointer items-start gap-3 text-[14px] leading-snug text-ash">
@@ -350,6 +364,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                         checked={answers.consent}
                         onChange={(e) => set("consent", e.target.checked)}
                         className="mt-0.5 size-5 shrink-0 cursor-pointer accent-white"
+                        aria-invalid={errorField === "consent" || undefined}
                       />
                       <span>
                         Autorizo a ZRO a guardar esses dados para responder ao meu pedido, conforme a{" "}
@@ -378,7 +393,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
             type="button"
             onClick={back}
             disabled={index === 0 || pending}
-            className="inline-flex h-12 items-center gap-2 rounded-full px-4 text-[15px] text-ash transition-colors hover:text-white disabled:invisible"
+            className="inline-flex h-12 items-center gap-2 rounded-full px-4 text-ui text-ash transition-colors hover:text-white disabled:invisible"
           >
             <ArrowLeft className="size-4" aria-hidden /> Voltar
           </button>
@@ -386,7 +401,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-5 text-[15px] font-medium whitespace-nowrap text-void shadow-[0_0_40px_rgb(255_255_255/0.25)] transition-colors hover:bg-light disabled:opacity-60 sm:gap-3 sm:px-7 sm:text-[16px]"
+              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-5 text-ui font-medium whitespace-nowrap text-void shadow-[0_0_40px_rgb(255_255_255/0.25)] transition-colors hover:bg-light disabled:opacity-60 sm:gap-3 sm:px-7 sm:text-[16px]"
             >
               <MessageCircle className="size-5" aria-hidden />
               {pending ? "Preparando…" : "Enviar pelo WhatsApp"}
@@ -394,7 +409,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
           ) : (
             <button
               type="submit"
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-void transition-colors hover:bg-light"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-ui font-medium text-void transition-colors hover:bg-light"
             >
               {step === "extras" && answers.extras.length === 0 ? "Pular" : "Continuar"}
               <ArrowRight className="size-4" aria-hidden />
@@ -430,7 +445,7 @@ function OptionGrid({
             aria-checked={selected}
             onClick={() => onPick(o.key)}
             className={cn(
-              "group relative flex min-h-16 items-center justify-between gap-4 rounded-[20px] border px-5 py-4 text-left transition-[background-color,border-color,box-shadow] duration-300",
+              "group relative flex min-h-16 items-center justify-between gap-4 rounded-media border px-5 py-4 text-left transition-[background-color,border-color,box-shadow] duration-300",
               selected
                 ? "border-white bg-white text-void shadow-[0_0_48px_rgb(255_255_255/0.18)]"
                 : "border-line-strong bg-white/[0.02] text-light hover:border-white/40 hover:bg-white/[0.05]",
@@ -439,7 +454,7 @@ function OptionGrid({
             <span>
               <span className="block text-[17px] font-medium tracking-[-0.01em]">{o.label}</span>
               {"hint" in o && o.hint ? (
-                <span className={cn("mt-0.5 block text-[13px]", selected ? "text-void/60" : "text-mute")}>{o.hint}</span>
+                <span className={cn("mt-0.5 block text-caption", selected ? "text-void/60" : "text-mute")}>{o.hint}</span>
               ) : null}
             </span>
             <span
@@ -470,11 +485,11 @@ function TextField({
 } & Omit<React.ComponentProps<"input">, "value" | "onChange">) {
   return (
     <label className="grid gap-2">
-      <span className="text-[13px] text-ash">{label}</span>
+      <span className="text-caption text-ash">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-14 w-full rounded-[18px] border border-line-strong bg-white/[0.03] px-4 text-[17px] text-light placeholder:text-mute focus:border-white/50 focus:outline-none"
+        className="h-14 w-full rounded-field border border-line-strong bg-white/[0.03] px-4 text-[17px] text-light placeholder:text-mute focus:border-white/50 focus:outline-none aria-[invalid=true]:border-danger/70"
         {...props}
       />
     </label>
@@ -500,7 +515,7 @@ function Summary({ answers, isFinishing }: { answers: Answers; isFinishing: bool
   ].filter((r) => r.value);
 
   return (
-    <dl className="overflow-hidden rounded-[24px] border border-line bg-white/[0.02]">
+    <dl className="overflow-hidden rounded-card border border-line bg-white/[0.02]">
       {rows.map((r) => (
         <div key={r.label} className="grid gap-1 border-b border-line px-5 py-4 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-6">
           <dt className="label pt-1 text-mute">{r.label}</dt>
@@ -535,7 +550,7 @@ function Done({
             ? "Se o WhatsApp não abriu sozinho, toque no botão abaixo."
             : "Enquanto o WhatsApp da ZRO é configurado, você pode enviar por e-mail."}
         </p>
-        <pre className="mt-8 max-h-72 overflow-auto rounded-[20px] border border-line bg-white/[0.02] p-5 font-sans text-[14px] leading-relaxed whitespace-pre-wrap text-ash">
+        <pre className="mt-8 max-h-72 overflow-auto rounded-media border border-line bg-white/[0.02] p-5 font-sans text-[14px] leading-relaxed whitespace-pre-wrap text-ash">
           {result.message}
         </pre>
         <div className="mt-8 flex flex-wrap gap-3">
@@ -557,12 +572,12 @@ function Done({
           <button
             type="button"
             onClick={onCopy}
-            className="inline-flex h-14 items-center gap-2 rounded-full border border-line-strong px-6 text-[15px] text-light transition-colors hover:border-white/40"
+            className="inline-flex h-14 items-center gap-2 rounded-full border border-line-strong px-6 text-ui text-light transition-colors hover:border-white/40"
           >
             {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
             {copied ? "Copiada" : "Copiar mensagem"}
           </button>
-          <Link href="/" className="inline-flex h-14 items-center px-4 text-[15px] text-mute transition-colors hover:text-white">
+          <Link href="/" className="inline-flex h-14 items-center px-4 text-ui text-mute transition-colors hover:text-white">
             Voltar ao site
           </Link>
         </div>

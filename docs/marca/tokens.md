@@ -15,6 +15,7 @@ Qualquer valor novo nasce aqui primeiro.
 | `--smoke` | `#1A1A1A` | superfície 3 (hover, campos) |
 | `--line` | `rgb(255 255 255 / 0.08)` | filetes e divisórias |
 | `--line-strong` | `rgb(255 255 255 / 0.16)` | bordas de campo e cápsulas |
+| `--dim` | `#1f1f1f` | texto do manifesto antes da luz (estado apagado) |
 | `--mute` | `#858585` | texto terciário (contraste mínimo 4,5:1 até sobre `--smoke`) |
 | `--ash` | `#A3A3A3` | texto secundário |
 | `--light` | `#E6E6E6` | texto principal |
@@ -64,7 +65,9 @@ Status sempre com texto junto. Cor nunca é o único sinal.
 | `manifesto` | `clamp(36px, 6.4vw, 104px)` | 1.0 | -0.04em |
 | `body-lg` | `19px` | 1.55 | -0.005em |
 | `body` | `16px` | 1.6 | 0 |
+| `ui` | `15px` | 1.5 | 0 |
 | `small` | `14px` | 1.5 | 0 |
+| `caption` | `13px` | 1.45 | 0 |
 | `label` | `11px`, mono, caixa alta | 1.4 | 0.16em |
 
 ## Espaço e forma
@@ -72,7 +75,7 @@ Status sempre com texto junto. Cor nunca é o único sinal.
 - **Grade de 4px.** Espaços usados: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192
 - **Seções:** `clamp(96px, 14vw, 192px)` de respiro vertical
 - **Contêiner:** até 1440px, margem lateral de 20px no celular, 32px no tablet e 48px no desktop
-- **Raios:** cápsula `999px` · cartão `24px` · campo `14px` · miniatura `16px`
+- **Raios:** cápsula `999px` · moldura de filme `28px` (`media`) · cartão `24px` · miniatura `16px` · campo `14px`
 - **Bordas:** sempre 1px, com `--line` ou `--line-strong`
 
 ## Luz, grão e movimento

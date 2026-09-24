@@ -46,7 +46,7 @@ export default function AbsolutePage() {
           <div className="flex items-end lg:justify-end">
             <Link
               href="/orcamento?tipo=finalizacao"
-              className="group inline-flex h-12 items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-[15px] font-medium text-abs-deep transition-colors hover:bg-white"
+              className="group inline-flex h-12 items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-ui font-medium text-abs-deep transition-colors hover:bg-white"
             >
               Falar sobre finalização
               <span className="grid size-9 place-items-center rounded-full bg-abs-deep text-abs-ice transition-transform duration-500 ease-out-expo group-hover:rotate-45">
@@ -60,7 +60,7 @@ export default function AbsolutePage() {
       <section className="container-zro">
         <Reveal>
           <CompareSlider src="/media/feixe-de-luz.jpg" />
-          <p className="mt-4 text-[13px] text-mute">Arraste para comparar. A mesma imagem, bruta e finalizada.</p>
+          <p className="mt-4 text-caption text-mute">Arraste para comparar. A mesma imagem, bruta e finalizada.</p>
         </Reveal>
       </section>
 
@@ -75,9 +75,9 @@ export default function AbsolutePage() {
         <ul className="border-t border-line">
           {SERVICES.map((s, i) => (
             <Reveal as="li" key={s.title} delay={i * 0.05} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[64px_240px_1fr] sm:items-baseline">
-              <span className="font-mono text-[13px] text-abs-ice/60">{String(i + 1).padStart(2, "0")}</span>
+              <span className="font-mono text-caption text-abs-ice/60">{String(i + 1).padStart(2, "0")}</span>
               <span className="text-[22px] font-semibold tracking-[-0.03em] text-white">{s.title}</span>
-              <span className="text-[15px] text-ash">{s.text}</span>
+              <span className="text-ui text-ash">{s.text}</span>
             </Reveal>
           ))}
         </ul>
@@ -111,7 +111,7 @@ export default function AbsolutePage() {
           </p>
           <Link
             href="/orcamento?tipo=finalizacao"
-            className="mt-12 inline-flex h-12 items-center rounded-full border border-abs-ice/40 px-6 text-[15px] text-abs-ice transition-colors hover:bg-abs-ice hover:text-abs-deep"
+            className="mt-12 inline-flex h-12 items-center rounded-full border border-abs-ice/40 px-6 text-ui text-abs-ice transition-colors hover:bg-abs-ice hover:text-abs-deep"
           >
             Enviar um projeto para finalizar
           </Link>

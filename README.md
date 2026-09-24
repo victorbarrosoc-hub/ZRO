@@ -4,6 +4,46 @@
 
 Site e plataforma interna da ZRO Filmes, produtora audiovisual de Natal/RN.
 
-- `docs/briefing.md`: o que vamos construir
-- `docs/marca/`: documento-mestre da marca e identidade visual
-- `brand/`: logo e referências visuais
+- **Site público:** portfólio com os filmes, manifesto, conceito, equipe, Absolute ZRO e o funil de orçamento que termina no WhatsApp
+- **Área interna (`/painel`):** só para os sócios. CRM, projetos pelo processo criativo da ZRO, agenda de produções, orçamentos com timbrado em PDF, banco de freelas, financeiro, processos e gestão do conteúdo do site
+
+## Rodar no computador
+
+Precisa de Node.js 20.9 ou mais novo.
+
+```bash
+npm install
+npm run db:reset   # cria o banco local com dados de exemplo
+npm run dev        # http://localhost:3000
+```
+
+O `db:reset` mostra no terminal (e salva em `data/credenciais-dev.txt`) o e-mail e a senha de teste para entrar em `/entrar`.
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run dev` | servidor de desenvolvimento |
+| `npm run build` / `npm start` | versão de produção |
+| `npm run lint` / `npm run typecheck` | qualidade do código |
+| `npm run db:migrate` | aplica migrações pendentes |
+| `npm run db:seed` | dados base + dados de exemplo (ids `demo-…`) |
+| `npm run db:setup` | prepara um banco novo para uso real, sem exemplos |
+| `npm run db:reset` | apaga o banco local e recria com exemplos |
+| `npm run db:generate` | gera migração depois de mudar o schema |
+
+## Publicar (Vercel + Turso)
+
+1. **Banco:** crie um banco no [Turso](https://turso.tech) (plano gratuito) e gere um token.
+2. **Variáveis:** na Vercel, cadastre as variáveis do `.env.example` (`DATABASE_URL`, `DATABASE_AUTH_TOKEN`, `SESSION_SECRET`, `NEXT_PUBLIC_SITE_URL`).
+3. **Contas dos sócios:** no seu computador, com as mesmas variáveis do banco de produção:
+   ```bash
+   ZRO_VICTOR_EMAIL=... ZRO_VICTOR_PASSWORD=... ZRO_EDU_EMAIL=... ZRO_EDU_PASSWORD=... npm run db:setup
+   ```
+4. **Deploy:** importe o repositório na [Vercel](https://vercel.com) e publique.
+5. **Primeiros ajustes** em `/painel/ajustes`: número do WhatsApp comercial, dados da empresa, alíquota e catálogo de preços. Em `/painel/site`, os links dos vídeos (Vimeo ou YouTube).
+
+## Documentação
+
+- `docs/briefing.md`: o que o site e a plataforma precisam ter
+- `docs/marca/`: documento-mestre, identidade visual, mood, voz e tokens
+- `docs/referencias-ui/`: referências visuais e o que foi aproveitado de cada uma
+- `docs/dev/area-interna.md`: padrões de código da área interna

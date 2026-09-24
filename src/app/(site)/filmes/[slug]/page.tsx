@@ -69,7 +69,7 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
 
         <Reveal>
           <FilmPlayer film={film} className="block w-full">
-            <div className="relative aspect-video overflow-hidden rounded-[28px] border border-line bg-ink">
+            <div className="relative aspect-video overflow-hidden rounded-media border border-line bg-ink">
               {film.posterUrl ? (
                 <Image src={film.posterUrl} alt="" fill priority sizes="(min-width: 1440px) 1344px, 100vw" className="object-cover" />
               ) : (
@@ -100,7 +100,7 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
               {details.map((d) => (
                 <div key={d.label} className="flex items-baseline justify-between gap-6 border-b border-line py-4">
                   <dt className="label text-mute">{d.label}</dt>
-                  <dd className="text-right text-[15px] text-light">{d.value}</dd>
+                  <dd className="text-right text-ui text-light">{d.value}</dd>
                 </div>
               ))}
             </dl>
@@ -124,7 +124,7 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
           <div className="grid gap-4 pb-24 sm:grid-cols-2">
             {film.stills.map((src, i) => (
               <Reveal key={src} delay={(i % 2) * 0.08} className={i % 3 === 0 ? "sm:col-span-2" : undefined}>
-                <div className="relative aspect-video overflow-hidden rounded-[20px] bg-ink">
+                <div className="relative aspect-video overflow-hidden rounded-media bg-ink">
                   <Image src={src} alt="" fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" />
                 </div>
               </Reveal>
@@ -138,7 +138,7 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
             <p className="text-h2 text-white">Tem uma história pra contar?</p>
             <Link
               href="/orcamento"
-              className="group mt-8 inline-flex h-12 items-center gap-4 rounded-full bg-white pr-1.5 pl-6 text-[15px] font-medium text-void transition-colors hover:bg-light"
+              className="group mt-8 inline-flex h-12 items-center gap-4 rounded-full bg-white pr-1.5 pl-6 text-ui font-medium text-void transition-colors hover:bg-light"
             >
               Começar um projeto
               <span className="grid size-9 place-items-center rounded-full bg-void text-white transition-transform duration-500 ease-out-expo group-hover:rotate-45">

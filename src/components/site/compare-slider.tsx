@@ -11,7 +11,7 @@ export function CompareSlider({ src, alt = "" }: { src: string; alt?: string }) 
   const [value, setValue] = useState(52);
 
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[28px] border border-abs-blue/20 bg-black select-none sm:aspect-video">
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-media border border-abs-blue/20 bg-black select-none sm:aspect-video">
       {/* Absoluto */}
       <Image
         src={src}

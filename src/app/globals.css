@@ -11,6 +11,7 @@
   --color-graphite: #121212;
   --color-smoke: #1a1a1a;
   --color-mist: #232323;
+  --color-dim: #1f1f1f;
   --color-mute: #858585;
   --color-ash: #a3a3a3;
   --color-light: #e6e6e6;
@@ -69,6 +70,12 @@
   --text-body-lg--line-height: 1.55;
   --text-body-lg--letter-spacing: -0.005em;
 
+  --text-ui: 15px;
+  --text-ui--line-height: 1.5;
+
+  --text-caption: 13px;
+  --text-caption--line-height: 1.45;
+
   --text-label: 11px;
   --text-label--line-height: 1.4;
   --text-label--letter-spacing: 0.16em;
@@ -77,6 +84,7 @@
   --radius-card: 24px;
   --radius-field: 14px;
   --radius-thumb: 16px;
+  --radius-media: 28px;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   --animate-grain: grain 1s steps(6) infinite;
@@ -165,6 +173,7 @@
 
   body {
     min-height: 100dvh;
+    overflow-x: clip;
     background: var(--color-void);
     font-family: var(--font-sans);
     font-optical-sizing: auto;
@@ -181,7 +190,6 @@
   :focus-visible {
     outline: 2px solid var(--color-white);
     outline-offset: 3px;
-    border-radius: 6px;
   }
 
   h1, h2, h3, h4 {
@@ -279,4 +287,28 @@
 @keyframes accordion-up {
   from { height: var(--radix-accordion-content-height); opacity: 1; }
   to { height: 0; opacity: 0; }
+}
+
+/*
+ * Menos movimento: tudo que entra com animação aparece no estado final.
+ * Feito em CSS (e não em JS) para não depender da hidratação.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .zro-reveal {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .zro-parallax {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .zro-manifesto-line {
+    color: var(--color-white) !important;
+    filter: none !important;
+  }
+  .zro-manifesto-glow {
+    opacity: 0.35 !important;
+    transform: none !important;
+  }
 }

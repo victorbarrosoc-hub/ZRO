@@ -134,7 +134,7 @@ export default async function SobrePage() {
           <ol className="border-t border-paper-line">
             {CREATIVE_RULE.map((q, i) => (
               <Reveal as="li" key={q.key} delay={i * 0.05} className="flex items-baseline gap-6 border-b border-paper-line py-6">
-                <span className="font-mono text-[13px] text-paper-mute">{String(i + 1).padStart(2, "0")}</span>
+                <span className="font-mono text-caption text-paper-mute">{String(i + 1).padStart(2, "0")}</span>
                 <span className="text-[clamp(20px,2vw,28px)] font-medium tracking-[-0.025em]">{q.question}</span>
               </Reveal>
             ))}
@@ -153,16 +153,16 @@ export default async function SobrePage() {
             <RotatingBadge />
           </Reveal>
         </div>
-        <div className="grid gap-px overflow-hidden rounded-[24px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
           {VALUES.map((v, i) => (
             <Reveal key={v.title} delay={(i % 4) * 0.05} className="bg-void p-7 sm:p-8">
               <p className="label mb-8 text-mute">{String(i + 1).padStart(2, "0")}</p>
               <h3 className="text-h3 text-white">{v.title}</h3>
-              <p className="mt-3 text-[15px] leading-relaxed text-ash">{v.text}</p>
+              <p className="mt-3 text-ui leading-relaxed text-ash">{v.text}</p>
             </Reveal>
           ))}
           <div className="hidden bg-void p-8 lg:flex lg:items-end">
-            <Link href="/orcamento" className="group inline-flex items-center gap-2 text-[15px] text-light">
+            <Link href="/orcamento" className="group inline-flex items-center gap-2 text-ui text-light">
               Começar um projeto
               <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
             </Link>

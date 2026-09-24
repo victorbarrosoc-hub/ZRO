@@ -29,7 +29,7 @@ await db
     duration: "0:34",
     format: "16:9",
     videoUrl: "/media/manifesto-zro.mp4",
-    posterUrl: "/media/manifesto-poster.jpg",
+    posterUrl: "/media/manifesto-capa.jpg",
     summary: "Tudo começa do zero.",
     featured: true,
   })

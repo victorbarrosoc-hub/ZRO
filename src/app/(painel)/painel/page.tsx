@@ -66,43 +66,18 @@ export default async function PainelPage() {
       </section>
 
       {data.lateIn.count || data.lateOut.count ? (
-        <section className="grid gap-4 md:grid-cols-2" aria-label="Atrasados">
+        <section className={cn("grid gap-3", data.lateIn.count && data.lateOut.count ? "lg:grid-cols-2" : null)} aria-label="Atrasados">
           {data.lateIn.count ? (
-            <LateCard
-              title="Recebimentos atrasados"
-              total={data.lateIn.total}
-              count={data.lateIn.count}
-              items={data.lateIn.items}
-            />
+            <LateBanner title="Recebimentos atrasados" total={data.lateIn.total} count={data.lateIn.count} first={data.lateIn.items[0]} />
           ) : null}
           {data.lateOut.count ? (
-            <LateCard
-              title="Pagamentos atrasados"
-              total={data.lateOut.total}
-              count={data.lateOut.count}
-              items={data.lateOut.items}
-            />
+            <LateBanner title="Pagamentos atrasados" total={data.lateOut.total} count={data.lateOut.count} first={data.lateOut.items[0]} />
           ) : null}
         </section>
       ) : null}
 
       <section className="grid gap-4 xl:grid-cols-12">
-        <Card className="min-w-0 xl:col-span-8">
-          <CardHeader
-            title="Fluxo de caixa"
-            description="Entradas acima da linha, saídas abaixo. Dois meses para trás e três para frente."
-            action={
-              <Link href="/painel/financeiro/fluxo" className="flex items-center gap-1 text-[13px] text-ash hover:text-white">
-                Detalhes <ArrowUpRight className="size-3.5" />
-              </Link>
-            }
-          />
-          <div className="px-3 pt-5 pb-4 sm:px-6">
-            <CashflowChart months={flow.months} current={flow.current} />
-          </div>
-        </Card>
-
-        <Card className="xl:col-span-4">
+        <Card className="xl:col-span-7">
           <CardHeader
             title="Próximos 7 dias"
             action={
@@ -140,55 +115,6 @@ export default async function PainelPage() {
             <EmptyState title="Semana livre" description="Nenhuma diária, entrega ou reunião nos próximos 7 dias." />
           )}
         </Card>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-7">
-          <CardHeader
-            title="Projetos por etapa"
-            description="O processo criativo da ZRO, de Origem a Entrega."
-            action={
-              <Link href="/painel/projetos" className="flex items-center gap-1 text-[13px] text-ash hover:text-white">
-                Projetos <ArrowUpRight className="size-3.5" />
-              </Link>
-            }
-          />
-          <ol className="mt-5 grid grid-cols-7 gap-1.5 px-5 sm:px-6">
-            {STAGES.map((stage) => {
-              const count = data.stageCounts[stage.key] ?? 0;
-              return (
-                <li key={stage.key} className="grid gap-2">
-                  <div className="flex h-20 items-end rounded-xl bg-white/[0.03] p-1.5">
-                    <div
-                      className={cn("w-full rounded-lg transition-all", count ? "bg-white/85" : "bg-white/10")}
-                      style={{ height: `${count ? Math.max(18, (count / Math.max(1, data.activeProjects.length)) * 100) : 6}%` }}
-                    />
-                  </div>
-                  <span className="font-mono text-[10px] text-mute">{stage.n}</span>
-                  <span className="hidden truncate text-[12px] text-ash sm:block">{stage.label}</span>
-                  <span className="text-[15px] font-semibold text-white">{count}</span>
-                </li>
-              );
-            })}
-          </ol>
-          <ul className="mt-5 border-t border-line px-3 py-2">
-            {data.activeProjects.slice(0, 5).map((p) => (
-              <li key={p.id}>
-                <Link href={`/painel/projetos/${p.id}`} className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 hover:bg-white/[0.04]">
-                  <span className="min-w-0">
-                    <span className="block truncate text-[14px] text-light">{p.title}</span>
-                    <span className="font-mono text-[11px] text-mute">{p.code}</span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-3">
-                    <Badge>{STAGES.find((s) => s.key === p.stage)?.label}</Badge>
-                    <span className="hidden text-[12px] text-mute sm:inline">{p.dueDate ? `até ${dateShort(p.dueDate)}` : ""}</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
         <Card className="xl:col-span-5">
           <CardHeader
             title="Leads em aberto"
@@ -236,6 +162,70 @@ export default async function PainelPage() {
         </Card>
       </section>
 
+      <section className="grid gap-4 xl:grid-cols-12">
+        <Card className="min-w-0 xl:col-span-8">
+          <CardHeader
+            title="Fluxo de caixa"
+            description="Entradas acima da linha, saídas abaixo. Dois meses para trás e três para frente."
+            action={
+              <Link href="/painel/financeiro/fluxo" className="flex items-center gap-1 text-[13px] text-ash hover:text-white">
+                Detalhes <ArrowUpRight className="size-3.5" />
+              </Link>
+            }
+          />
+          <div className="px-3 pt-5 pb-4 sm:px-6">
+            <CashflowChart months={flow.months} current={flow.current} />
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-4">
+          <CardHeader
+            title="Projetos por etapa"
+            description="O processo criativo da ZRO, de Origem a Entrega."
+            action={
+              <Link href="/painel/projetos" className="flex items-center gap-1 text-[13px] text-ash hover:text-white">
+                Projetos <ArrowUpRight className="size-3.5" />
+              </Link>
+            }
+          />
+          <ol className="mt-5 grid grid-cols-7 gap-1.5 px-5 sm:px-6">
+            {STAGES.map((stage) => {
+              const count = data.stageCounts[stage.key] ?? 0;
+              return (
+                <li key={stage.key} className="grid gap-2">
+                  <div className="flex h-20 items-end rounded-xl bg-white/[0.03] p-1.5">
+                    <div
+                      className={cn("w-full rounded-lg transition-all", count ? "bg-white/85" : "bg-white/10")}
+                      style={{ height: `${count ? Math.max(18, (count / Math.max(1, data.activeProjects.length)) * 100) : 6}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-[10px] text-mute">{stage.n}</span>
+                  <span className="hidden truncate text-[12px] text-ash sm:block xl:hidden 2xl:block">{stage.label}</span>
+                  <span className="text-[15px] font-semibold text-white">{count}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <ul className="mt-5 border-t border-line px-3 py-2">
+            {data.activeProjects.slice(0, 5).map((p) => (
+              <li key={p.id}>
+                <Link href={`/painel/projetos/${p.id}`} className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 hover:bg-white/[0.04]">
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] text-light">{p.title}</span>
+                    <span className="font-mono text-[11px] text-mute">{p.code}</span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-3">
+                    <Badge>{STAGES.find((s) => s.key === p.stage)?.label}</Badge>
+                    <span className="hidden text-[12px] text-mute sm:inline xl:hidden 2xl:inline">{p.dueDate ? `até ${dateShort(p.dueDate)}` : ""}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
+      </section>
+
       <p className="flex items-center gap-2 text-[12px] text-mute">
         <CalendarDays className="size-3.5" aria-hidden /> Valores do mês pelo vencimento; recebido e pago pela data da baixa.
       </p>
@@ -243,43 +233,40 @@ export default async function PainelPage() {
   );
 }
 
-function LateCard({
+function LateBanner({
   title,
   total,
   count,
-  items,
+  first,
 }: {
   title: string;
   total: number;
   count: number;
-  items: { id: string; description: string; amount: number; paidAmount: number; dueDate: string }[];
+  first?: { id: string; description: string; amount: number; paidAmount: number; dueDate: string };
 }) {
   return (
-    <Card className="border-danger/25">
-      <div className="flex items-start justify-between gap-4 p-5">
-        <div>
-          <p className="flex items-center gap-2 text-[13px] text-danger">
-            <AlertTriangle className="size-4" aria-hidden /> {title}
-          </p>
-          <p className="mt-3 text-[26px] leading-none font-semibold tracking-[-0.03em] text-white">{brl(total)}</p>
-          <p className="mt-2 text-[13px] text-mute">
-            {count} lançamento{count > 1 ? "s" : ""} vencido{count > 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link href="/painel/financeiro?status=atrasado" className="text-[13px] text-ash hover:text-white">
-          Ver
-        </Link>
-      </div>
-      <ul className="border-t border-line px-5 py-3">
-        {items.map((e) => (
-          <li key={e.id} className="flex items-center justify-between gap-4 py-1.5 text-[13px]">
-            <span className="truncate text-ash">{e.description}</span>
-            <span className="shrink-0 text-light tabular-nums">
-              {brl(e.amount - e.paidAmount)} <span className="text-mute">· {dateShort(e.dueDate)}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Card>
+    <Link
+      href="/painel/financeiro?status=atrasado"
+      className="group flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-card border border-danger/25 bg-danger/[0.04] px-5 py-4 transition-colors hover:border-danger/45"
+    >
+      <span className="flex items-center gap-3">
+        <AlertTriangle className="size-4 shrink-0 text-danger" aria-hidden />
+        <span className="text-[14px] text-light">
+          {title} <span className="font-semibold text-white">{brl(total)}</span>
+          <span className="text-mute">
+            {" "}
+            · {count} vencido{count > 1 ? "s" : ""}
+          </span>
+        </span>
+      </span>
+      {first ? (
+        <span className="flex min-w-0 items-center gap-3 text-[13px] text-mute">
+          <span className="truncate">
+            {first.description} · desde {dateShort(first.dueDate)}
+          </span>
+          <ArrowUpRight className="size-4 shrink-0 text-ash transition-transform group-hover:rotate-45" aria-hidden />
+        </span>
+      ) : null}
+    </Link>
   );
 }

@@ -6,13 +6,14 @@ import { extendTailwindMerge } from "tailwind-merge";
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ["display", "h1", "h2", "h3", "manifesto", "body-lg", "label"],
+      text: ["display", "h1", "h2", "h3", "manifesto", "body-lg", "ui", "caption", "label"],
       color: [
         "void",
         "ink",
         "graphite",
         "smoke",
         "mist",
+        "dim",
         "mute",
         "ash",
         "light",
@@ -31,7 +32,7 @@ const twMerge = extendTailwindMerge({
         "warn",
         "danger",
       ],
-      radius: ["card", "field", "thumb"],
+      radius: ["card", "field", "thumb", "media"],
       ease: ["out-expo"],
     },
   },

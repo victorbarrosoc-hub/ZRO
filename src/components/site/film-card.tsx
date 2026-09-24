@@ -52,7 +52,7 @@ export function FilmCard({
     >
       <div
         className={cn(
-          "relative overflow-hidden rounded-[22px] border border-line bg-ink transition-[border-color] duration-500 group-hover:border-white/20",
+          "relative overflow-hidden rounded-card border border-line bg-ink transition-[border-color] duration-500 group-hover:border-white/20",
           aspect,
         )}
       >
@@ -102,7 +102,7 @@ export function FilmCard({
       </div>
 
       <div className="mt-4 flex items-baseline justify-between gap-4 px-1">
-        <p className="truncate text-[15px] text-light">
+        <p className="truncate text-ui text-light">
           {film.title}
           {film.client ? <span className="text-mute"> · {film.client}</span> : null}
         </p>
@@ -125,7 +125,7 @@ function TitleCard({ film }: { film: FilmSummary }) {
         <p className="max-w-[80%] text-[clamp(24px,2.6vw,40px)] leading-[1.02] font-semibold tracking-[-0.04em] text-white">
           {film.title}
         </p>
-        {film.summary ? <p className="mt-2 max-w-[70%] text-[13px] text-mute">{film.summary}</p> : null}
+        {film.summary ? <p className="mt-2 max-w-[70%] text-caption text-mute">{film.summary}</p> : null}
       </div>
     </div>
   );

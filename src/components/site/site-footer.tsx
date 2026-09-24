@@ -19,7 +19,7 @@ export async function SiteFooter() {
             </p>
             <Link
               href="/orcamento"
-              className="mt-8 inline-flex h-12 items-center rounded-full bg-white px-6 text-[15px] font-medium text-void transition-colors hover:bg-light"
+              className="mt-8 inline-flex h-12 items-center rounded-full bg-white px-6 text-ui font-medium text-void transition-colors hover:bg-light"
             >
               Começar um projeto
             </Link>
@@ -28,7 +28,7 @@ export async function SiteFooter() {
           <div className="grid gap-10 sm:grid-cols-3 md:col-span-7">
             <div>
               <p className="label mb-4 text-mute">Fale com a gente</p>
-              <ul className="grid gap-2.5 text-[15px] text-ash">
+              <ul className="grid gap-2.5 text-ui text-ash">
                 {wa ? (
                   <li>
                     <a className="transition-colors hover:text-white" href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">
@@ -59,7 +59,7 @@ export async function SiteFooter() {
             </div>
             <div>
               <p className="label mb-4 text-mute">Navegue</p>
-              <ul className="grid gap-2.5 text-[15px] text-ash">
+              <ul className="grid gap-2.5 text-ui text-ash">
                 <li><Link className="transition-colors hover:text-white" href="/filmes">Filmes</Link></li>
                 <li><Link className="transition-colors hover:text-white" href="/sobre">Sobre</Link></li>
                 <li><Link className="transition-colors hover:text-white" href="/absolute">Absolute ZRO</Link></li>
@@ -68,12 +68,12 @@ export async function SiteFooter() {
             </div>
             <div>
               <p className="label mb-4 text-mute">Onde estamos</p>
-              <p className="text-[15px] leading-relaxed text-ash">Natal · Rio Grande do Norte · Brasil</p>
+              <p className="text-ui leading-relaxed text-ash">Natal · Rio Grande do Norte · Brasil</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-[13px] text-mute">
+        <div className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-caption text-mute">
           <p>
             © {year} {company.legalName}
             {company.cnpj ? ` · CNPJ ${company.cnpj}` : ""}

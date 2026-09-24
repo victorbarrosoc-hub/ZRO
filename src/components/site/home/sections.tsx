@@ -42,7 +42,7 @@ export function FeaturedFilm({ film }: { film: FilmSummary }) {
       <div className="container-zro">
         <Reveal>
           <FilmPlayer film={film} className="block w-full">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] border border-line bg-ink sm:aspect-[21/10]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-media border border-line bg-ink sm:aspect-[21/10]">
               {film.posterUrl ? (
                 <Image
                   src={film.posterUrl}
@@ -65,7 +65,7 @@ export function FeaturedFilm({ film }: { film: FilmSummary }) {
                   <h2 id="destaque-titulo" className="text-[clamp(32px,5vw,72px)] leading-[0.95] font-semibold tracking-[-0.045em] text-white">
                     {film.title}
                   </h2>
-                  {film.summary ? <p className="mt-3 text-[15px] text-ash">{film.summary}</p> : null}
+                  {film.summary ? <p className="mt-3 text-ui text-ash">{film.summary}</p> : null}
                 </div>
                 <p className="label text-white/60">
                   {film.client ?? "ZRO"} · {categoryLabel(film.category)}
@@ -90,7 +90,7 @@ export function PortfolioSection({ films }: { films: FilmSummary[] }) {
           label="Filmes"
           title={<span id="filmes-titulo">Histórias que ganharam direção.</span>}
           aside={
-            <Link href="/filmes" className="group inline-flex items-center gap-2 text-[15px] text-ash transition-colors hover:text-white">
+            <Link href="/filmes" className="group inline-flex items-center gap-2 text-ui text-ash transition-colors hover:text-white">
               Ver todos os filmes
               <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
             </Link>
@@ -129,7 +129,7 @@ export function ServicesSection() {
             >
               <p className="label mb-10 text-mute">{String(i + 1).padStart(2, "0")}</p>
               <h3 className="text-h3 text-white">{front.label}</h3>
-              <p className="mt-3 text-[15px] leading-relaxed text-ash">{front.description}</p>
+              <p className="mt-3 text-ui leading-relaxed text-ash">{front.description}</p>
             </Reveal>
           ))}
         </div>
@@ -137,7 +137,7 @@ export function ServicesSection() {
         <Reveal className="mt-16">
           <Link
             href="/absolute"
-            className="group relative block overflow-hidden rounded-[28px] border border-abs-blue/25 bg-[radial-gradient(80%_120%_at_85%_20%,rgb(76_141_255/0.28),transparent_60%),linear-gradient(180deg,#07142a,var(--color-abs-deep))] p-7 transition-colors duration-500 hover:border-abs-blue/50 sm:p-10"
+            className="group relative block overflow-hidden rounded-media border border-abs-blue/25 bg-[radial-gradient(80%_120%_at_85%_20%,rgb(76_141_255/0.28),transparent_60%),linear-gradient(180deg,rgb(76_141_255/0.08),var(--color-abs-deep))] p-7 transition-colors duration-500 hover:border-abs-blue/50 sm:p-10"
           >
             <div className="flex flex-wrap items-end justify-between gap-8">
               <div className="max-w-2xl">
@@ -183,13 +183,13 @@ export function ProcessSection() {
           {STAGES.map((stage, i) => (
             <Reveal as="li" key={stage.key} delay={i * 0.04} className="group border-b border-line">
               <div className="grid grid-cols-[56px_1fr] items-baseline gap-4 py-7 sm:grid-cols-[80px_200px_1fr] sm:py-8">
-                <span className="font-mono text-[13px] text-mute transition-colors duration-500 group-hover:text-white">
+                <span className="font-mono text-caption text-mute transition-colors duration-500 group-hover:text-white">
                   {stage.n}
                 </span>
                 <span className="text-[clamp(22px,2.2vw,30px)] font-semibold tracking-[-0.03em] text-white">
                   {stage.label}
                 </span>
-                <span className="col-start-2 text-[15px] text-ash sm:col-start-3">{stage.hint}</span>
+                <span className="col-start-2 text-ui text-ash sm:col-start-3">{stage.hint}</span>
               </div>
             </Reveal>
           ))}
@@ -243,14 +243,14 @@ export function TeamSection({
           label="Quem dirige"
           title={
             <span id="equipe-titulo">
-              Grandes filmes são feitos por pessoas diferentes em torno de uma mesma visão.
+              Grandes filmes são construídos por pessoas diferentes trabalhando em torno de uma mesma visão.
             </span>
           }
         />
         <div className={cn("grid gap-6 sm:grid-cols-2", team.length >= 3 && "lg:grid-cols-3", team.length === 2 && "lg:max-w-4xl")}>
           {team.map((person, i) => (
             <Reveal key={person.id} delay={i * 0.08}>
-              <article className="group relative overflow-hidden rounded-[24px] border border-line bg-ink">
+              <article className="group relative overflow-hidden rounded-card border border-line bg-ink">
                 <div className="relative aspect-[4/5] overflow-hidden">
                   {person.photoUrl ? (
                     <Image
@@ -274,7 +274,7 @@ export function TeamSection({
                 <div className="absolute inset-x-0 bottom-0 p-6">
                   <p className="text-[22px] font-semibold tracking-[-0.03em] text-white">{person.name}</p>
                   <p className="mt-1 text-[14px] text-ash">{person.role}</p>
-                  {person.quote ? <p className="mt-4 text-[15px] text-light">“{person.quote}”</p> : null}
+                  {person.quote ? <p className="mt-4 text-ui text-light">“{person.quote}”</p> : null}
                 </div>
               </article>
             </Reveal>
@@ -334,7 +334,7 @@ export function FaqSection({ faqs }: { faqs: { id: string; question: string; ans
           <h2 id="faq-titulo" className="text-h2 text-white">
             Antes da primeira conversa.
           </h2>
-          <p className="mt-5 max-w-sm text-[15px] text-ash">
+          <p className="mt-5 max-w-sm text-ui text-ash">
             Não achou o que procurava?{" "}
             <Link href="/orcamento" className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
               Fale direto com a gente

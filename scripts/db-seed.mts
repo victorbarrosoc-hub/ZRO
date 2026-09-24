@@ -41,7 +41,7 @@ await db
       duration: "0:34",
       format: "16:9",
       videoUrl: "/media/manifesto-zro.mp4",
-      posterUrl: "/media/manifesto-poster.jpg",
+      posterUrl: "/media/manifesto-capa.jpg",
       summary: "Tudo começa do zero.",
       intention:
         "O filme que apresenta a ZRO: do vazio à luz, do contraste à forma. Um universo surgindo do escuro até o ponto exato onde intenção vira direção.",
