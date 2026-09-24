@@ -76,7 +76,7 @@ export default function AbsolutePage() {
           {SERVICES.map((s, i) => (
             <Reveal as="li" key={s.title} delay={i * 0.05} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[64px_240px_1fr] sm:items-baseline">
               <span className="font-mono text-caption text-abs-ice/60">{String(i + 1).padStart(2, "0")}</span>
-              <span className="text-[22px] font-semibold tracking-[-0.03em] text-white">{s.title}</span>
+              <span className="text-h3 font-semibold text-white">{s.title}</span>
               <span className="text-ui text-ash">{s.text}</span>
             </Reveal>
           ))}
@@ -96,8 +96,8 @@ export default function AbsolutePage() {
             <p className="label border-b border-abs-blue/20 py-4 text-abs-ice/80">Absolute ZRO</p>
             {VERBS.map(([a, b], i) => (
               <Reveal key={a} delay={i * 0.05} className="col-span-2 grid grid-cols-2 border-b border-abs-blue/20">
-                <span className="py-5 text-[clamp(24px,3.4vw,48px)] font-semibold tracking-[-0.04em] text-white/40">{a}</span>
-                <span className="py-5 text-[clamp(24px,3.4vw,48px)] font-semibold tracking-[-0.04em] text-abs-ice">{b}</span>
+                <span className="py-5 text-h2 text-white/40">{a}</span>
+                <span className="py-5 text-h2 text-abs-ice">{b}</span>
               </Reveal>
             ))}
           </div>

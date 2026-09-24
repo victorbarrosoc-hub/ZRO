@@ -236,7 +236,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
               exit={reduced ? undefined : { opacity: 0, y: -12, filter: "blur(8px)" }}
               transition={{ duration: 0.5, ease: EASE }}
             >
-              <h1 className="text-[clamp(32px,5vw,64px)] leading-[1.02] font-semibold tracking-[-0.04em] text-white">
+              <h1 className="text-h2 text-white">
                 {title[step]}
               </h1>
               {subtitle[step] ? <p className="mt-4 max-w-xl text-body-lg text-ash">{subtitle[step]}</p> : null}
@@ -265,7 +265,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                         rows={4}
                         maxLength={1200}
                         placeholder="Ex.: um filme para o lançamento da nova unidade, pensado para Instagram e YouTube."
-                        className="w-full rounded-field border border-line-strong bg-white/[0.03] px-4 py-3.5 text-[17px] leading-relaxed text-light placeholder:text-mute focus:border-white/50 focus:outline-none"
+                        className="w-full rounded-field border border-line-strong bg-white/[0.03] px-4 py-3.5 text-base leading-relaxed text-light placeholder:text-mute focus:border-white/50 focus:outline-none"
                       />
                     </label>
                   </div>
@@ -305,7 +305,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                             set("extras", on ? answers.extras.filter((e) => e !== o.key) : [...answers.extras, o.key])
                           }
                           className={cn(
-                            "inline-flex h-14 items-center gap-3 rounded-full border px-6 text-[16px] transition-[background-color,border-color] duration-300",
+                            "inline-flex h-14 items-center gap-3 rounded-full border px-6 text-base transition-[background-color,border-color] duration-300",
                             on ? "border-white bg-white text-void" : "border-line-strong text-light hover:border-white/40",
                           )}
                         >
@@ -358,7 +358,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
                         aria-invalid={errorField === "email" || errorField === "phone" || undefined}
                       />
                     </div>
-                    <label className="mt-2 flex cursor-pointer items-start gap-3 text-[14px] leading-snug text-ash">
+                    <label className="mt-2 flex cursor-pointer items-start gap-3 text-sm leading-snug text-ash">
                       <input
                         type="checkbox"
                         checked={answers.consent}
@@ -382,7 +382,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
             </motion.div>
           </AnimatePresence>
 
-          <p className="mt-6 min-h-6 text-[14px] text-danger" role="alert" aria-live="polite">
+          <p className="mt-6 min-h-6 text-sm text-danger" role="alert" aria-live="polite">
             {error ?? ""}
           </p>
         </div>
@@ -401,7 +401,7 @@ export function Funnel({ initialType }: { initialType?: string }) {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-5 text-ui font-medium whitespace-nowrap text-void shadow-[0_0_40px_rgb(255_255_255/0.25)] transition-colors hover:bg-light disabled:opacity-60 sm:gap-3 sm:px-7 sm:text-[16px]"
+              className="inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-5 text-ui font-medium whitespace-nowrap text-void shadow-[0_0_40px_rgb(255_255_255/0.25)] transition-colors hover:bg-light disabled:opacity-60 sm:gap-3 sm:px-7 sm:text-base"
             >
               <MessageCircle className="size-5" aria-hidden />
               {pending ? "Preparando…" : "Enviar pelo WhatsApp"}
@@ -452,7 +452,7 @@ function OptionGrid({
             )}
           >
             <span>
-              <span className="block text-[17px] font-medium tracking-[-0.01em]">{o.label}</span>
+              <span className="block text-base font-medium">{o.label}</span>
               {"hint" in o && o.hint ? (
                 <span className={cn("mt-0.5 block text-caption", selected ? "text-void/60" : "text-mute")}>{o.hint}</span>
               ) : null}
@@ -489,7 +489,7 @@ function TextField({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-14 w-full rounded-field border border-line-strong bg-white/[0.03] px-4 text-[17px] text-light placeholder:text-mute focus:border-white/50 focus:outline-none aria-[invalid=true]:border-danger/70"
+        className="h-14 w-full rounded-field border border-line-strong bg-white/[0.03] px-4 text-base text-light placeholder:text-mute focus:border-white/50 focus:outline-none aria-[invalid=true]:border-danger/70"
         {...props}
       />
     </label>
@@ -519,7 +519,7 @@ function Summary({ answers, isFinishing }: { answers: Answers; isFinishing: bool
       {rows.map((r) => (
         <div key={r.label} className="grid gap-1 border-b border-line px-5 py-4 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-6">
           <dt className="label pt-1 text-mute">{r.label}</dt>
-          <dd className="text-[16px] whitespace-pre-line text-light">{r.value}</dd>
+          <dd className="text-base whitespace-pre-line text-light">{r.value}</dd>
         </div>
       ))}
     </dl>
@@ -542,7 +542,7 @@ function Done({
           <Check className="size-6 text-white" aria-hidden />
         </div>
         <p className="label mb-4 text-mute">Protocolo {result.protocol}</p>
-        <h1 className="text-[clamp(32px,5vw,56px)] leading-[1.02] font-semibold tracking-[-0.04em] text-white">
+        <h1 className="text-h2 text-white">
           Pedido recebido. Agora a conversa continua no WhatsApp.
         </h1>
         <p className="mt-4 text-body-lg text-ash">
@@ -550,21 +550,21 @@ function Done({
             ? "Se o WhatsApp não abriu sozinho, toque no botão abaixo."
             : "Enquanto o WhatsApp da ZRO é configurado, você pode enviar por e-mail."}
         </p>
-        <pre className="mt-8 max-h-72 overflow-auto rounded-media border border-line bg-white/[0.02] p-5 font-sans text-[14px] leading-relaxed whitespace-pre-wrap text-ash">
+        <pre className="mt-8 max-h-72 overflow-auto rounded-media border border-line bg-white/[0.02] p-5 font-sans text-sm leading-relaxed whitespace-pre-wrap text-ash">
           {result.message}
         </pre>
         <div className="mt-8 flex flex-wrap gap-3">
           {result.whatsappUrl ? (
             <a
               href={result.whatsappUrl}
-              className="inline-flex h-14 items-center gap-3 rounded-full bg-white px-7 text-[16px] font-medium text-void transition-colors hover:bg-light"
+              className="inline-flex h-14 items-center gap-3 rounded-full bg-white px-7 text-base font-medium text-void transition-colors hover:bg-light"
             >
               <MessageCircle className="size-5" aria-hidden /> Abrir WhatsApp
             </a>
           ) : result.mailtoUrl ? (
             <a
               href={result.mailtoUrl}
-              className="inline-flex h-14 items-center gap-3 rounded-full bg-white px-7 text-[16px] font-medium text-void transition-colors hover:bg-light"
+              className="inline-flex h-14 items-center gap-3 rounded-full bg-white px-7 text-base font-medium text-void transition-colors hover:bg-light"
             >
               Enviar por e-mail
             </a>

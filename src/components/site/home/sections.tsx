@@ -62,7 +62,7 @@ export function FeaturedFilm({ film }: { film: FilmSummary }) {
               </div>
               <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-4 p-6 sm:p-8">
                 <div>
-                  <h2 id="destaque-titulo" className="text-[clamp(32px,5vw,72px)] leading-[0.95] font-semibold tracking-[-0.045em] text-white">
+                  <h2 id="destaque-titulo" className="text-h1 text-white">
                     {film.title}
                   </h2>
                   {film.summary ? <p className="mt-3 text-ui text-ash">{film.summary}</p> : null}
@@ -142,10 +142,10 @@ export function ServicesSection() {
             <div className="flex flex-wrap items-end justify-between gap-8">
               <div className="max-w-2xl">
                 <p className="label mb-5 text-abs-ice/80">Absolute ZRO · Finalização</p>
-                <p className="text-[clamp(30px,4.2vw,60px)] leading-[0.98] font-semibold tracking-[-0.045em] text-white">
+                <p className="text-h2 text-white">
                   Do bruto ao absoluto.
                 </p>
-                <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-abs-ice/75">
+                <p className="mt-4 max-w-lg text-base leading-relaxed text-abs-ice/75">
                   Color grading, finalização de imagem e construção de look. Para os nossos filmes e para outras
                   produtoras.
                 </p>
@@ -186,7 +186,7 @@ export function ProcessSection() {
                 <span className="font-mono text-caption text-mute transition-colors duration-500 group-hover:text-white">
                   {stage.n}
                 </span>
-                <span className="text-[clamp(22px,2.2vw,30px)] font-semibold tracking-[-0.03em] text-white">
+                <span className="text-h3 font-semibold text-white">
                   {stage.label}
                 </span>
                 <span className="col-start-2 text-ui text-ash sm:col-start-3">{stage.hint}</span>
@@ -215,7 +215,7 @@ export function ClientsSection({ clients }: { clients: { id: string; name: strin
           <ul className="flex flex-wrap items-center gap-x-10 gap-y-6 sm:gap-x-16">
             {clients.map((c, i) => (
               <li key={c.id} className="flex items-center gap-10 sm:gap-16">
-                <span className="text-[clamp(28px,4.8vw,72px)] font-semibold tracking-[-0.05em] text-white/35 transition-colors duration-500 hover:text-white">
+                <span className="text-h1 text-white/35 transition-colors duration-500 hover:text-white">
                   {c.name}
                 </span>
                 {i < clients.length - 1 ? <Symbol className="size-4 text-white/15" /> : null}
@@ -272,8 +272,8 @@ export function TeamSection({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-6">
-                  <p className="text-[22px] font-semibold tracking-[-0.03em] text-white">{person.name}</p>
-                  <p className="mt-1 text-[14px] text-ash">{person.role}</p>
+                  <p className="text-h3 font-semibold text-white">{person.name}</p>
+                  <p className="mt-1 text-sm text-ash">{person.role}</p>
                   {person.quote ? <p className="mt-4 text-ui text-light">“{person.quote}”</p> : null}
                 </div>
               </article>
@@ -306,7 +306,7 @@ export function StartSection() {
               <li key={t.key}>
                 <Link
                   href={`/orcamento?tipo=${t.key}`}
-                  className="group inline-flex h-14 items-center gap-3 rounded-full border border-paper-line bg-white/60 pr-2 pl-6 text-[16px] font-medium transition-all duration-300 hover:border-paper-ink hover:bg-paper-ink hover:text-paper"
+                  className="group inline-flex h-14 items-center gap-3 rounded-full border border-paper-line bg-white/60 pr-2 pl-6 text-base font-medium transition-all duration-300 hover:border-paper-ink hover:bg-paper-ink hover:text-paper"
                 >
                   {t.label}
                   <span className="grid size-10 place-items-center rounded-full bg-paper-ink text-paper transition-all duration-500 ease-out-expo group-hover:rotate-45 group-hover:bg-paper group-hover:text-paper-ink">

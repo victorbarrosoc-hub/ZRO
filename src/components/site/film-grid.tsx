@@ -42,7 +42,7 @@ export function FilmGrid({
               aria-selected={selected}
               onClick={() => setActive(c.key)}
               className={cn(
-                "h-10 shrink-0 rounded-full border px-4 text-[14px] transition-all duration-300",
+                "h-10 shrink-0 rounded-full border px-4 text-sm transition-all duration-300",
                 selected
                   ? "border-white bg-white text-void"
                   : "border-line-strong text-ash hover:border-white/40 hover:text-white",

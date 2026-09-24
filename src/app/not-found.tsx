@@ -13,10 +13,10 @@ export default function NotFound() {
         </div>
         <p className="label mb-4 text-mute">Erro 404</p>
         <h1 className="text-h2 text-white">Aqui ainda é zero.</h1>
-        <p className="mx-auto mt-4 max-w-sm text-[16px] text-ash">Esta página não existe, ou ainda não ganhou forma.</p>
+        <p className="mx-auto mt-4 max-w-sm text-base text-ash">Esta página não existe, ou ainda não ganhou forma.</p>
         <Link
           href="/"
-          className="mt-10 inline-flex h-12 items-center rounded-full bg-white px-6 text-[15px] font-medium text-void transition-colors hover:bg-light"
+          className="mt-10 inline-flex h-12 items-center rounded-full bg-white px-6 text-ui font-medium text-void transition-colors hover:bg-light"
         >
           Voltar ao início
         </Link>

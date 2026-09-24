@@ -62,6 +62,7 @@ Status sempre com texto junto. Cor nunca é o único sinal.
 | `h1` | `clamp(40px, 6vw, 96px)` | 0.95 | -0.04em |
 | `h2` | `clamp(30px, 3.6vw, 56px)` | 1.02 | -0.035em |
 | `h3` | `clamp(20px, 1.8vw, 28px)` | 1.2 | -0.02em |
+| `title` | `clamp(24px, 2.6vw, 40px)` | 1.05 | -0.035em |
 | `manifesto` | `clamp(36px, 6.4vw, 104px)` | 1.0 | -0.04em |
 | `body-lg` | `19px` | 1.55 | -0.005em |
 | `body` | `16px` | 1.6 | 0 |
@@ -69,6 +70,8 @@ Status sempre com texto junto. Cor nunca é o único sinal.
 | `small` | `14px` | 1.5 | 0 |
 | `caption` | `13px` | 1.45 | 0 |
 | `label` | `11px`, mono, caixa alta | 1.4 | 0.16em |
+
+Exceções documentadas: texto do selo circular (SVG, 12,5px) e iniciais decorativas da equipe (44px).
 
 ## Espaço e forma
 

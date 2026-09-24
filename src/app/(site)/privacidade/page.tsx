@@ -16,7 +16,7 @@ export default async function PrivacidadePage() {
       <div className="mx-auto max-w-2xl">
         <p className="label mb-6 text-mute">Privacidade</p>
         <h1 className="text-h2 text-white">Como cuidamos dos seus dados</h1>
-        <div className="mt-12 grid gap-10 text-[16px] leading-relaxed text-ash [&_h2]:mb-3 [&_h2]:text-[18px] [&_h2]:font-medium [&_h2]:text-light">
+        <div className="mt-12 grid gap-10 text-base leading-relaxed text-ash [&_h2]:mb-3 [&_h2]:text-body-lg [&_h2]:font-medium [&_h2]:text-light">
           <section>
             <h2>Quem somos</h2>
             <p>

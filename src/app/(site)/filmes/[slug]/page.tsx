@@ -91,7 +91,7 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
         <div className="section-y grid gap-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]">
           <Reveal>
             <p className="label mb-6 text-mute">A intenção</p>
-            <p className="text-[clamp(22px,2.4vw,34px)] leading-[1.25] font-medium tracking-[-0.025em] text-light">
+            <p className="text-h3 leading-snug text-light">
               {film.intention ?? film.summary ?? "Em breve, a história por trás deste filme."}
             </p>
           </Reveal>
@@ -110,8 +110,8 @@ export default async function FilmPage({ params }: PageProps<"/filmes/[slug]">) 
                 <dl className="grid gap-3">
                   {film.credits.map((c) => (
                     <div key={`${c.role}-${c.name}`} className="flex items-baseline justify-between gap-6">
-                      <dt className="text-[14px] text-mute">{c.role}</dt>
-                      <dd className="text-right text-[14px] text-light">{c.name}</dd>
+                      <dt className="text-sm text-mute">{c.role}</dt>
+                      <dd className="text-right text-sm text-light">{c.name}</dd>
                     </div>
                   ))}
                 </dl>

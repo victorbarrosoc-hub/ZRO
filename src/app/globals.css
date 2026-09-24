@@ -61,6 +61,11 @@
   --text-h3--letter-spacing: -0.02em;
   --text-h3--font-weight: 500;
 
+  --text-title: clamp(24px, 2.6vw, 40px);
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.035em;
+  --text-title--font-weight: 600;
+
   --text-manifesto: clamp(36px, 6.4vw, 104px);
   --text-manifesto--line-height: 1;
   --text-manifesto--letter-spacing: -0.04em;

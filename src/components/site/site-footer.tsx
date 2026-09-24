@@ -14,7 +14,7 @@ export async function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
             <p className="label mb-5 text-mute">Contato</p>
-            <p className="max-w-md text-[clamp(28px,3vw,40px)] leading-[1.05] font-semibold tracking-[-0.035em] text-white">
+            <p className="max-w-md text-title text-white">
               Toda história começa do zero.
             </p>
             <Link

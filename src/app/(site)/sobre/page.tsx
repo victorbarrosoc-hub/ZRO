@@ -46,7 +46,7 @@ export default async function SobrePage() {
           <Reveal>
             <p className="label text-mute">O nome</p>
           </Reveal>
-          <Reveal delay={0.1} className="grid gap-5 text-[clamp(19px,1.8vw,24px)] leading-[1.45] tracking-[-0.015em] text-light">
+          <Reveal delay={0.1} className="grid gap-5 text-h3 leading-snug font-normal text-light">
             <p>“ZRO” é uma forma visual e contemporânea de representar ZERO.</p>
             <p className="text-ash">
               É o ponto anterior à forma. Anterior à cor. Anterior à direção. Anterior à imagem. É onde uma ideia ainda
@@ -77,7 +77,7 @@ export default async function SobrePage() {
           {CONTRAST.map((c, i) => (
             <Reveal key={c.title} delay={i * 0.08} className="border-b border-line py-10 md:border-b-0 md:border-l md:px-8 md:first:border-l-0 md:first:pl-0">
               <h3 className="text-h3 text-white">{c.title}</h3>
-              <ul className="mt-5 grid gap-1.5 text-[16px] text-ash">
+              <ul className="mt-5 grid gap-1.5 text-base text-ash">
                 {c.items.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
@@ -127,7 +127,7 @@ export default async function SobrePage() {
           <Reveal>
             <p className="label mb-5 text-paper-mute">Regra criativa</p>
             <h2 className="text-h2">Antes de qualquer projeto, a gente responde:</h2>
-            <p className="mt-6 max-w-sm text-[16px] text-paper-mute">
+            <p className="mt-6 max-w-sm text-base text-paper-mute">
               Se não houver resposta clara, o projeto ainda não está pronto.
             </p>
           </Reveal>
@@ -135,7 +135,7 @@ export default async function SobrePage() {
             {CREATIVE_RULE.map((q, i) => (
               <Reveal as="li" key={q.key} delay={i * 0.05} className="flex items-baseline gap-6 border-b border-paper-line py-6">
                 <span className="font-mono text-caption text-paper-mute">{String(i + 1).padStart(2, "0")}</span>
-                <span className="text-[clamp(20px,2vw,28px)] font-medium tracking-[-0.025em]">{q.question}</span>
+                <span className="text-h3">{q.question}</span>
               </Reveal>
             ))}
           </ol>
@@ -174,7 +174,7 @@ export default async function SobrePage() {
       <section className="container-zro pb-12">
         <Reveal className="mx-auto max-w-4xl text-center">
           <p className="label mb-6 text-mute">Como trabalhamos</p>
-          <p className="text-[clamp(26px,3.2vw,44px)] leading-[1.15] font-semibold tracking-[-0.035em] text-white">
+          <p className="text-h2 leading-[1.12] text-white">
             Não somos fornecedores. Somos parceiros criativos. Você traz o problema, o objetivo ou a ideia. Juntos
             encontramos conceito, narrativa, linguagem e direção.
           </p>

@@ -94,7 +94,7 @@ export function FilmCard({
 
         {film.posterUrl ? (
           <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-            <p className="text-[clamp(20px,2vw,28px)] leading-tight font-semibold tracking-[-0.03em] text-white">
+            <p className="text-h3 font-semibold text-white">
               {film.title}
             </p>
           </div>
@@ -122,7 +122,7 @@ function TitleCard({ film }: { film: FilmSummary }) {
         </div>
       </div>
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-        <p className="max-w-[80%] text-[clamp(24px,2.6vw,40px)] leading-[1.02] font-semibold tracking-[-0.04em] text-white">
+        <p className="max-w-[80%] text-title text-white">
           {film.title}
         </p>
         {film.summary ? <p className="mt-2 max-w-[70%] text-caption text-mute">{film.summary}</p> : null}

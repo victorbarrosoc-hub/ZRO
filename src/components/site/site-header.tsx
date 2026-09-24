@@ -57,7 +57,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-full px-3.5 py-2 text-[14px] transition-colors duration-300",
+                  "rounded-full px-3.5 py-2 text-sm transition-colors duration-300",
                   active ? "text-white" : "text-ash hover:text-white",
                 )}
               >
@@ -122,7 +122,7 @@ export function SiteHeader() {
                     <Link
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="block py-2 text-[40px] leading-tight font-semibold tracking-[-0.04em] text-white"
+                      className="block py-2 text-h1 text-white"
                     >
                       {item.label}
                     </Link>
@@ -133,7 +133,7 @@ export function SiteHeader() {
                 <Link
                   href="/orcamento"
                   onClick={() => setOpen(false)}
-                  className="flex h-14 items-center justify-center rounded-full bg-white text-[16px] font-medium text-void"
+                  className="flex h-14 items-center justify-center rounded-full bg-white text-base font-medium text-void"
                 >
                   Começar um projeto
                 </Link>

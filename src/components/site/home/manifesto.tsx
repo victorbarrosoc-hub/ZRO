@@ -37,7 +37,7 @@ function ManifestoLine({ text, index }: { text: string; index: number }) {
         className="zro-manifesto-line relative max-w-[16ch] text-center text-manifesto"
         style={{ color, filter }}
       >
-        <span className="label mb-6 block text-[11px] tracking-[0.3em] text-mute sm:mb-8">
+        <span className="label mb-6 block tracking-[0.3em] text-mute sm:mb-8">
           {String(index + 1).padStart(2, "0")}
         </span>
         {text}
@@ -57,7 +57,7 @@ export function Manifesto({ film }: { film: PlayableFilm | null }) {
         <div className={cn("relative flex min-h-[80vh] flex-col items-center justify-center pb-24 text-center")}>
           <div className="halo pointer-events-none absolute top-1/2 left-1/2 size-[900px] max-w-[140vw] -translate-x-1/2 -translate-y-1/2 opacity-80" aria-hidden />
           <Logo className="relative h-[clamp(48px,9vw,120px)] text-white" />
-          <p className="relative mt-8 max-w-[18ch] text-[clamp(24px,3.2vw,44px)] leading-[1.05] font-semibold tracking-[-0.035em] text-white">
+          <p className="relative mt-8 max-w-[18ch] text-h2 text-white">
             Onde tudo começa e o comum termina.
           </p>
           {film ? (
