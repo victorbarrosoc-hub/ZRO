@@ -1,7 +1,7 @@
 # Briefing: site e plataforma da ZRO
 
 > Registrado em 24/09/2026 a partir do pedido do Victor. Base da marca: `docs/marca/documento-mestre.md`.
-> **Status:** aguardando as referências de UI/UX pra começar o design.
+> **Status:** recebendo as referências de UI/UX (lote 1 em `docs/referencias-ui/`).
 
 ## Visão geral
 
@@ -211,7 +211,7 @@ SERHS (Grand Hotel, Beach e Pipa), SESI/FIEPB, SUDECO e Quartzo Soluções em Au
 
 ## Pendências
 
-- [ ] **Referências de UI/UX** (o Victor vai mandar)
+- [ ] **Referências de UI/UX:** lote 1 em `docs/referencias-ui/`, mais a caminho
 - [ ] **Melhores vídeos:** lista, onde estão hospedados e a categoria de cada um
 - [ ] **Nomes finais das categorias** do portfólio
 - [ ] **Equipe:** nomes, funções, fotos e uma frase

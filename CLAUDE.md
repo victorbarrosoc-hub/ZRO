@@ -7,6 +7,7 @@ Antes de propor ou construir qualquer coisa, leia:
 1. `docs/marca/documento-mestre.md`: a fonte de verdade da marca (conceito, manifesto, tom de voz, regras)
 2. `docs/briefing.md`: o que o site e a área interna precisam ter, dados que já existem e pendências
 3. `docs/marca/identidade-visual.md`: leitura técnica do logo, das cores, da tipografia e do filme manifesto
+4. `docs/referencias-ui/README.md`: as referências de UI/UX e o que levar de cada uma
 
 ## Quem é a ZRO
 
@@ -49,7 +50,7 @@ Antes de propor ou construir qualquer coisa, leia:
 ## Status
 
 - [x] Contexto, documento-mestre, identidade visual e briefing registrados
-- [ ] Referências de UI/UX (o Victor vai mandar)
+- [ ] Referências de UI/UX: lote 1 recebido, o Victor vai mandar mais
 - [ ] Definir a stack e começar pelo site público + funil do WhatsApp
 - [ ] Área interna (CRM, orçamentos, freelas, financeiro, agenda, processos)
 
@@ -63,6 +64,7 @@ brand/
   referencias/   filme manifesto, story da marca e quadros-chave do filme
 docs/
   briefing.md    site + área interna: escopo, dados existentes, pendências
+  referencias-ui/  prints de referência de UI/UX + notas (README.md)
   marca/
     documento-mestre.md   texto oficial da marca
     identidade-visual.md  cores, tipografia, textura e movimento
