@@ -172,7 +172,7 @@ export function ServicesSection() {
             </div>
             <div className="relative hidden min-h-[320px] sm:block">
               <Image
-                src="/media/absolute/eclipse.jpg"
+                src="/media/absolute/eclipse-alta.jpg"
                 alt=""
                 fill
                 sizes="280px"

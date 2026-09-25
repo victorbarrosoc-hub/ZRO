@@ -89,9 +89,9 @@ export default function AbsolutePage() {
             <div className="grid grid-cols-2 gap-px bg-white/10 lg:contents">
               <Panel className="min-h-[300px]">
                 <Photo
-                  src="/media/absolute/eclipse.jpg"
-                  w={514}
-                  h={728}
+                  src="/media/absolute/eclipse-alta.jpg"
+                  w={1285}
+                  h={1820}
                   alt="Eclipse: o disco escuro com a borda acesa em azul"
                   sizes="(min-width: 1024px) 20vw, 50vw"
                   className="absolute inset-0"
@@ -218,9 +218,9 @@ export default function AbsolutePage() {
           <div className="grid gap-px bg-white/10 lg:grid-cols-2">
             <Panel className="aspect-[564/510]">
               <Photo
-                src="/media/absolute/paisagem.jpg"
-                w={564}
-                h={510}
+                src="/media/absolute/paisagem-feixe.jpg"
+                w={1410}
+                h={1275}
                 alt="Paisagem noturna com um feixe de luz: do bruto ao absoluto"
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 className="absolute inset-0"
