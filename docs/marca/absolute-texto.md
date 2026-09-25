@@ -4,42 +4,57 @@ Base de texto da Absolute ZRO para site, Instagram, propostas e conversas com cl
 Organizada a partir de como as casas de pós se apresentam no Brasil e fora (pesquisa de setembro de 2026):
 Cora Post, Yellow Pós, Picma, DOT Cine, Liquor, Company 3, Time Based Arts e Cheat.
 
+## Posicionamento
+
+**Casa de color grading high-end.** A Absolute ZRO assina como empresa: **nenhum texto público leva nome de pessoa**
+(o Victor faz a cor, mas a marca precisa crescer com equipe). Créditos saem como `Color: Absolute ZRO`.
+
 ## Para quem fala
 
 Produtoras, agências, diretores e diretores de fotografia: gente que já sabe o que é grading.
-A linguagem é técnica e humana: português, com os termos do mercado em inglês (color grading, look, match, LOG, RAW),
-frases curtas e nada de explicar o básico.
+
+## Tom
+
+- **Pouco texto, frase declarativa.** A casa não se explica: mostra o trabalho e diz o essencial
+- **Sem "a gente"**, sem conversa de vendedor, sem ponto de exclamação
+- **Rótulos no inglês do mercado** (Color grading, Look development, Finishing, Mastering); frases em português
+- **Técnico como prova**, nunca como enfeite
+- **Nada de trinca abstrata** nem palavra grande
 
 ## O que as casas de pós fazem (e a Absolute segue)
 
 - **Uma frase curta na abertura**, sem lista (Cora: "We build what people feel before they understand.")
-- **Uma frase de quem somos e para quem** (Cora: "full-service post-production studio serving the advertising and entertainment industries")
+- **Uma linha de quem é e para quem** (Cora: "full-service post-production studio serving the advertising and entertainment industries")
 - **Serviços em lista seca**, sem adjetivo
 - **Trabalho como crédito**: cliente, projeto e formato. Reel primeiro, pouco texto
-- **O colorista é o rosto da casa** (Yellow, DOT Cine, Company 3)
 - **Parceria com a produtora**, não "prestação de serviço" (Yellow)
-- **O técnico entra como prova**, nunca como enfeite (Yellow, Cheat)
 
 ## O texto
 
 | Peça | Texto |
 | --- | --- |
 | Assinatura | Do bruto ao absoluto. |
-| Frase de abertura | Cada frame tem uma temperatura. *(provisória, a confirmar com o Victor; alternativas: "A última decisão do filme é a cor." e "Cor é decisão, não filtro.")* |
-| Quem somos | A Absolute ZRO é a casa de color grading e finalização da ZRO Filmes. Atende produtoras, agências e diretores em publicidade, cinema e conteúdo. |
-| Colorista | Victor Barroso (assina a cor) |
-| Serviços | Color grading · Construção de look · Finalização e masterização · Pós para produtoras |
-| Como trabalha | Entramos como extensão do time de pós da produtora, alinhados com direção e fotografia. |
-| Chamada | Envie seu projeto. |
+| Frase de abertura | Cada frame tem uma temperatura. *(provisória; alternativas: "A última decisão do filme é a cor." e "Cor é decisão, não filtro.")* |
+| Quem é | Absolute ZRO. Color grading e finalização para publicidade, cinema e conteúdo. |
+| Serviços | Color grading · Look development · Finishing · Mastering |
+| Parceria | Extensão do time de pós da produtora, alinhada com direção e fotografia. |
+| Chamada | Agenda aberta. / Contato na bio. |
 
-**Crédito de trabalho:** `Cliente · Projeto · Formato` e, embaixo, `Color: Victor Barroso`.
+**Crédito de trabalho:**
+
+```
+Cliente — Projeto
+Direção: … · Fotografia: …
+Color: Absolute ZRO
+```
 
 **Técnico confirmado:** DaVinci Resolve Studio (tela real de um grading da ZRO).
-A confirmar com o Victor antes de citar: monitor de referência calibrado, HDR, sessão presencial ou remota e formatos de entrega (DCP etc.).
+A confirmar antes de citar: monitor de referência calibrado, HDR, sessão presencial ou remota e formatos de entrega (DCP etc.).
 Nada entra sem ser verdade.
 
 ## Evitar
 
+- Nome de pessoa em texto público (a Absolute assina como empresa)
 - "Braço especializado", "estado mais absoluto", "a forma final da imagem" em texto corrido
 - Trincas abstratas ("precisão, controle e intenção", "mistério e origem")
 - Explicar a marca como manual (paleta, símbolos, tipografia) em post
@@ -47,21 +62,32 @@ Nada entra sem ser verdade.
 
 ## Instagram
 
-**Bio** (138 caracteres):
+**Bio** (escolhida: a 1; as outras ficam de alternativa)
 
 ```
-Casa de color grading e finalização
-Colorista: Victor Barroso
-Publicidade, cinema e conteúdo
-by @zrofilmes · Natal/RN · envie seu projeto ↓
+Color grading & finishing
+Publicidade · Cinema · Conteúdo
+Natal, Brasil · by @zrofilmes
+```
+
+```
+Cada frame tem uma temperatura.
+Color grading & finishing · by @zrofilmes
+Natal, Brasil
+```
+
+```
+Color grading & finishing house
+Advertising · Film · Content
+Natal, BR · by @zrofilmes
 ```
 
 **Post 1: A ZRO apresenta**
 
 ```
-A ZRO apresenta: Absolute ZRO.
+A ZRO apresenta Absolute ZRO.
 
-Casa de color grading e finalização da @zrofilmes, com Victor Barroso na cor. Agora atendendo produtoras, agências e diretores em publicidade, cinema e conteúdo.
+Color grading e finalização para publicidade, cinema e conteúdo.
 
 Do bruto ao absoluto.
 ```
@@ -71,7 +97,7 @@ Do bruto ao absoluto.
 ```
 Cada frame tem uma temperatura.
 
-O nome vem do zero absoluto, 0 K, o ponto mais frio da escala Kelvin. É daí que vêm o azul e o anel da marca.
+A nossa começa no zero absoluto: 0 K.
 ```
 
 **Post 3: Do bruto ao absoluto**
@@ -79,9 +105,9 @@ O nome vem do zero absoluto, 0 K, o ponto mais frio da escala Kelvin. É daí qu
 ```
 Do bruto ao absoluto.
 
-Color grading, look, finalização e masterização no DaVinci Resolve Studio, junto com direção e fotografia.
+Color grading · Look development · Finishing · Mastering
 
-Envie seu projeto pelo link na bio.
+Agenda aberta. Contato na bio.
 ```
 
 Hashtags: `#colorgrading #colorist #davinciresolve #posprodução #finalização #audiovisual`
