@@ -77,6 +77,7 @@ Referência: `brand/absolute-zro/referencia-board.png` (o Victor pediu "igual, �
 - **Assinatura de apoio:** COLOR GRADING & FINISHING (Montserrat, caixa alta, espaçada). Frase: "Do bruto ao absoluto."
 - **Símbolos:** Eclipse (mistério, origem), Lente (precisão, controle) e Absolute Ring (estado final).
 - **Avatar do Instagram:** `public/media/absolute/avatar-instagram.png` (1080×1080), com link para baixar em https://zrofilmes.vercel.app/media/absolute/avatar-instagram.png. É o Absolute Ring do board, redesenhado com as medidas do original: núcleo branco-gelo, azul em volta, brilho forte para dentro, mais azul do lado direito. O anel ocupa 57% do quadro e o brilho some antes da borda, então o recorte redondo do Instagram não corta nada.
+- **Posts fixados do Instagram:** `public/media/absolute/instagram/post-01.jpg` a `post-03.jpg` (1080×1350): 01 o logo e a assinatura, 02 o que fazemos, 03 frames reais da ZRO e a tela do DaVinci. Só logo, anel e trabalho de verdade.
 - **Paleta:** preto `#000000`, azul profundo `#0B1F2D`, azul Absolute `#2D7BFF` (5,4:1 sobre o preto, serve para texto), branco frio `#F5F7FA`.
 - **Tipografia:** Montserrat Light + Medium (token `font-absolute`). O resto do site segue com Inter.
 - **Código:** `src/components/brand/absolute-logo.tsx` (`AbsoluteLogo` horizontal/empilhado, `AbsoluteSymbol`, `AbsoluteEclipse`, `AbsoluteLens`). O anel sempre usa `--color-abs-blue`; o resto usa `currentColor`. Em tamanhos pequenos ou impressão, `glow={false}`.
