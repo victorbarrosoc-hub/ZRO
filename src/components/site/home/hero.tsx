@@ -38,14 +38,6 @@ export function Hero({ latest }: { latest: (PlayableFilm & { year?: number | nul
         className="zro-parallax container-zro relative flex h-full flex-col pt-24 pb-8 sm:pb-10"
         style={{ y: contentY, opacity: contentOpacity }}
       >
-        <motion.div className="zro-reveal flex items-start justify-between" {...fade(0.4)}>
-          <p className="label text-mute">
-            <span className="text-ash">Produtora audiovisual</span>
-            <span className="hidden sm:inline"> · Natal/RN</span>
-          </p>
-          <p className="label hidden text-mute sm:block">Filmes · Campanhas · Documentários</p>
-        </motion.div>
-
         <div className="mt-auto grid items-end gap-10 lg:grid-cols-[1fr_auto]">
           <div className="max-w-4xl">
             <h1 id="hero-title" className="text-h1 text-white">

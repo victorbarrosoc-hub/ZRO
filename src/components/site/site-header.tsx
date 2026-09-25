@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/logo";
@@ -68,6 +69,21 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {/* Entrada dos sócios: discreta ao lado do convite ao cliente, mas sempre à vista. */}
+          <Link
+            href="/entrar"
+            className="hidden h-9 items-center gap-2 rounded-full border border-line-strong px-3.5 text-caption text-light transition-colors hover:border-white/40 hover:text-white sm:inline-flex"
+          >
+            <LockKeyhole className="size-3.5" aria-hidden />
+            Área interna
+          </Link>
+          <Link
+            href="/entrar"
+            aria-label="Área interna"
+            className="grid size-10 place-items-center rounded-full border border-line-strong text-light transition-colors hover:border-white/40 hover:text-white sm:hidden"
+          >
+            <LockKeyhole className="size-4" aria-hidden />
+          </Link>
           <Link
             href="/orcamento"
             className="hidden h-9 items-center rounded-full bg-white px-4 text-caption font-medium text-void transition-colors hover:bg-light sm:inline-flex"
@@ -130,13 +146,23 @@ export function SiteHeader() {
                 ))}
               </ul>
               <div className="mt-auto grid gap-6">
-                <Link
-                  href="/orcamento"
-                  onClick={() => setOpen(false)}
-                  className="flex h-14 items-center justify-center rounded-full bg-white text-base font-medium text-void"
-                >
-                  Começar um projeto
-                </Link>
+                <div className="grid gap-3">
+                  <Link
+                    href="/orcamento"
+                    onClick={() => setOpen(false)}
+                    className="flex h-14 items-center justify-center rounded-full bg-white text-base font-medium text-void"
+                  >
+                    Começar um projeto
+                  </Link>
+                  <Link
+                    href="/entrar"
+                    onClick={() => setOpen(false)}
+                    className="flex h-14 items-center justify-center gap-2 rounded-full border border-line-strong text-base text-light"
+                  >
+                    <LockKeyhole className="size-4" aria-hidden />
+                    Área interna
+                  </Link>
+                </div>
                 <p className="label text-center text-mute">Onde tudo começa e o comum termina.</p>
               </div>
             </nav>
