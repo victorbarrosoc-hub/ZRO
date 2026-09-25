@@ -5,7 +5,9 @@ import { ArrowUpRight } from "lucide-react";
 import { AbsoluteEclipse, AbsoluteLens, AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
 import { Logo } from "@/components/brand/logo";
 import { CompareSlider } from "@/components/site/compare-slider";
+import { FramesMosaic } from "@/components/site/frames-mosaic";
 import { Reveal } from "@/components/site/reveal";
+import { FRAMES } from "@/lib/frames";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -149,6 +151,12 @@ export default function AbsolutePage() {
               <CompareSlider src="/media/feixe-de-luz.jpg" />
             </div>
           </Panel>
+
+          {/* Frames finalizados: trabalho real da ZRO */}
+          <Panel className="px-6 pt-10 pb-6 sm:px-9">
+            <Tag>A imagem em seu estado absoluto</Tag>
+          </Panel>
+          <FramesMosaic frames={FRAMES} variant="board" />
 
           {/* Linha 5: o que fazemos · ZRO × Absolute */}
           <div className="grid gap-px bg-white/10 lg:grid-cols-2">

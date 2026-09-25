@@ -6,10 +6,12 @@ import { FilmGrid } from "@/components/site/film-grid";
 import type { FilmSummary } from "@/components/site/film-card";
 import { FilmPlayer, PlayGlyph } from "@/components/site/film-player";
 import { FaqList } from "@/components/site/faq-list";
+import { FramesMosaic } from "@/components/site/frames-mosaic";
 import { Reveal } from "@/components/site/reveal";
 import { RotatingBadge } from "@/components/site/rotating-badge";
 import { CATEGORIES, FUNNEL_PROJECT_TYPES, STAGES, categoryLabel } from "@/lib/domain";
 import { initials } from "@/lib/format";
+import { FRAMES } from "@/lib/frames";
 import { cn } from "@/lib/utils";
 
 export function SectionHeading({
@@ -97,6 +99,19 @@ export function PortfolioSection({ films }: { films: FilmSummary[] }) {
           }
         />
         <FilmGrid films={films} limit={6} />
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Frames ---------------- */
+
+export function FramesSection() {
+  return (
+    <section className="section-y pt-0" aria-labelledby="frames-titulo">
+      <div className="container-zro">
+        <SectionHeading label="Frames" title={<span id="frames-titulo">Do contraste nasce a forma.</span>} />
+        <FramesMosaic frames={FRAMES} />
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import {
   ClientsSection,
   FaqSection,
   FeaturedFilm,
+  FramesSection,
   PortfolioSection,
   ProcessSection,
   ServicesSection,
@@ -37,6 +38,7 @@ export default async function HomePage() {
       <Marquee items={["Filmes de marca", "Campanhas", "Conteúdo", "Documental", "Direção criativa"]} />
       {featured ? <FeaturedFilm film={featured} /> : null}
       <PortfolioSection films={films} />
+      <FramesSection />
       <ServicesSection />
       <ProcessSection />
       <ClientsSection clients={clients} />
