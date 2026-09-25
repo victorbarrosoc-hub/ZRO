@@ -67,12 +67,18 @@ export default function AbsolutePage() {
           <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,60fr)_minmax(0,20fr)_minmax(0,20fr)]">
             <Panel className="grid min-h-[420px] place-content-center justify-items-center gap-7 px-6 py-20 text-center lg:min-h-[520px]">
               <Reveal>
+                {/* O logo exatamente como o Victor enviou (brand/absolute-zro/logo-original.png). */}
                 <h1>
-                  <AbsoluteLogo className="h-auto w-[min(640px,86vw)] text-abs-ice" />
+                  <Image
+                    src="/media/absolute/logo.png"
+                    width={1520}
+                    height={310}
+                    priority
+                    alt="Absolute ZRO · Color grading & finishing"
+                    sizes="(min-width: 1024px) 760px, 92vw"
+                    className="h-auto w-[min(760px,92vw)] mix-blend-screen"
+                  />
                 </h1>
-              </Reveal>
-              <Reveal delay={0.15}>
-                <Tag className="text-[10px] tracking-[0.55em] sm:text-[12px]">Color grading &amp; finishing</Tag>
               </Reveal>
               <Reveal delay={0.3} className="mt-12 sm:mt-16">
                 <Tag className="text-[10px] tracking-[0.55em] sm:text-[12px]">Do bruto ao absoluto.</Tag>

@@ -73,7 +73,7 @@ Ritmo lento e contemplativo, com cortes marcados pelo texto.
 
 Referência: `brand/absolute-zro/referencia-board.png` (o Victor pediu "igual, é essa logo e essas cores"). A página `/absolute` é a réplica do board, adaptada para o site.
 
-- **Logo:** "A B S O L U T E" em Montserrat Light (espaçamento 1em, centrado na altura do ZRO) + um **ZR próprio da Absolute** (traço fino; o R não tem haste) + o **O virando o Anel Absolute** (azul, com brilho e o lado direito aceso). É diferente do logo da ZRO de propósito: é o desenho do board. Versões horizontal e empilhada (ABSOLUTE em cima, ZR◯ embaixo: porta, moletom, caderno).
+- **Logo:** o arquivo original do Victor é a referência: `brand/absolute-zro/logo-original.png`. "Λ B S O L U T E" fino e bem espaçado (o A sem travessão), o **ZR próprio da Absolute** (grosso, o R sem haste) e o **anel** fino azul-claro, aceso à direita com o ponto de luz. O site usa essa imagem tal qual no topo da `/absolute` e no cartão da home (`public/media/absolute/logo.png`); o vetor em `absolute-logo.tsx` reproduz as mesmas medidas para os tamanhos pequenos.
 - **Assinatura de apoio:** COLOR GRADING & FINISHING (Montserrat, caixa alta, espaçada). Frase: "Do bruto ao absoluto."
 - **Símbolos:** Eclipse (mistério, origem), Lente (precisão, controle) e Absolute Ring (estado final).
 - **Paleta:** preto `#000000`, azul profundo `#0B1F2D`, azul Absolute `#2D7BFF` (5,4:1 sobre o preto, serve para texto), branco frio `#F5F7FA`.
