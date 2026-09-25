@@ -12,6 +12,7 @@ Antes de propor ou construir qualquer coisa, leia:
 4. `docs/referencias-ui/README.md`: as referências de UI/UX e o que levar de cada uma
 5. `docs/dev/area-interna.md`: padrões de código da área interna (obrigatório antes de mexer em `/painel`)
 6. `docs/marca/mood.md`, `voice.md` e `tokens.md`: usados pelas skills de crítica de marca
+7. `docs/marca/absolute-texto.md`: texto base da Absolute ZRO (tom técnico para produtoras, colorista, bio e legendas)
 
 ## Quem é a ZRO
 
@@ -23,7 +24,7 @@ Antes de propor ou construir qualquer coisa, leia:
 
 ## Sócios
 
-- **Victor Barroso:** criativo. Está nas produções e cuida do nível de qualidade da entrega. É quem conversa com o Claude aqui.
+- **Victor Barroso:** criativo. Está nas produções e cuida do nível de qualidade da entrega. **É o colorista: assina a cor da Absolute ZRO.** É quem conversa com o Claude aqui.
 - **Edu Cardoso** (Eduardo Rocha Cardoso): administrativo e financeiro. Cuida da parte burocrática: propostas, notas, certidões e contratos.
 - A área interna da plataforma é **só para os dois**.
 
