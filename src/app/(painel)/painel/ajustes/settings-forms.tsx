@@ -123,6 +123,9 @@ export function CompanyForm({ company }: { company: CompanySettings }) {
                 <Input id="co-ig" name="instagram" defaultValue={company.instagram} className="pl-8" placeholder="zrofilmes" />
               </div>
             </Field>
+            <Field label="Canal do YouTube" htmlFor="co-yt" error={fieldError(state, "youtube")} className="sm:col-span-2">
+              <Input id="co-yt" name="youtube" inputMode="url" defaultValue={company.youtube} placeholder="youtube.com/@ZROFilmes" />
+            </Field>
             <Field label="Site" htmlFor="co-site" error={fieldError(state, "website")} className="sm:col-span-2">
               <Input id="co-site" name="website" inputMode="url" defaultValue={company.website} placeholder="zrofilmes.com.br" />
             </Field>

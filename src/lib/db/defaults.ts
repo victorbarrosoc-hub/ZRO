@@ -14,10 +14,11 @@ export const DEFAULT_SETTINGS = {
     financeEmail: "financeiro.zro@gmail.com",
     phone: "",
     instagram: "zrofilmes",
+    youtube: "https://www.youtube.com/@ZROFilmes",
     website: "",
   },
   whatsapp: {
-    number: "",
+    number: "(84) 98748-0000",
   },
   taxes: {
     // Alíquota efetiva estimada do Simples Nacional, em %. Confirmar com o contador.
@@ -45,6 +46,7 @@ export type CompanySettings = {
   financeEmail: string;
   phone: string;
   instagram: string;
+  youtube: string;
   website: string;
 };
 export type WhatsappSettings = { number: string };

@@ -55,6 +55,13 @@ export async function SiteFooter() {
                     </a>
                   </li>
                 ) : null}
+                {company.youtube ? (
+                  <li>
+                    <a className="transition-colors hover:text-white" href={company.youtube} target="_blank" rel="noreferrer">
+                      YouTube
+                    </a>
+                  </li>
+                ) : null}
               </ul>
             </div>
             <div>

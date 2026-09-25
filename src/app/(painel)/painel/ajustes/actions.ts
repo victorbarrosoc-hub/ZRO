@@ -61,6 +61,7 @@ const CompanySchema = z.object({
     .max(60)
     .regex(/^[a-zA-Z0-9._]+$/, "Use só o usuário, sem espaço. Ex.: zrofilmes")
     .optional(),
+  youtube: z.string().max(200).optional(),
   website: z.string().max(200).optional(),
 });
 
@@ -79,6 +80,7 @@ export async function saveCompany(_prev: ActionResult | null, fd: FormData): Pro
         ?.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
         .replace(/^@/, "")
         .replace(/\/.*$/, "") || undefined,
+    youtube: str(fd, "youtube"),
     website: str(fd, "website"),
   });
   if (!parsed.success) return fromZod(parsed.error);
@@ -88,6 +90,10 @@ export async function saveCompany(_prev: ActionResult | null, fd: FormData): Pro
   if (cnpj === null) return fail("CNPJ inválido. Confira os números.", { cnpj: ["CNPJ inválido. Confira os números."] });
   const website = normalizeWebsite(data.website);
   if (website === null) return fail("Endereço do site inválido.", { website: ["Use um endereço como zrofilmes.com.br."] });
+  const youtube = normalizeWebsite(data.youtube);
+  if (youtube === null || (youtube && !/^https:\/\/(www\.)?youtube\.com\//.test(youtube))) {
+    return fail("Link do YouTube inválido.", { youtube: ["Use o link do canal, ex.: youtube.com/@ZROFilmes"] });
+  }
 
   await saveSetting("company", {
     legalName: data.legalName,
@@ -98,6 +104,7 @@ export async function saveCompany(_prev: ActionResult | null, fd: FormData): Pro
     financeEmail: data.financeEmail ?? "",
     phone: data.phone ?? "",
     instagram: data.instagram ?? "",
+    youtube: youtube ?? "",
     website: website ?? "",
   });
   revalidateSettings();

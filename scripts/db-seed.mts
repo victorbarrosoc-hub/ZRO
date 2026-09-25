@@ -62,7 +62,8 @@ await db
       year: 2026,
       format: "16:9",
       summary: "O jantar como experiência no SERHS Grand Hotel.",
-      sortOrder: 1,
+      published: false, // sem link ainda: entra no site quando tiver vídeo
+      sortOrder: 21,
     },
     {
       id: "film-tapiro",
@@ -73,7 +74,8 @@ await db
       year: 2026,
       format: "16:9",
       summary: "A primeira luz do dia à mesa.",
-      sortOrder: 2,
+      published: false, // sem link ainda: entra no site quando tiver vídeo
+      sortOrder: 22,
     },
     {
       id: "film-sudeco",
@@ -84,7 +86,8 @@ await db
       year: 2026,
       format: "16:9",
       summary: "O desenvolvimento do Centro-Oeste contado por quem o constrói.",
-      sortOrder: 3,
+      published: false, // sem link ainda: entra no site quando tiver vídeo
+      sortOrder: 23,
     },
     {
       id: "film-caravana",
@@ -95,7 +98,8 @@ await db
       year: 2026,
       format: "16:9",
       summary: "Uma viagem pelos territórios da caravana.",
-      sortOrder: 4,
+      published: false, // sem link ainda: entra no site quando tiver vídeo
+      sortOrder: 24,
     },
     {
       id: "film-nordeste-criativo",
@@ -112,16 +116,9 @@ await db
   ])
   .onConflictDoNothing();
 
-/* ---------- Clientes que aparecem no site (confirmar autorização) ---------- */
-await db
-  .insert(s.showcaseClients)
-  .values([
-    { id: "demo-sc-serhs", name: "SERHS", sortOrder: 0 },
-    { id: "demo-sc-sesi", name: "SESI", sortOrder: 1 },
-    { id: "demo-sc-fiepb", name: "FIEPB", sortOrder: 2 },
-    { id: "demo-sc-sudeco", name: "SUDECO", sortOrder: 3 },
-  ])
-  .onConflictDoNothing();
+/* ---------- Clientes que aparecem no site ---------- */
+// Clientes do site: vêm dos dados base (reais).
+
 
 /* ---------- Freelas (nomes fictícios, valores praticados em 2026) ---------- */
 await db

@@ -67,6 +67,12 @@ Antes de propor ou construir qualquer coisa, leia:
 - **Casamentos:** fora das categorias da ZRO até o Victor dizer o contrário
 - **Dados de exemplo:** ids começando com `demo-`, apagáveis em Ajustes
 
+## Já confirmado pelo Victor
+
+- **WhatsApp comercial:** (84) 98748-0000 · **e-mail de contato:** zro.contato@gmail.com
+- **YouTube:** https://www.youtube.com/@ZROFilmes (os filmes do portfólio vêm de lá, em `scripts/lib/base-data.ts`)
+- **Clientes no site:** todos podem aparecer
+
 ## Estrutura
 
 ```

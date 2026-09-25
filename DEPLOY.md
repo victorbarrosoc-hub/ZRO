@@ -45,8 +45,8 @@ A Vercel publica em produção o que está na `main`. Fazer o merge da branch `c
 ### 4. Primeiro acesso
 
 1. Abrir **https://zrofilmes.vercel.app/entrar** e entrar com o e-mail e a senha do passo 2.
-2. **Painel → Ajustes:** número do WhatsApp (sem ele o funil fecha por e-mail), CNPJ, endereço, impostos e condições do orçamento.
-3. **Painel → Site:** links do Vimeo ou YouTube de cada filme, fotos da equipe e clientes em destaque.
+2. **Painel → Ajustes:** conferir WhatsApp (já vem (84) 98748-0000), e-mail, CNPJ, endereço, impostos e condições do orçamento.
+3. **Painel → Site:** os 10 filmes do canal do YouTube já entram no primeiro deploy; faltam as fotos da equipe (link do Google Drive serve).
 4. Com as contas criadas, dá pra apagar `ZRO_VICTOR_PASSWORD` e `ZRO_EDU_PASSWORD` da Vercel. A senha fica guardada só como hash no banco.
 
 ## Depois
