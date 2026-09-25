@@ -54,6 +54,7 @@ A Vercel publica em produção o que está na `main`. Fazer o merge da branch `c
 - **Cada push na `main` publica sozinho.** Os branches de desenvolvimento do Claude (`claude/…`) não geram prévia (`vercel.json`).
 - **Um endereço, um banco:** a área interna só abre em `zrofilmes.vercel.app`. Qualquer prévia da Vercel manda pra lá, pra ninguém trabalhar num banco de teste sem perceber.
 - **Dois bancos ligados = deploy parado.** Se o projeto tiver mais de um banco Turso conectado, o build para e lista quais são. Deixe só o certo em Storage (ou defina `DATABASE_URL`/`DATABASE_AUTH_TOKEN`). O site no ar continua como estava.
+- **Banco trocado = deploy parado.** Em produção, cada deploy confere se o banco é o mesmo do deploy anterior. Se vier um banco vazio ou uma cópia (por exemplo, uma integração criando banco novo a cada deploy), o build para com `Deploy parado para proteger os dados` e o site continua no ar com os dados de antes. Trocou o banco de propósito? Crie `ZRO_ACEITAR_BANCO_NOVO=1`, publique e apague a variável depois.
 - **Conferir o banco:** Painel → Ajustes → **Dados e backup** mostra o nome e a identidade do banco e quantos leads, orçamentos e projetos ele tem. O log de cada deploy mostra a mesma linha (`Banco pronto: …`).
 - **Backup:** no mesmo lugar, **Baixar backup (.json)** com tudo, menos senhas. Vale guardar um por semana no Google Drive.
 - **Domínio próprio:** Vercel → Settings → Domains → adicionar o domínio → apontar o DNS como a Vercel indicar → trocar `NEXT_PUBLIC_SITE_URL` → Redeploy.
