@@ -71,14 +71,14 @@ Ritmo lento e contemplativo, com cortes marcados pelo texto.
 
 ## Absolute ZRO: identidade (escolhida pelo Victor)
 
-Referência: `brand/absolute-zro/referencia-board.png` (o Victor pediu "igual"). Réplica em código: `brand/absolute-zro/board-v1.jpg`.
+Referência: `brand/absolute-zro/referencia-board.png` (o Victor pediu "igual, é essa logo e essas cores"). A página `/absolute` é a réplica do board, adaptada para o site.
 
-- **Logo:** "A B S O L U T E" em Montserrat Light, espaçamento bem aberto, seguido do **ZR** do logo oficial da ZRO com o **O virando o Anel Absolute** (anel azul com brilho). Versões horizontal e empilhada (ABSOLUTE em cima, ZR◯ embaixo: porta, moletom, caderno).
+- **Logo:** "A B S O L U T E" em Montserrat Light (espaçamento 1em, centrado na altura do ZRO) + um **ZR próprio da Absolute** (traço fino; o R não tem haste) + o **O virando o Anel Absolute** (azul, com brilho e o lado direito aceso). É diferente do logo da ZRO de propósito: é o desenho do board. Versões horizontal e empilhada (ABSOLUTE em cima, ZR◯ embaixo: porta, moletom, caderno).
 - **Assinatura de apoio:** COLOR GRADING & FINISHING (Montserrat, caixa alta, espaçada). Frase: "Do bruto ao absoluto."
 - **Símbolos:** Eclipse (mistério, origem), Lente (precisão, controle) e Absolute Ring (estado final).
 - **Paleta:** preto `#000000`, azul profundo `#0B1F2D`, azul Absolute `#2D7BFF` (5,4:1 sobre o preto, serve para texto), branco frio `#F5F7FA`.
 - **Tipografia:** Montserrat Light + Medium (token `font-absolute`). O resto do site segue com Inter.
 - **Código:** `src/components/brand/absolute-logo.tsx` (`AbsoluteLogo` horizontal/empilhado, `AbsoluteSymbol`, `AbsoluteEclipse`, `AbsoluteLens`). O anel sempre usa `--color-abs-blue`; o resto usa `currentColor`. Em tamanhos pequenos ou impressão, `glow={false}`.
-- **Fotos de mockup do board** (estúdio, porta, moletom, monitor): pedem geração de imagem (Higgsfield), só com aprovação e custo informado ao Victor.
+- **Fotos:** recortadas do próprio board, em `public/media/absolute/` (eclipse, cartão, estúdio, porta, corredor, câmera, Instagram, moletom, caderno, paisagem). Estão na resolução do board; para versões maiores, gerar de novo (Higgsfield, só com aprovação e custo informado ao Victor).
 
 Histórico: antes do board houve duas rodadas de propostas (|ZRO| com azul Kelvin e ABSOLUTE by ZRO), descartadas pelo Victor.

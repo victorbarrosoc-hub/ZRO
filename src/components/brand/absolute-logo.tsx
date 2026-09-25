@@ -1,9 +1,10 @@
 "use client";
 
 /*
- * Absolute ZRO: logo e símbolos (direção escolhida pelo Victor a partir do board de referência).
- * - "A B S O L U T E" em Montserrat Light, bem espaçado (em contorno: não depende da fonte).
- * - "ZR" do logo oficial da ZRO + o O virando o Anel Absolute: um anel azul que brilha.
+ * Absolute ZRO: logo e símbolos, desenhados a partir do board de referência do Victor
+ * (brand/absolute-zro/referencia-board.png).
+ * - "A B S O L U T E" em Montserrat Light, espaçamento de 1em, centrado na altura do ZRO.
+ * - "ZR" próprio da Absolute (traço fino, R sem haste) + o O virando o Anel Absolute: azul, com brilho.
  * - Símbolos: Anel (estado final), Eclipse (mistério, origem) e Lente (precisão, controle).
  * Paleta: preto #000000, azul profundo #0B1F2D, azul Absolute #2D7BFF, branco frio #F5F7FA.
  * Base em currentColor; o azul vem de --color-abs-blue.
@@ -11,48 +12,85 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-/* Z e R do logo oficial (components/brand/logo.tsx), sem o O. */
+/* Z e R da Absolute (altura 300, traço 36): o R não tem haste, como no board. */
 const ZR_PATH =
-  "M9 1H275V9L109 269H275V326H0V318L165 58H9ZM307 1H422C497 1 540 38 540 100C540 150 510 183 457 193L554 326H473L388 199H375V326H307ZM375 60H414C450 60 471 75 471 100C471 125 450 141 414 141H375Z";
+  "M0 0H270V36L50 264H270V300H0V264L220 36H0Z" +
+  "M356 0H531A84 84 0 0 1 531 168H356V132H531A48 48 0 0 0 531 36H356Z" +
+  "M386 168H448L641 300H579Z";
+const ZR_H = 300;
+const ZR_W = 641;
 
-/* "ABSOLUTE" em Montserrat Light, espaçamento 0,62em. Maiúsculas com 62% da altura do ZRO. */
+/* "ABSOLUTE" em Montserrat Light, espaçamento 1em. Maiúsculas com 55% da altura do ZR. */
 const ABSOLUTE_PATH =
-  "M1 203L95 0L110 0L203 203L187 203L99 9L105 9L17 203ZM36 146L41 133L162 133L167 146ZM420 203L420 0L504 0Q537 0 556 13Q574 27 574 52Q574 68 566 80Q559 91 545 97Q531 102 514 102L519 97Q540 97 555 103Q570 109 577 120Q585 132 585 149Q585 175 566 189Q548 203 510 203ZM434 190L510 190Q539 190 555 180Q570 170 570 148Q570 126 555 116Q539 106 510 106L433 106L433 94L504 94Q530 94 545 84Q559 73 559 53Q559 33 545 23Q530 13 504 13L434 13ZM871 204Q848 204 828 197Q808 189 797 177L804 166Q814 177 832 184Q850 191 871 191Q891 191 904 186Q917 181 923 172Q929 163 929 152Q929 139 922 131Q915 123 904 118Q893 114 879 110Q866 107 852 104Q839 100 827 94Q816 88 809 78Q802 68 802 52Q802 38 810 26Q818 14 833 6Q849 -1 874 -1Q891 -1 908 3Q924 8 936 17L930 29Q917 20 903 16Q888 12 874 12Q855 12 842 17Q829 23 823 32Q817 41 817 52Q817 65 824 73Q831 81 842 86Q853 90 867 93Q881 97 894 100Q907 104 919 110Q930 115 937 125Q944 135 944 151Q944 165 936 177Q928 190 912 197Q896 204 871 204ZM1260 204Q1237 204 1218 197Q1199 189 1185 175Q1170 161 1162 142Q1154 124 1154 102Q1154 79 1162 61Q1170 42 1185 28Q1199 14 1218 6Q1237 -1 1260 -1Q1283 -1 1302 6Q1321 14 1335 28Q1350 42 1358 60Q1366 79 1366 102Q1366 124 1358 143Q1350 161 1335 175Q1321 189 1302 197Q1283 204 1260 204ZM1260 191Q1279 191 1296 184Q1313 177 1325 165Q1337 153 1344 137Q1351 121 1351 102Q1351 82 1344 66Q1337 50 1325 38Q1313 26 1296 19Q1279 12 1260 12Q1241 12 1224 19Q1208 26 1195 38Q1183 50 1176 66Q1169 82 1169 102Q1169 121 1176 137Q1183 153 1195 165Q1208 177 1224 184Q1241 191 1260 191ZM1597 203L1597 0L1612 0L1612 190L1728 190L1728 203ZM2022 204Q1984 204 1962 182Q1940 160 1940 117L1940 0L1955 0L1955 116Q1955 154 1973 173Q1990 191 2022 191Q2053 191 2071 173Q2088 154 2088 116L2088 0L2103 0L2103 117Q2103 160 2081 182Q2060 204 2022 204ZM2387 203L2387 13L2314 13L2314 0L2475 0L2475 13L2401 13L2401 203ZM2691 203L2691 0L2827 0L2827 13L2706 13L2706 190L2831 190L2831 203ZM2704 106L2704 93L2814 93L2814 106Z";
-const ABSOLUTE_CAP = 203;
+  "M1 165L77 0L89 0L165 165L152 165L80 8L86 8L14 165ZM29 119L33 109L132 109L136 119ZM431 165L431 0L500 0Q527 0 542 11Q557 22 557 42Q557 56 551 65Q544 74 533 79Q522 83 508 83L512 79Q529 79 541 84Q553 89 559 98Q566 107 566 122Q566 142 551 154Q535 165 505 165ZM443 155L505 155Q529 155 541 147Q554 139 554 121Q554 103 541 95Q529 87 505 87L442 87L442 76L500 76Q521 76 533 68Q545 60 545 43Q545 27 533 19Q521 10 500 10L443 10ZM888 166Q870 166 853 160Q837 154 828 144L833 135Q842 144 857 150Q871 156 888 156Q904 156 915 151Q925 147 930 140Q936 132 936 123Q936 113 930 106Q924 100 915 96Q906 93 895 90Q884 87 873 84Q862 81 853 77Q843 72 838 64Q832 56 832 43Q832 31 839 21Q845 11 858 5Q871 -1 891 -1Q905 -1 918 3Q931 7 941 14L936 23Q926 16 914 13Q902 9 891 9Q875 9 865 14Q854 18 849 26Q844 33 844 42Q844 53 850 59Q856 66 865 70Q874 73 885 76Q896 79 907 82Q918 84 927 89Q936 94 942 102Q948 110 948 123Q948 134 941 144Q935 154 922 160Q909 166 888 166ZM1294 166Q1276 166 1260 160Q1245 154 1233 142Q1221 131 1215 116Q1209 101 1209 83Q1209 65 1215 49Q1221 34 1233 23Q1245 11 1260 5Q1276 -1 1294 -1Q1313 -1 1329 5Q1344 11 1356 23Q1367 34 1374 49Q1380 64 1380 83Q1380 101 1374 116Q1367 131 1356 143Q1344 154 1329 160Q1313 166 1294 166ZM1294 155Q1310 155 1324 150Q1337 144 1347 135Q1357 125 1363 111Q1368 98 1368 83Q1368 67 1363 54Q1357 41 1347 31Q1337 21 1324 15Q1310 10 1294 10Q1279 10 1265 15Q1252 21 1242 31Q1232 41 1226 54Q1221 67 1221 83Q1221 98 1226 111Q1232 125 1242 135Q1252 144 1265 150Q1279 155 1294 155ZM1658 165L1658 0L1670 0L1670 154L1765 154L1765 165ZM2094 166Q2063 166 2045 148Q2027 131 2027 95L2027 0L2040 0L2040 95Q2040 126 2054 140Q2068 155 2094 155Q2120 155 2134 140Q2148 126 2148 95L2148 0L2160 0L2160 95Q2160 131 2142 148Q2124 166 2094 166ZM2480 165L2480 11L2421 11L2421 0L2552 0L2552 11L2492 11L2492 165ZM2818 165L2818 0L2928 0L2928 11L2830 11L2830 154L2932 154L2932 165ZM2828 87L2828 76L2918 76L2918 87Z";
+const ABSOLUTE_W = 2932;
+const ABSOLUTE_CAP = 165;
 
-/* Versão menor, para a assinatura empilhada. */
+/* Versão da assinatura empilhada (porta, moletom, caderno): mais larga que o ZRO. */
 const ABSOLUTE_SMALL_PATH =
-  "M1 77L36 0L42 0L77 77L71 77L38 4L40 4L7 77ZM14 55L15 51L61 51L63 55ZM159 77L159 0L191 0Q204 0 211 5Q218 10 218 20Q218 26 215 30Q212 35 207 37Q201 39 195 39L197 37Q205 37 210 39Q216 41 219 46Q222 50 222 57Q222 66 215 72Q208 77 193 77ZM165 72L193 72Q205 72 210 68Q216 65 216 56Q216 48 210 44Q205 40 193 40L164 40L164 36L191 36Q201 36 207 32Q212 28 212 20Q212 13 207 9Q201 5 191 5L165 5ZM330 78Q322 78 314 75Q306 72 302 67L305 63Q309 67 316 70Q323 73 330 73Q338 73 343 71Q348 69 350 65Q352 62 352 58Q352 53 350 50Q347 47 343 45Q339 43 334 42Q328 41 323 39Q318 38 314 36Q310 34 307 30Q304 26 304 20Q304 14 307 10Q310 5 316 2Q322 -1 332 -1Q338 -1 344 1Q350 3 355 6L353 11Q348 8 342 6Q337 4 332 4Q324 4 319 6Q315 9 312 12Q310 16 310 20Q310 25 313 28Q315 31 319 32Q324 34 329 35Q334 37 339 38Q344 39 348 42Q353 44 355 48Q358 51 358 57Q358 63 355 67Q352 72 346 75Q340 78 330 78ZM478 78Q469 78 462 75Q455 72 449 66Q444 61 441 54Q438 47 438 39Q438 30 441 23Q444 16 449 11Q455 5 462 2Q469 -1 478 -1Q487 -1 494 2Q501 5 507 11Q512 16 515 23Q518 30 518 39Q518 47 515 54Q512 61 507 66Q501 72 494 75Q487 78 478 78ZM478 72Q485 72 492 70Q498 67 502 63Q507 58 510 52Q512 46 512 39Q512 31 510 25Q507 19 502 14Q498 10 492 7Q485 5 478 5Q471 5 464 7Q458 10 453 14Q449 19 446 25Q444 31 444 39Q444 46 446 52Q449 58 453 63Q458 67 464 70Q471 72 478 72ZM606 77L606 0L611 0L611 72L656 72L656 77ZM767 78Q753 78 744 69Q736 61 736 44L736 0L742 0L742 44Q742 59 748 65Q755 72 767 72Q779 72 786 65Q792 59 792 44L792 0L798 0L798 44Q798 61 789 69Q781 78 767 78ZM905 77L905 5L878 5L878 0L939 0L939 5L911 5L911 77ZM1021 77L1021 0L1072 0L1072 5L1026 5L1026 72L1074 72L1074 77ZM1026 40L1026 35L1067 35L1067 40Z";
+  "M1 108L50 0L58 0L108 108L99 108L53 5L56 5L9 108ZM19 77L22 71L86 71L89 77ZM258 108L258 0L303 0Q321 0 330 7Q340 14 340 28Q340 36 336 42Q332 48 325 51Q317 54 308 54L311 51Q322 51 330 55Q338 58 342 64Q346 70 346 79Q346 93 336 100Q326 108 306 108ZM266 101L306 101Q322 101 330 96Q338 90 338 79Q338 67 330 62Q322 57 306 57L265 57L265 50L303 50Q317 50 325 44Q332 39 332 28Q332 18 325 12Q317 7 303 7L266 7ZM533 109Q521 109 511 104Q500 100 494 94L498 88Q503 94 513 98Q522 102 533 102Q544 102 551 99Q558 96 561 91Q564 86 564 81Q564 74 561 69Q557 65 551 63Q545 60 538 59Q531 57 523 55Q516 53 510 50Q504 47 501 42Q497 36 497 28Q497 20 501 14Q505 7 513 3Q522 -1 535 -1Q544 -1 553 2Q561 4 568 9L565 15Q558 11 550 8Q542 6 535 6Q525 6 518 9Q511 12 508 17Q505 22 505 28Q505 35 508 39Q512 43 518 45Q524 48 531 50Q539 51 546 53Q553 55 559 58Q565 61 568 67Q572 72 572 80Q572 88 568 94Q564 101 555 105Q547 109 533 109ZM775 109Q763 109 753 104Q743 100 735 93Q728 85 723 76Q719 66 719 54Q719 42 723 32Q728 22 735 15Q743 7 753 3Q763 -1 775 -1Q787 -1 798 3Q808 7 815 15Q823 22 827 32Q831 42 831 54Q831 66 827 76Q823 86 815 93Q808 100 798 104Q787 109 775 109ZM775 101Q786 101 794 98Q803 94 810 88Q816 81 820 73Q823 64 823 54Q823 44 820 35Q816 26 810 20Q803 14 794 10Q786 6 775 6Q765 6 756 10Q748 14 741 20Q734 26 731 35Q727 44 727 54Q727 64 731 73Q734 81 741 88Q748 94 756 98Q765 101 775 101ZM990 108L990 0L997 0L997 101L1060 101L1060 108ZM1251 109Q1231 109 1219 97Q1208 85 1208 62L1208 0L1215 0L1215 62Q1215 82 1225 92Q1234 101 1251 101Q1268 101 1277 92Q1286 82 1286 62L1286 0L1294 0L1294 62Q1294 85 1282 97Q1271 109 1251 109ZM1480 108L1480 7L1441 7L1441 0L1527 0L1527 7L1488 7L1488 108ZM1677 108L1677 0L1749 0L1749 7L1685 7L1685 101L1751 101L1751 108ZM1684 57L1684 50L1742 50L1742 57Z";
+const ABSOLUTE_SMALL_W = 1751;
+const ABSOLUTE_SMALL_CAP = 108;
 
-const H = 327;
-const RING_R = 168;
+/* Anel: 1,37 vez a altura do ZR, traço fino, centrado na altura das letras. */
+const RING_R = 195;
+const RING_STROKE = 20;
+const RING_GAP = 120;
+const ZRO_W = ZR_W + RING_GAP + (RING_R + RING_STROKE / 2) * 2;
+const GAP_E_Z = 236;
 
 function useSvgId(prefix: string) {
   return `${prefix}-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 }
 
-/** O anel azul com brilho, centrado em (cx, cy). Raio e traço nas unidades do desenho. */
+/**
+ * O Anel Absolute: azul mais fundo à esquerda, quase branco à direita (onde a luz bate),
+ * com o brilho em volta e um fio de luz horizontal no lado aceso, como no board.
+ */
 function Ring({ cx, cy, r, stroke, glow, id }: { cx: number; cy: number; r: number; stroke: number; glow: boolean; id: string }) {
   return (
     // Cor pelo token (com o hex de reserva): o anel é sempre o azul Absolute, qualquer que seja a cor do texto.
     <g style={{ color: "var(--color-abs-blue, #2d7bff)" }}>
       <defs>
-        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#9cc4ff" />
-          <stop offset="0.45" stopColor="currentColor" />
-          <stop offset="1" stopColor="#1d5fe0" />
+        <linearGradient id={`${id}-g`} x1="0" y1="0.5" x2="1" y2="0.45">
+          <stop offset="0" stopColor="#1557d8" />
+          <stop offset="0.5" stopColor="currentColor" />
+          <stop offset="0.85" stopColor="#8fc0ff" />
+          <stop offset="1" stopColor="#eaf4ff" />
         </linearGradient>
         {glow ? (
-          <filter id={`${id}-f`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation={stroke * 0.9} />
-          </filter>
+          <>
+            <filter id={`${id}-f`} x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation={stroke * 1.4} />
+            </filter>
+            <radialGradient id={`${id}-flare`}>
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="0.3" stopColor="#bcd9ff" stopOpacity="0.7" />
+              <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+            </radialGradient>
+          </>
         ) : null}
       </defs>
       {glow ? (
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={stroke * 2.6} opacity={0.9} filter={`url(#${id}-f)`} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={stroke * 3} opacity={0.85} filter={`url(#${id}-f)`} />
       ) : null}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={`url(#${id}-g)`} strokeWidth={stroke} />
-      {glow ? <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e3efff" strokeWidth={stroke * 0.22} opacity={0.85} /> : null}
+      {glow ? (
+        <>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f2f8ff" strokeWidth={stroke * 0.25} opacity={0.6} />
+          <ellipse cx={cx + r * 0.99} cy={cy + r * 0.08} rx={r * 0.32} ry={stroke * 0.3} fill={`url(#${id}-flare)`} opacity={0.55} />
+        </>
+      ) : null}
+    </g>
+  );
+}
+
+/** Z R ◯ a partir de (x, y), com as letras de altura ZR_H. */
+function ZroMark({ x, y, glow, id }: { x: number; y: number; glow: boolean; id: string }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <path fill="currentColor" d={ZR_PATH} />
+      <Ring cx={ZR_W + RING_GAP + RING_R + RING_STROKE / 2} cy={ZR_H / 2} r={RING_R} stroke={RING_STROKE} glow={glow} id={id} />
     </g>
   );
 }
@@ -76,29 +114,25 @@ export function AbsoluteLogo({
   variant = "horizontal",
 }: LogoProps & { variant?: "horizontal" | "stacked" }) {
   const id = useSvgId("abs");
-  const pad = glow ? 70 : 12;
+  const pad = glow ? 90 : 20;
+  const ringOver = RING_R + RING_STROKE / 2 - ZR_H / 2; // quanto o anel passa das letras, em cima e embaixo
   if (variant === "stacked") {
-    const w = 1074;
-    const zroTop = 188;
-    const h = zroTop + H;
+    const w = Math.max(ABSOLUTE_SMALL_W, ZRO_W);
+    const zroTop = ABSOLUTE_SMALL_CAP + 110 + ringOver;
+    const h = zroTop + ZR_H + ringOver;
     return (
       <svg viewBox={`${-pad} ${-pad} ${w + pad * 2} ${h + pad * 2}`} role="img" aria-label={label} className={cn("h-24 w-auto", className)}>
-        <path fill="currentColor" d={ABSOLUTE_SMALL_PATH} transform="translate(0 0)" />
-        <g transform={`translate(70 ${zroTop})`}>
-          <path fill="currentColor" d={ZR_PATH} />
-          <Ring cx={554 + 44 + RING_R} cy={H / 2} r={RING_R} stroke={24} glow={glow} id={id} />
-        </g>
+        <path fill="currentColor" d={ABSOLUTE_SMALL_PATH} transform={`translate(${(w - ABSOLUTE_SMALL_W) / 2} 0)`} />
+        <ZroMark x={(w - ZRO_W) / 2} y={zroTop} glow={glow} id={id} />
       </svg>
     );
   }
-  const w = 4015;
+  const w = ABSOLUTE_W + GAP_E_Z + ZRO_W;
+  const h = ZR_H + ringOver * 2;
   return (
-    <svg viewBox={`${-pad} ${-pad} ${w + pad * 2} ${H + pad * 2}`} role="img" aria-label={label} className={cn("h-10 w-auto", className)}>
-      <path fill="currentColor" d={ABSOLUTE_PATH} transform={`translate(0 ${H - 1 - ABSOLUTE_CAP})`} />
-      <g transform="translate(3081 0)">
-        <path fill="currentColor" d={ZR_PATH} />
-        <Ring cx={554 + 44 + RING_R} cy={H / 2} r={RING_R} stroke={24} glow={glow} id={id} />
-      </g>
+    <svg viewBox={`${-pad} ${-pad} ${w + pad * 2} ${h + pad * 2}`} role="img" aria-label={label} className={cn("h-10 w-auto", className)}>
+      <path fill="currentColor" d={ABSOLUTE_PATH} transform={`translate(0 ${ringOver + (ZR_H - ABSOLUTE_CAP) / 2})`} />
+      <ZroMark x={ABSOLUTE_W + GAP_E_Z} y={ringOver} glow={glow} id={id} />
     </svg>
   );
 }
@@ -108,7 +142,7 @@ export function AbsoluteSymbol({ className, "aria-label": label, glow = true }: 
   const id = useSvgId("ring");
   return (
     <svg viewBox="0 0 400 400" {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} className={cn("size-10", className)}>
-      <Ring cx={200} cy={200} r={128} stroke={18} glow={glow} id={id} />
+      <Ring cx={200} cy={200} r={128} stroke={13} glow={glow} id={id} />
     </svg>
   );
 }

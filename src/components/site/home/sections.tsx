@@ -136,24 +136,28 @@ export function ServicesSection() {
         </div>
 
         <Reveal className="mt-16">
+          {/* Cartão no desenho do board da Absolute: painel preto, logo, eclipse à direita. */}
           <Link
             href="/absolute"
-            className="group relative block overflow-hidden rounded-media border border-abs-blue/25 bg-[radial-gradient(80%_120%_at_85%_20%,color-mix(in_srgb,var(--color-abs-blue)_18%,transparent),transparent_60%),linear-gradient(180deg,color-mix(in_srgb,var(--color-abs-blue)_5%,transparent),color-mix(in_srgb,var(--color-abs-deep)_55%,transparent))] p-7 transition-colors duration-500 hover:border-abs-blue/50 sm:p-10"
+            className="group relative grid overflow-hidden rounded-media border border-white/10 bg-black font-absolute transition-colors duration-500 hover:border-abs-blue/45 sm:grid-cols-[minmax(0,1fr)_280px]"
           >
-            <div className="flex flex-wrap items-end justify-between gap-8">
-              <div className="max-w-2xl">
-                <AbsoluteLogo className="mb-7 h-auto w-full max-w-[420px] text-abs-ice" />
-                <p className="text-h2 text-white">
-                  Do bruto ao absoluto.
-                </p>
-                <p className="mt-4 max-w-lg text-base leading-relaxed text-abs-ice/75">
-                  Color grading, finalização de imagem e construção de look. Para os nossos filmes e para outras
-                  produtoras.
-                </p>
-              </div>
-              <span className="grid size-14 place-items-center rounded-full border border-abs-ice/30 text-abs-ice transition-all duration-500 ease-out-expo group-hover:rotate-45 group-hover:border-abs-ice group-hover:bg-abs-ice group-hover:text-abs-deep">
-                <ArrowUpRight className="size-5" aria-hidden />
+            <div className="grid content-center justify-items-start gap-6 p-7 sm:p-10">
+              <AbsoluteLogo className="h-auto w-full max-w-[440px] text-abs-ice" />
+              <p className="text-[10px] tracking-[0.55em] text-abs-ice/80 uppercase sm:text-[11px]">Color grading &amp; finishing</p>
+              <p className="mt-6 text-[clamp(22px,2.4vw,32px)] leading-tight font-light text-abs-ice">Do bruto ao absoluto.</p>
+              <span className="inline-flex items-center gap-3 text-[13px] text-abs-ice/70 transition-colors group-hover:text-abs-ice">
+                Conhecer a Absolute ZRO
+                <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
               </span>
+            </div>
+            <div className="relative hidden min-h-[320px] sm:block">
+              <Image
+                src="/media/absolute/eclipse.jpg"
+                alt=""
+                fill
+                sizes="280px"
+                className="object-cover transition-transform duration-[1.2s] ease-out-expo group-hover:scale-105"
+              />
             </div>
           </Link>
         </Reveal>

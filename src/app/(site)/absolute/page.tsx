@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { AbsoluteEclipse, AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
+import { AbsoluteEclipse, AbsoluteLens, AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
 import { Logo } from "@/components/brand/logo";
 import { CompareSlider } from "@/components/site/compare-slider";
 import { Reveal } from "@/components/site/reveal";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Absolute ZRO",
   description: "Do bruto ao absoluto. Color grading, finalização de imagem e construção de look.",
 };
+
+/*
+ * A página segue o board da Absolute (brand/absolute-zro/referencia-board.png): painéis pretos
+ * separados por um fio, rótulos em caixa alta bem espaçados, Montserrat, o azul só na luz.
+ * As fotos vêm do próprio board (public/media/absolute).
+ */
 
 const SERVICES = [
   { title: "Color grading", text: "A cor como decisão: cada tom a serviço da narrativa." },
@@ -27,136 +35,244 @@ const VERBS = [
   ["Conta.", "Aperfeiçoa."],
 ];
 
+/* Os três símbolos como o caminho da imagem: do bruto ao estado final. */
+const STEPS = [
+  { name: "Eclipse", sub: "Mistério / origem", step: "O bruto", Icon: AbsoluteEclipse },
+  { name: "Lente", sub: "Precisão / controle", step: "O grading", Icon: AbsoluteLens },
+  { name: "Absolute ring", sub: "Estado final", step: "A entrega", Icon: AbsoluteSymbol },
+];
+
+const STRIP = [
+  { src: "/media/absolute/camera.jpg", w: 548, h: 510, alt: "Monitor de câmera com a assinatura Absolute ZRO" },
+  { src: "/media/absolute/instagram.jpg", w: 540, h: 510, alt: "Perfil @absolutezro no Instagram" },
+  { src: "/media/absolute/moletom.jpg", w: 440, h: 510, alt: "Moletom preto com o logo Absolute ZRO" },
+  { src: "/media/absolute/caderno.jpg", w: 502, h: 510, alt: "Caderno preto com o logo Absolute ZRO" },
+];
+
+/** Rótulo do board: caixa alta, Montserrat, bem espaçado. */
+function Tag({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={cn("font-absolute text-[11px] tracking-[0.42em] text-abs-ice uppercase", className)}>{children}</p>;
+}
+
+/** Painel preto do board. */
+function Panel({ children, className }: { children?: React.ReactNode; className?: string }) {
+  return <div className={cn("relative overflow-hidden bg-black", className)}>{children}</div>;
+}
+
+function Photo({ src, w, h, alt, className, sizes }: { src: string; w: number; h: number; alt: string; className?: string; sizes: string }) {
+  return <Image src={src} width={w} height={h} alt={alt} sizes={sizes} className={cn("h-full w-full object-cover", className)} />;
+}
+
 export default function AbsolutePage() {
   return (
-    <div className="relative isolate overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1200px] bg-[radial-gradient(60%_50%_at_70%_10%,color-mix(in_srgb,var(--color-abs-blue)_16%,transparent),transparent_70%),radial-gradient(50%_40%_at_10%_0%,color-mix(in_srgb,var(--color-abs-ice)_6%,transparent),transparent_70%)]"
-        aria-hidden
-      />
-
-      {/* Herói no desenho do board: o logo é o título, o eclipse acende a borda. */}
-      <section className="container-zro grid min-h-[88svh] items-center gap-10 pt-28 pb-16 sm:pt-40 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-6">
-        <div className="relative z-10">
-          <Reveal>
-            <h1>
-              <AbsoluteLogo className="h-auto w-full max-w-[660px] text-abs-ice" />
-            </h1>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <p className="mt-8 font-absolute text-[11px] tracking-[0.55em] text-abs-ice/80 uppercase sm:text-[13px]">
-              Color grading &amp; finishing
-            </p>
-          </Reveal>
-          <Reveal delay={0.3} className="mt-16 grid gap-8 sm:mt-20">
-            <p className="font-absolute text-[12px] tracking-[0.5em] text-abs-ice uppercase sm:text-[13px]">Do bruto ao absoluto.</p>
-            <p className="max-w-lg text-body-lg text-abs-ice/70">
-              O braço de finalização da ZRO. Color grading, finalização de imagem, acabamento e construção de look, para os nossos
-              filmes e para outras produtoras.
-            </p>
-            <Link
-              href="/orcamento?tipo=finalizacao"
-              className="group inline-flex h-12 w-fit items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-ui font-medium text-abs-deep transition-colors hover:bg-white"
-            >
-              Falar sobre finalização
-              <span className="grid size-9 place-items-center rounded-full bg-abs-deep text-abs-ice transition-transform duration-500 ease-out-expo group-hover:rotate-45">
-                <ArrowUpRight className="size-4" aria-hidden />
-              </span>
-            </Link>
-          </Reveal>
-        </div>
-        <Reveal delay={0.2} className="relative order-first lg:order-none">
-          <AbsoluteEclipse className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[420px] lg:max-w-[560px]" />
-        </Reveal>
-      </section>
-
-      {/* O que move a Absolute: as palavras do conceito, empilhadas como no board. */}
-      <section className="container-zro grid gap-12 pb-24 sm:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] sm:items-end">
-        <Reveal>
-          <p className="font-absolute text-[13px] leading-[2.2] tracking-[0.5em] text-abs-ice uppercase">
-            Precisão
-            <br />
-            Controle
-            <br />
-            Profundidade
-            <br />
-            Cor
-            <br />é o que nos move.
-          </p>
-          <span className="mt-8 block h-px w-12 bg-abs-blue" aria-hidden />
-        </Reveal>
-        <Reveal delay={0.1}>
-          <p className="max-w-xl text-body-lg text-ash">
-            Aqui, cada frame é tratado com precisão, controle e intenção, para que a imagem atinja seu estado mais absoluto.
-          </p>
-        </Reveal>
-      </section>
-
-      <section className="container-zro">
-        <Reveal>
-          <CompareSlider src="/media/feixe-de-luz.jpg" />
-          <p className="mt-4 text-caption text-mute">Arraste para comparar. A mesma imagem, bruta e finalizada.</p>
-        </Reveal>
-      </section>
-
-      <section className="container-zro section-y grid gap-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <Reveal>
-          <p className="label mb-5 text-abs-ice/70">O conceito</p>
-          <h2 className="text-h2 text-white">O zero absoluto é o estado mais frio possível.</h2>
-          <p className="mt-6 max-w-md text-body-lg text-ash">
-            Por isso, o azul: frio, precisão, controle, profundidade, tecnologia. A imagem em seu estado absoluto.
-          </p>
-        </Reveal>
-        <ul className="border-t border-line">
-          {SERVICES.map((s, i) => (
-            <Reveal as="li" key={s.title} delay={i * 0.05} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[64px_240px_1fr] sm:items-baseline">
-              <span className="font-mono text-caption text-abs-ice/60">{String(i + 1).padStart(2, "0")}</span>
-              <span className="text-h3 font-semibold text-white">{s.title}</span>
-              <span className="text-ui text-ash">{s.text}</span>
-            </Reveal>
-          ))}
-        </ul>
-      </section>
-
-      <section className="border-y border-abs-blue/15 bg-abs-deep/25">
-        <div className="container-zro section-y">
-          <Reveal className="mb-14 max-w-3xl">
-            <p className="label mb-5 text-abs-ice/70">Dois lados da mesma imagem</p>
-            <h2 className="text-h2 text-white">
-              ZRO é origem, criação e direção. Absolute ZRO é finalização, precisão e estado final.
-            </h2>
-          </Reveal>
-          <div className="grid grid-cols-2 border-t border-abs-blue/20">
-            <p className="flex h-14 items-center border-b border-abs-blue/20">
-              <Logo className="h-[22px] text-white/45" />
-            </p>
-            <p className="flex h-14 items-center border-b border-abs-blue/20">
-              <AbsoluteLogo className="h-auto w-full max-w-[240px] text-abs-ice" glow={false} />
-            </p>
-            {VERBS.map(([a, b], i) => (
-              <Reveal key={a} delay={i * 0.05} className="col-span-2 grid grid-cols-2 border-b border-abs-blue/20">
-                <span className="py-5 text-h2 text-white/40">{a}</span>
-                <span className="py-5 text-h2 text-abs-blue">{b}</span>
+    <div className="relative isolate bg-black pt-20 font-absolute">
+      <div className="mx-auto max-w-[1600px] px-3 sm:px-5">
+        {/* Board: fios de 1px entre os painéis */}
+        <div className="grid gap-px border border-white/10 bg-white/10">
+          {/* Linha 1: logo · eclipse · o que nos move */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,60fr)_minmax(0,20fr)_minmax(0,20fr)]">
+            <Panel className="grid min-h-[420px] place-content-center justify-items-center gap-7 px-6 py-20 text-center lg:min-h-[520px]">
+              <Reveal>
+                <h1>
+                  <AbsoluteLogo className="h-auto w-[min(640px,86vw)] text-abs-ice" />
+                </h1>
               </Reveal>
+              <Reveal delay={0.15}>
+                <Tag className="text-[10px] tracking-[0.55em] sm:text-[12px]">Color grading &amp; finishing</Tag>
+              </Reveal>
+              <Reveal delay={0.3} className="mt-12 sm:mt-16">
+                <Tag className="text-[10px] tracking-[0.55em] sm:text-[12px]">Do bruto ao absoluto.</Tag>
+              </Reveal>
+            </Panel>
+            <div className="grid grid-cols-2 gap-px bg-white/10 lg:contents">
+              <Panel className="min-h-[300px]">
+                <Photo
+                  src="/media/absolute/eclipse.jpg"
+                  w={514}
+                  h={728}
+                  alt="Eclipse: o disco escuro com a borda acesa em azul"
+                  sizes="(min-width: 1024px) 20vw, 50vw"
+                  className="absolute inset-0"
+                />
+              </Panel>
+              <Panel className="grid content-center px-6 py-10 sm:px-9">
+                <Tag className="leading-[2.3]">
+                  Precisão
+                  <br />
+                  Controle
+                  <br />
+                  Profundidade
+                  <br />
+                  Cor
+                  <br />é o que
+                  <br />
+                  nos move.
+                </Tag>
+                <span className="my-7 block h-px w-9 bg-abs-blue" aria-hidden />
+                <p className="text-[13px] leading-[1.8] font-light text-abs-ice/85">
+                  A Absolute ZRO é o braço especializado em color grading e finalização da ZRO. Aqui, cada frame é tratado com
+                  precisão, controle e intenção, para que a imagem atinja seu estado mais absoluto.
+                </p>
+                <p className="mt-6 text-[12px] tracking-[0.08em] text-abs-ice">Do bruto ao absoluto.</p>
+              </Panel>
+            </div>
+          </div>
+
+          {/* Linha 2: o caminho (os três símbolos) · cartão */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,72fr)_minmax(0,28fr)]">
+            <Panel className="px-6 py-10 sm:px-9">
+              <Tag>Do bruto ao absoluto</Tag>
+              <ol className="mt-8 grid gap-px bg-white/10 sm:grid-cols-3">
+                {STEPS.map(({ name, sub, step, Icon }, i) => (
+                  <Reveal as="li" key={name} delay={i * 0.08} className="grid justify-items-center gap-4 bg-black px-4 py-8 text-center">
+                    <Icon className="size-28 sm:size-32" />
+                    <p className="text-[11px] tracking-[0.42em] text-abs-ice uppercase">{name}</p>
+                    <p className="text-[10px] tracking-[0.35em] text-abs-ice/55 uppercase">{sub}</p>
+                    <p className="mt-2 text-[13px] font-light text-abs-ice/80">
+                      <span className="mr-2 font-mono text-[11px] text-abs-blue">0{i + 1}</span>
+                      {step}
+                    </p>
+                  </Reveal>
+                ))}
+              </ol>
+            </Panel>
+            <Panel className="min-h-[260px]">
+              <Photo
+                src="/media/absolute/cartao.jpg"
+                w={730}
+                h={512}
+                alt="Cartão preto com o logo Absolute ZRO em relevo"
+                sizes="(min-width: 1024px) 28vw, 100vw"
+                className="absolute inset-0"
+              />
+            </Panel>
+          </div>
+
+          {/* Linha 3: o estúdio */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,57fr)_minmax(0,21fr)_minmax(0,22fr)]">
+            <Panel className="aspect-[1502/626] lg:aspect-auto lg:min-h-[400px]">
+              <Photo
+                src="/media/absolute/estudio.jpg"
+                w={1502}
+                h={626}
+                alt="Studio de finalização: sala de color escura com o anel azul na parede"
+                sizes="(min-width: 1024px) 57vw, 100vw"
+                className="absolute inset-0 object-left"
+              />
+            </Panel>
+            <div className="grid grid-cols-2 gap-px bg-white/10 lg:contents">
+              <Panel className="aspect-[532/626] lg:aspect-auto">
+                <Photo
+                  src="/media/absolute/porta.jpg"
+                  w={532}
+                  h={626}
+                  alt="Porta preta com a assinatura Absolute ZRO"
+                  sizes="(min-width: 1024px) 21vw, 50vw"
+                  className="absolute inset-0"
+                />
+              </Panel>
+              <Panel className="aspect-[576/626] lg:aspect-auto">
+                <Photo
+                  src="/media/absolute/corredor.jpg"
+                  w={576}
+                  h={626}
+                  alt="Corredor com o anel azul aceso e a parede Color grading & finishing"
+                  sizes="(min-width: 1024px) 22vw, 50vw"
+                  className="absolute inset-0"
+                />
+              </Panel>
+            </div>
+          </div>
+
+          {/* Linha 4: bruto × absoluto (arraste) */}
+          <Panel className="grid gap-8 px-6 py-10 sm:px-9 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:items-center">
+            <div>
+              <Tag>Bruto × absoluto</Tag>
+              <p className="mt-6 max-w-sm text-[clamp(24px,2.6vw,36px)] leading-[1.15] font-light text-abs-ice">
+                A mesma imagem, antes e depois da <span className="text-abs-blue">cor</span>.
+              </p>
+              <Tag className="mt-8 text-[10px] text-abs-ice/55">Arraste para comparar</Tag>
+            </div>
+            <div className="mx-auto w-full max-w-[760px]">
+              <CompareSlider src="/media/feixe-de-luz.jpg" />
+            </div>
+          </Panel>
+
+          {/* Linha 5: o que fazemos · ZRO × Absolute */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-2">
+            <Panel className="px-6 py-10 sm:px-9">
+              <Tag>O que fazemos</Tag>
+              <ul className="mt-6">
+                {SERVICES.map((s, i) => (
+                  <Reveal as="li" key={s.title} delay={i * 0.05} className="grid gap-1 border-b border-white/10 py-5 last:border-b-0 sm:grid-cols-[48px_1fr]">
+                    <span className="font-mono text-[11px] text-abs-blue">{String(i + 1).padStart(2, "0")}</span>
+                    <span>
+                      <span className="block text-[15px] tracking-[0.02em] text-abs-ice">{s.title}</span>
+                      <span className="mt-1 block text-[13px] font-light text-abs-ice/60">{s.text}</span>
+                    </span>
+                  </Reveal>
+                ))}
+              </ul>
+            </Panel>
+            <Panel className="px-6 py-10 sm:px-9">
+              <Tag>Dois lados da mesma imagem</Tag>
+              <div className="mt-6 grid grid-cols-2 border-t border-white/10">
+                <p className="flex h-14 items-center border-b border-white/10">
+                  <Logo className="h-[18px] text-white/45" />
+                </p>
+                <p className="flex h-14 items-center border-b border-white/10">
+                  <AbsoluteLogo className="h-auto w-full max-w-[210px] text-abs-ice" glow={false} />
+                </p>
+                {VERBS.map(([a, b], i) => (
+                  <Reveal key={a} delay={i * 0.05} className="col-span-2 grid grid-cols-2 border-b border-white/10">
+                    <span className="py-4 text-[22px] font-light text-white/35 sm:text-[26px]">{a}</span>
+                    <span className="py-4 text-[22px] font-light text-abs-ice sm:text-[26px]">{b}</span>
+                  </Reveal>
+                ))}
+              </div>
+            </Panel>
+          </div>
+
+          {/* Linha 6: a marca no mundo */}
+          <div className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
+            {STRIP.map((p) => (
+              <Panel key={p.src} className="aspect-square">
+                <Photo src={p.src} w={p.w} h={p.h} alt={p.alt} sizes="(min-width: 1024px) 25vw, 50vw" className="absolute inset-0" />
+              </Panel>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section className="container-zro section-y text-center">
-        <Reveal>
-          <AbsoluteSymbol className="mx-auto mb-10 size-20" />
-          <p className="mx-auto max-w-4xl text-h1 text-white">
-            Color como <span className="accent text-abs-blue">decisão</span>.
-          </p>
-          <Link
-            href="/orcamento?tipo=finalizacao"
-            className="mt-12 inline-flex h-12 items-center rounded-full border border-abs-ice/40 px-6 text-ui text-abs-ice transition-colors hover:bg-abs-ice hover:text-abs-deep"
-          >
-            Enviar um projeto para finalizar
-          </Link>
-        </Reveal>
-      </section>
+          {/* Fecho: a paisagem do board · o convite */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-2">
+            <Panel className="aspect-[564/510]">
+              <Photo
+                src="/media/absolute/paisagem.jpg"
+                w={564}
+                h={510}
+                alt="Paisagem noturna com um feixe de luz: do bruto ao absoluto"
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="absolute inset-0"
+              />
+            </Panel>
+            <Panel className="grid content-center justify-items-start gap-8 px-6 py-16 sm:px-12">
+              <AbsoluteSymbol className="size-20" />
+              <p className="max-w-md text-[clamp(28px,3.4vw,48px)] leading-[1.1] font-light tracking-[-0.01em] text-abs-ice">
+                Color como <span className="text-abs-blue">decisão</span>.
+              </p>
+              <Link
+                href="/orcamento?tipo=finalizacao"
+                className="group inline-flex h-12 items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-[14px] font-medium text-abs-deep transition-colors hover:bg-white"
+              >
+                Enviar um projeto para finalizar
+                <span className="grid size-9 place-items-center rounded-full bg-abs-deep text-abs-ice transition-transform duration-500 ease-out-expo group-hover:rotate-45">
+                  <ArrowUpRight className="size-4" aria-hidden />
+                </span>
+              </Link>
+            </Panel>
+          </div>
+        </div>
+      </div>
+      <div className="h-24" aria-hidden />
     </div>
   );
 }
