@@ -7,6 +7,9 @@ import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
 import { EVENT_TYPES, FUNCTIONS } from "@/lib/domain";
+import { dateBR } from "@/lib/format";
+import { logProjectActivity } from "@/lib/services/activity";
+import { syncProjectTeam, teamSyncNote, type TeamSyncReport } from "@/lib/services/team";
 import { joinNames } from "./agenda-utils";
 
 const { events, eventCrew, freelancers, projects } = schema;
@@ -125,11 +128,37 @@ function insertCrew(eventId: string, crew: { freelancerId: string; function?: st
 function revalidateEvent(...projectIds: (string | null | undefined)[]) {
   revalidatePath("/painel/agenda");
   revalidatePath("/painel");
-  for (const id of new Set(projectIds)) if (id) revalidatePath(`/painel/projetos/${id}`);
+  const ids = [...new Set(projectIds)].filter(Boolean);
+  for (const id of ids) revalidatePath(`/painel/projetos/${id}`);
+  if (ids.length) {
+    // Diária mexe na equipe e nos pagamentos: financeiro, freelas e ficha do cliente também.
+    revalidatePath("/painel/projetos");
+    revalidatePath("/painel/financeiro", "layout");
+    revalidatePath("/painel/freelas", "layout");
+    revalidatePath("/painel/crm", "layout");
+  }
+}
+
+/** Equipe e pagamentos dos projetos envolvidos, em dia com a agenda. */
+async function syncTeams(...projectIds: (string | null | undefined)[]) {
+  const total: TeamSyncReport = { joined: [], left: [], paymentsCreated: 0, paymentsUpdated: 0 };
+  for (const id of new Set(projectIds)) {
+    if (!id) continue;
+    const r = await syncProjectTeam(id);
+    total.joined.push(...r.joined);
+    total.left.push(...r.left);
+    total.paymentsCreated += r.paymentsCreated;
+    total.paymentsUpdated += r.paymentsUpdated;
+  }
+  return teamSyncNote(total);
+}
+
+function when(date: string, endDate: string | null) {
+  return endDate && endDate > date ? `${dateBR(date)} a ${dateBR(endDate)}` : dateBR(date);
 }
 
 export async function createEvent(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = readEvent(fd);
   if (!parsed.success) return fromZod(parsed.error);
   const clean = await sanitize(parsed.data);
@@ -146,15 +175,28 @@ export async function createEvent(_prev: ActionResult | null, fd: FormData): Pro
     clean.values.date,
     clean.values.endDate ?? clean.values.date,
   );
+  const note = await syncTeams(clean.values.projectId);
+  if (clean.values.type === "diaria") {
+    await logProjectActivity(
+      clean.values.projectId,
+      "agenda",
+      `Diária marcada: ${when(clean.values.date, clean.values.endDate)} · ${clean.values.title}.`,
+      user.id,
+    );
+  }
   revalidateEvent(clean.values.projectId);
-  return ok(warning ? `Evento salvo. ${warning}` : "Evento salvo.", id);
+  return ok([warning ? `Evento salvo. ${warning}` : "Evento salvo.", note].filter(Boolean).join(" "), id);
 }
 
 export async function updateEvent(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const id = str(fd, "id");
   if (!id) return fail("Evento não encontrado.");
-  const [current] = await db.select({ id: events.id, projectId: events.projectId }).from(events).where(eq(events.id, id)).limit(1);
+  const [current] = await db
+    .select({ id: events.id, projectId: events.projectId, type: events.type, date: events.date, endDate: events.endDate })
+    .from(events)
+    .where(eq(events.id, id))
+    .limit(1);
   if (!current) return fail("Esse evento não existe mais.");
   const parsed = readEvent(fd);
   if (!parsed.success) return fromZod(parsed.error);
@@ -173,21 +215,39 @@ export async function updateEvent(_prev: ActionResult | null, fd: FormData): Pro
     clean.values.date,
     clean.values.endDate ?? clean.values.date,
   );
+  const note = await syncTeams(current.projectId, clean.values.projectId);
+  const moved = current.date !== clean.values.date || (current.endDate ?? null) !== clean.values.endDate;
+  if (clean.values.type === "diaria" && (moved || current.projectId !== clean.values.projectId)) {
+    await logProjectActivity(
+      clean.values.projectId,
+      "agenda",
+      `Diária ${current.projectId === clean.values.projectId ? "remarcada" : "marcada"}: ${when(clean.values.date, clean.values.endDate)} · ${clean.values.title}.`,
+      user.id,
+    );
+  }
   revalidateEvent(current.projectId, clean.values.projectId);
-  return ok(warning ? `Evento salvo. ${warning}` : "Evento salvo.", id);
+  return ok([warning ? `Evento salvo. ${warning}` : "Evento salvo.", note].filter(Boolean).join(" "), id);
 }
 
 export async function deleteEvent(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const id = str(fd, "id");
   if (!id) return fail("Evento não encontrado.");
-  const [current] = await db.select({ projectId: events.projectId }).from(events).where(eq(events.id, id)).limit(1);
+  const [current] = await db
+    .select({ projectId: events.projectId, type: events.type, title: events.title, date: events.date, endDate: events.endDate })
+    .from(events)
+    .where(eq(events.id, id))
+    .limit(1);
   if (!current) return fail("Esse evento já foi excluído.");
   await db.batch([
     db.delete(eventCrew).where(eq(eventCrew.eventId, id)),
     db.update(schema.callSheets).set({ eventId: null }).where(eq(schema.callSheets.eventId, id)),
     db.delete(events).where(eq(events.id, id)),
   ]);
+  const note = await syncTeams(current.projectId);
+  if (current.type === "diaria") {
+    await logProjectActivity(current.projectId, "agenda", `Diária desmarcada: ${when(current.date, current.endDate)} · ${current.title}.`, user.id);
+  }
   revalidateEvent(current.projectId);
-  return ok("Evento excluído.");
+  return ok(["Evento excluído.", note].filter(Boolean).join(" "));
 }

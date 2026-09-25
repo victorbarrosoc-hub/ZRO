@@ -61,7 +61,6 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
       <PageHeader
         label="Financeiro"
         title="Fluxo e resultado"
-        description="O que entrou e saiu de fato, o que ainda vai entrar e sair, e quanto sobra de cada projeto."
       />
 
       <FinanceTabs active="fluxo" month={mes} />
@@ -110,13 +109,6 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
       <Card className="min-w-0">
         <CardHeader
           title="Fluxo de caixa"
-          description={
-            <>
-              Entradas acima da linha, saídas e impostos abaixo.{" "}
-              <span className="sm:hidden">Dois meses para trás e três para frente.</span>
-              <span className="hidden sm:inline">Cinco meses para trás e seis para frente.</span>
-            </>
-          }
         />
         <div className="px-3 pt-5 pb-4 sm:hidden">
           <CashflowChart months={flowShort.months} current={mes} />
@@ -200,7 +192,7 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
               ))}
             </ul>
           ) : (
-            <EmptyState title="Nenhum freela a pagar" description="Quando alguém entra na equipe de um projeto, o pagamento aparece aqui." />
+            <EmptyState title="Nenhum freela a pagar" />
           )}
         </Card>
 
@@ -272,12 +264,10 @@ function MarginCell({ r }: { r: { margin: number; marginPct: number | null } }) 
 }
 
 function ProjectResults({ data }: { data: Awaited<ReturnType<typeof projectResults>> }) {
-  const rate = String(data.rate).replace(".", ",");
   return (
     <Card className="overflow-hidden">
       <CardHeader
         title="Resultado por projeto"
-        description={`Contratado, menos custos e imposto estimado (${rate}%). Do início de cada projeto até hoje.`}
       />
       {data.projects.length ? (
         <>
@@ -362,7 +352,6 @@ function ProjectResults({ data }: { data: Awaited<ReturnType<typeof projectResul
       ) : (
         <EmptyState
           title="Nenhum projeto com valores"
-          description="Com valor contratado ou lançamentos ligados, o projeto aparece aqui com a margem."
         />
       )}
       {data.hiddenCount > 0 ? (

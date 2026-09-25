@@ -58,7 +58,10 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Site público (início, filmes, sobre, Absolute ZRO, privacidade) e funil de orçamento até o WhatsApp
 - [x] Área interna: painel, freelas; CRM, projetos, agenda e documentos, orçamentos com PDF, financeiro, processos, site e ajustes
 - [x] Pronto pra Vercel: `vercel.json`, banco preparado no build, sitemap, robots e imagem de compartilhamento (passo a passo no `DEPLOY.md`)
-- [ ] Publicar em https://zrofilmes.vercel.app e configurar WhatsApp, links dos vídeos e dados reais
+- [x] Publicado em https://zrofilmes.vercel.app, com WhatsApp, e-mail e filmes do YouTube configurados
+- [x] Integração: diária na agenda → equipe do projeto (valor por diária) → pagamento no financeiro → histórico do cliente no CRM; dashboard com abas (Resumo, Projetos, Freelas a pagar, Fluxo)
+- [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
+- [ ] Absolute ZRO: logo e cor provisórios (|ZRO| + azul Kelvin), aguardando o Victor escolher entre as 3 propostas
 
 ## Escolhas provisórias (a confirmar com o Victor)
 

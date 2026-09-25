@@ -9,7 +9,7 @@ import { FUNNEL_BUDGETS, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from 
 import { brl, dateBR, relativeDay, todayISO } from "@/lib/format";
 import { filterLeads, listLeads, type LeadRow } from "@/lib/queries/crm";
 import { NewLeadButton } from "./crm-dialogs";
-import { followUpDue, isOpenStage, sinceLabel } from "./crm-options";
+import { followUpDue, sinceLabel } from "./crm-options";
 import { FilterChip } from "./crm-ui";
 import { LeadBoard, type BoardLead } from "./lead-board";
 
@@ -32,16 +32,6 @@ export default async function CrmPage({ searchParams }: PageProps<"/painel/crm">
   const all = await listLeads();
   const leads = filterLeads(all, { q, origem });
 
-  const open = all.filter((l) => isOpenStage(l.stage));
-  const due = open.filter((l) => followUpDue(l, today)).length;
-  const openValue = open.reduce((s, l) => s + (l.estimatedValue ?? 0), 0);
-  const summary = [
-    open.length ? `${open.length} em aberto` : "Nenhum lead em aberto",
-    due ? `${due} para retornar` : null,
-    openValue ? `${brl(openValue)} estimado` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -61,7 +51,7 @@ export default async function CrmPage({ searchParams }: PageProps<"/painel/crm">
 
   return (
     <div className="grid grid-cols-1 gap-8">
-      <PageHeader label="Funil comercial" title="CRM" description={summary} actions={<NewLeadButton />} />
+      <PageHeader label="Funil comercial" title="CRM" actions={<NewLeadButton />} />
 
       <div className="grid gap-4 xl:flex xl:items-center xl:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -91,7 +81,6 @@ export default async function CrmPage({ searchParams }: PageProps<"/painel/crm">
           {filtered ? (
             <EmptyState
               title="Nenhum lead com esse filtro"
-              description="Confira a busca ou veja todas as origens."
               action={
                 <Link
                   href={qs({ q: undefined, origem: undefined })}
@@ -104,7 +93,6 @@ export default async function CrmPage({ searchParams }: PageProps<"/painel/crm">
           ) : (
             <EmptyState
               title="Nenhum lead ainda"
-              description="Os pedidos do site entram aqui sozinhos. Os que chegam por WhatsApp, Instagram ou indicação você cadastra em Novo lead."
               action={<NewLeadButton />}
             />
           )}
@@ -112,14 +100,6 @@ export default async function CrmPage({ searchParams }: PageProps<"/painel/crm">
       ) : view === "quadro" ? (
         <div className="grid gap-3">
           <LeadBoard leads={leads.map((l) => toBoard(l, today))} today={today} />
-          <p className="text-[12px] text-mute">
-            <span className="pointer-coarse:hidden">
-              Para mudar a etapa, arraste o cartão para outra coluna ou use o menu de cada cartão.
-            </span>
-            <span className="hidden pointer-coarse:inline">
-              Para mudar a etapa, toque no menu do cartão. Deslize para ver as outras colunas.
-            </span>
-          </p>
         </div>
       ) : (
         <LeadTable

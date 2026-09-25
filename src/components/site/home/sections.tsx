@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { AbsoluteLogo } from "@/components/brand/absolute-logo";
 import { Symbol } from "@/components/brand/logo";
 import { FilmGrid } from "@/components/site/film-grid";
 import type { FilmSummary } from "@/components/site/film-card";
@@ -137,11 +138,11 @@ export function ServicesSection() {
         <Reveal className="mt-16">
           <Link
             href="/absolute"
-            className="group relative block overflow-hidden rounded-media border border-abs-blue/25 bg-[radial-gradient(80%_120%_at_85%_20%,rgb(76_141_255/0.28),transparent_60%),linear-gradient(180deg,rgb(76_141_255/0.08),var(--color-abs-deep))] p-7 transition-colors duration-500 hover:border-abs-blue/50 sm:p-10"
+            className="group relative block overflow-hidden rounded-media border border-abs-blue/25 bg-[radial-gradient(80%_120%_at_85%_20%,color-mix(in_srgb,var(--color-abs-blue)_18%,transparent),transparent_60%),linear-gradient(180deg,color-mix(in_srgb,var(--color-abs-blue)_5%,transparent),color-mix(in_srgb,var(--color-abs-deep)_55%,transparent))] p-7 transition-colors duration-500 hover:border-abs-blue/50 sm:p-10"
           >
             <div className="flex flex-wrap items-end justify-between gap-8">
               <div className="max-w-2xl">
-                <p className="label mb-5 text-abs-ice/80">Absolute ZRO · Finalização</p>
+                <AbsoluteLogo className="mb-7 h-9 text-logo sm:h-10" />
                 <p className="text-h2 text-white">
                   Do bruto ao absoluto.
                 </p>

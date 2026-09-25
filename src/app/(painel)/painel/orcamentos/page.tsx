@@ -48,11 +48,6 @@ export default async function OrcamentosPage({ searchParams }: PageProps<"/paine
       <PageHeader
         label="Comercial"
         title="Orçamentos"
-        description={
-          summary.openCount
-            ? `${summary.openCount} enviado${summary.openCount > 1 ? "s" : ""} esperando resposta · ${brl(summary.openTotal)} em aberto`
-            : "Nenhum orçamento esperando resposta agora."
-        }
         actions={newButton}
       />
 
@@ -175,11 +170,6 @@ export default async function OrcamentosPage({ searchParams }: PageProps<"/paine
         <Card>
           <EmptyState
             title={q || status ? "Nenhum orçamento com esse filtro" : "Nenhum orçamento ainda"}
-            description={
-              q || status
-                ? "Tente outro status ou limpe a busca."
-                : "Monte o primeiro com os itens do catálogo. Número, validade e condições entram sozinhos."
-            }
             action={q || status ? undefined : newButton}
           />
         </Card>

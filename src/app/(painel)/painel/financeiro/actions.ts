@@ -18,6 +18,7 @@ import {
   shiftMonth,
 } from "@/lib/queries/finance";
 import { deletePayment, registerPayment } from "@/lib/services/finance";
+import { logProjectActivity } from "@/lib/services/activity";
 import { getSetting } from "@/lib/settings";
 
 const { financeEntries, financePayments } = schema;
@@ -200,7 +201,7 @@ const PaySchema = z.object({
 
 /** Registra uma baixa (total ou parcial) de qualquer lançamento. */
 export async function payEntry(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const entryId = str(fd, "entryId");
   const entry = entryId ? await db.query.financeEntries.findFirst({ where: eq(financeEntries.id, entryId) }) : undefined;
   if (!entry) return fail("Lançamento não encontrado.");
@@ -221,6 +222,9 @@ export async function payEntry(_prev: ActionResult | null, fd: FormData): Promis
     await registerPayment({ entryId: entry.id, ...parsed.data });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "Não foi possível registrar a baixa.");
+  }
+  if (entry.kind === "entrada") {
+    await logProjectActivity(entry.projectId, "financeiro", `Recebido ${brl(parsed.data.amount)} · ${entry.description}.`, user.id);
   }
   touch(entry);
   const done = parsed.data.amount === open;

@@ -19,7 +19,6 @@ export default async function NewFilmPage() {
       <PageHeader
         label="Site · Portfólio"
         title="Novo filme"
-        description="Entra como rascunho no fim da lista. Publique quando o vídeo e o texto estiverem prontos."
       />
       <FilmForm
         policy={getImagePolicy()}

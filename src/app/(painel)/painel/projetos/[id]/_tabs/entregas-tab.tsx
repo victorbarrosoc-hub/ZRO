@@ -119,7 +119,6 @@ export function ProjectDeliverablesTab({ project }: { project: ProjectDetail }) 
       ) : (
         <EmptyState
           title="Nenhuma entrega ainda"
-          description="Cadastre cada vídeo ou lote com formato, duração e prazo. As rodadas de revisão ficam contadas aqui."
           action={<NewDeliverableButton projectId={project.id} variant="primary" />}
         />
       )}

@@ -1,8 +1,8 @@
 import { EntryStatusBadge, InfoList } from "@/components/painel/bits";
-import { HeroFigure } from "@/components/painel/stat";
+import { StatTile } from "@/components/painel/stat";
 import { Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { FINANCE_CATEGORIES, FINANCE_KINDS, optionLabel } from "@/lib/domain";
-import { brl, dateBR, entryStatus, todayISO } from "@/lib/format";
+import { brl, dateBR, dateShort, entryStatus, todayISO } from "@/lib/format";
 import type { ProjectDetail, ProjectSummary } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
 import { DeleteEntryButton, NewEntryButton, PayEntryButton } from "../_components/finance-dialogs";
@@ -11,82 +11,79 @@ import { percent } from "../_components/meter";
 const KIND_TITLE: Record<string, string> = { entrada: "Entradas", saida: "Saídas", imposto: "Impostos" };
 const COLS = "lg:grid-cols-[minmax(0,1.6fr)_112px_96px_112px_112px_96px_minmax(0,1.1fr)_40px]";
 
-/** Aba "Financeiro": resultado estimado do projeto e os lançamentos ligados a ele. */
+/** Aba "Financeiro": resultado do projeto (contratado, custos por origem, imposto, margem) e os lançamentos. */
 export function ProjectFinanceTab({ project, summary }: { project: ProjectDetail; summary: ProjectSummary }) {
   const f = summary.finance;
+  const b = f.breakdown;
   const today = todayISO();
   const hasValue = f.contracted > 0;
   const groups = FINANCE_KINDS.map((k) => ({ ...k, entries: project.entries.filter((e) => e.kind === k.key) })).filter((g) => g.entries.length);
   const rate = String(f.taxRate).replace(".", ",");
+  const diarias = project.diarias.map((d) => ({ id: d.id, date: d.date, label: `${dateBR(d.date)} · ${d.title}` }));
+  const diariaLabel = new Map(project.diarias.map((d) => [d.id, dateShort(d.date)]));
+  const newEntry = <NewEntryButton projectId={project.id} diarias={diarias} />;
 
   return (
     <div className="grid grid-cols-1 gap-4">
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12" aria-label="Resultado do projeto">
-        <HeroFigure
-          className="md:col-span-2 xl:col-span-4"
-          label="Margem estimada"
+      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-label="Resultado do projeto">
+        <StatTile label="Contratado" value={hasValue ? brl(f.contracted) : "—"} sub={`${brl(f.received)} recebido`} />
+        <StatTile label="Custos" value={brl(f.costs)} sub={`${brl(f.paidOut)} pago`} />
+        <StatTile label={`Imposto (${rate}%)`} value={brl(f.taxEstimated)} sub="estimado" />
+        <StatTile
+          label="Margem"
           value={hasValue ? brl(f.margin) : "—"}
-          sub={
-            hasValue
-              ? `${percent(f.marginPct)} do valor contratado, depois de custos e imposto`
-              : "Defina o valor contratado do projeto para calcular"
-          }
+          sub={hasValue ? percent(f.marginPct) : undefined}
+          tone={hasValue && f.margin < 0 ? "danger" : "default"}
         />
+      </section>
 
-        <Card className="xl:col-span-4">
-          <CardHeader title="Resultado" description="Valor contratado menos custos e imposto estimado." />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="Custos" />
           <div className="px-5 pt-2 pb-2 sm:px-6">
             <InfoList
               items={[
-                { label: "Valor contratado", value: brl(f.contracted) },
-                { label: "Custos", value: <span className="tabular-nums">− {brl(f.costs)}</span> },
-                { label: `Imposto estimado (${rate}%)`, value: <span className="tabular-nums">− {brl(f.taxEstimated)}</span> },
                 {
-                  label: "Margem estimada",
+                  label: "Equipe",
                   value: (
-                    <span className={cn("font-medium", hasValue && f.margin < 0 ? "text-danger" : "text-white")}>
-                      {hasValue ? `${brl(f.margin)} · ${percent(f.marginPct)}` : "—"}
+                    <span className="tabular-nums">
+                      {brl(b.crew.total)}
+                      {b.crew.open ? <span className="ml-2 text-[12px] text-warn">falta {brl(b.crew.open)}</span> : null}
                     </span>
                   ),
+                },
+                { label: "Diárias (logística)", value: <span className="tabular-nums">{brl(b.diarias.total)}</span> },
+                { label: "Outros custos", value: <span className="tabular-nums">{brl(b.other.total)}</span> },
+                { label: `Imposto estimado (${rate}%)`, value: <span className="tabular-nums">{brl(f.taxEstimated)}</span> },
+                {
+                  label: "Total",
+                  value: <span className="font-medium text-white tabular-nums">{brl(f.costs + f.taxEstimated)}</span>,
                 },
               ]}
             />
           </div>
-          <div className="grid gap-1 border-t border-line px-5 py-4 text-[12px] text-mute sm:px-6">
-            <p>
-              Custos = {brl(f.costsLaunched)} em saídas lançadas
-              {f.crewPending ? ` + ${brl(f.crewPending)} da equipe ainda sem pagamento gerado` : ""}.
-            </p>
-            {f.taxLaunched ? <p>Impostos lançados neste projeto: {brl(f.taxLaunched)} (a estimativa acima não muda).</p> : null}
-          </div>
         </Card>
 
-        <Card className="xl:col-span-4">
-          <CardHeader title="Caixa do projeto" description="O que já entrou e saiu, e o que falta." />
+        <Card>
+          <CardHeader title="Caixa do projeto" />
           <div className="px-5 pt-2 pb-2 sm:px-6">
             <InfoList
               items={[
-                { label: "Recebido", value: brl(f.received) },
-                { label: "A receber", value: brl(f.receivable) },
-                { label: "Pago", value: brl(f.paidOut) },
-                { label: "A pagar", value: brl(f.payable) },
+                { label: "Recebido", value: <span className="tabular-nums">{brl(f.received)}</span> },
+                { label: "A receber", value: <span className="tabular-nums">{brl(f.receivable)}</span> },
+                { label: "Pago", value: <span className="tabular-nums">{brl(f.paidOut)}</span> },
+                { label: "A pagar", value: <span className="tabular-nums">{brl(f.payable + f.crewPending)}</span> },
+                ...(hasValue && f.notLaunched > 0
+                  ? [{ label: "Sem recebimento lançado", value: <span className="text-warn tabular-nums">{brl(f.notLaunched)}</span> }]
+                  : []),
               ]}
             />
           </div>
-          {hasValue && f.notLaunched > 0 ? (
-            <p className="border-t border-line px-5 py-4 text-[12px] text-warn sm:px-6">
-              {brl(f.notLaunched)} do valor contratado ainda sem entrada lançada.
-            </p>
-          ) : null}
         </Card>
-      </section>
+      </div>
 
       <Card>
-        <CardHeader
-          title="Lançamentos"
-          description="Tudo que entra e sai por este projeto. Aparece também no Financeiro."
-          action={<NewEntryButton projectId={project.id} />}
-        />
+        <CardHeader title="Lançamentos" action={newEntry} />
         {groups.length ? (
           <div className="mt-4">
             <div className={cn("hidden gap-x-4 px-6 pb-3 text-[12px] text-mute lg:grid", COLS)} aria-hidden>
@@ -126,6 +123,12 @@ export function ProjectFinanceTab({ project, summary }: { project: ProjectDetail
                             <p className="text-[14px] leading-snug text-light">{e.description}</p>
                             <p className="mt-0.5 text-[12px] text-mute">
                               {e.installment ? <span className="font-mono">Parcela {e.installment}</span> : null}
+                              {e.eventId && diariaLabel.has(e.eventId) ? (
+                                <span>
+                                  {e.installment ? " · " : ""}diária {diariaLabel.get(e.eventId)}
+                                  <span className="lg:hidden"> · </span>
+                                </span>
+                              ) : null}
                               <span className="lg:hidden">
                                 {e.installment ? " · " : ""}
                                 {category} ·{" "}
@@ -164,11 +167,7 @@ export function ProjectFinanceTab({ project, summary }: { project: ProjectDetail
             })}
           </div>
         ) : (
-          <EmptyState
-            title="Nenhum lançamento neste projeto"
-            description="Lance a entrada e o saldo do cliente e os custos do projeto. Os pagamentos da equipe são gerados na aba Equipe."
-            action={<NewEntryButton projectId={project.id} />}
-          />
+          <EmptyState title="Nenhum lançamento neste projeto" action={newEntry} />
         )}
       </Card>
     </div>

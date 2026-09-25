@@ -15,12 +15,12 @@ export default async function ContaPage() {
 
   return (
     <div className="grid gap-8">
-      <PageHeader label="Ajustes" title="Minha conta" description="Acesso à área interna. Cada sócio troca a própria senha." />
+      <PageHeader label="Ajustes" title="Minha conta" />
       <AjustesTabs active="conta" />
 
       <div className="grid gap-4 xl:grid-cols-12 xl:items-start">
         <Card className="xl:col-span-7">
-          <CardHeader title="Trocar senha" description="Vale na hora. Você continua conectado aqui; os outros aparelhos pedem login de novo." />
+          <CardHeader title="Trocar senha" />
           <ChangePasswordForm email={user.email} />
         </Card>
         <Card className="xl:col-span-5">
@@ -34,10 +34,6 @@ export default async function ContaPage() {
               ]}
             />
           </div>
-          <p className="border-t border-line px-5 py-4 text-[13px] text-mute sm:px-6">
-            Trocar a senha desconecta os outros aparelhos em que você estava logado. Esqueceu a senha? O outro sócio
-            não consegue redefinir por aqui: fale com quem cuida do sistema.
-          </p>
         </Card>
       </div>
     </div>

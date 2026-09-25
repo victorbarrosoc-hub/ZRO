@@ -21,7 +21,9 @@ O módulo **Freelas** (`src/app/(painel)/painel/freelas/`) é a implementação 
 - Status de lançamento financeiro: `entryStatus(entry)` em `src/lib/format.ts`.
 - Serviços compartilhados (use, não duplique):
   - `src/lib/services/finance.ts`: `registerPayment`, `deletePayment`, `recalcPaid`
-  - `src/lib/services/projects.ts`: `nextProjectCode`, `createProject`, `applyTemplate`
+  - `src/lib/services/projects.ts`: `nextProjectCode`, `createProject`, `applyTemplate`, `syncProjectReceivable` (valor do projeto → recebimento)
+  - `src/lib/services/team.ts`: `syncProjectTeam` (diárias da agenda → equipe → pagamentos). Chame depois de mexer em equipe, diária ou escalação.
+  - `src/lib/services/activity.ts`: `logProjectActivity` (o que acontece no projeto aparece no histórico do cliente)
   - `src/lib/services/clients.ts`: `ensureClientForLead`
   - `src/lib/settings.ts`: `getSetting("company" | "whatsapp" | "taxes" | "quote")`, `saveSetting`
 
@@ -65,6 +67,13 @@ export async function criarAlgo(_prev: ActionResult | null, fd: FormData): Promi
 - `src/components/painel/search-field.tsx`: busca que atualiza `?q=`.
 
 **Páginas de servidor não passam funções para componentes cliente.** Formulários em janela ficam num arquivo `*-dialogs.tsx` ("use client") que importa as actions.
+
+## Integração (não quebre)
+
+- Escalar freela numa diária do projeto → entra na equipe com a diária do cadastro dele → pagamento a pagar no financeiro.
+- Equipe "por diária": valor = diária × dias escalados. "Valor fechado": o valor digitado.
+- Lançamento com baixa nunca é apagado nem reduzido abaixo do que já foi pago.
+- Páginas sem texto explicativo: título, números e ações. Nada de `description` em `PageHeader`.
 
 ## Visual
 

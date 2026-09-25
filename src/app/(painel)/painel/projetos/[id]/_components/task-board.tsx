@@ -116,7 +116,7 @@ export function TaskBoard({
     <div>
       <CardHeader
         title="Tarefas"
-        description={items.length ? `${done} de ${items.length} concluídas` : "Nenhuma tarefa ainda. Use um modelo ou adicione à mão."}
+        description={items.length ? `${done} de ${items.length} concluídas` : undefined}
         action={
           <ApplyTemplateButton
             projectId={projectId}

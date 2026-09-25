@@ -12,6 +12,7 @@ import { addDaysISO, brl, dateBR, todayISO } from "@/lib/format";
 import { nextQuoteNumber, otherOpenQuotesForLead } from "@/lib/queries/quotes";
 import { ensureClientForLead } from "@/lib/services/clients";
 import { createProject } from "@/lib/services/projects";
+import { logProjectActivity } from "@/lib/services/activity";
 import { NEW_CLIENT_VALUE, installmentLabels, normalizeText, quoteCode, quoteTotals, scopeFromLead } from "@/lib/services/quotes";
 import { getSetting } from "@/lib/settings";
 
@@ -350,7 +351,7 @@ const InstallmentsSchema = z
   .max(3, "No máximo 3 parcelas.");
 
 export async function approveQuote(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const quote = await findQuote(fd);
   if (!quote) return fail("Orçamento não encontrado.");
   if (quote.status === "aprovado") return fail("Este orçamento já foi aprovado.");
@@ -437,6 +438,7 @@ export async function approveQuote(_prev: ActionResult | null, fd: FormData): Pr
     return fail("Não foi possível concluir a aprovação. Nada foi alterado; tente de novo.");
   }
 
+  await logProjectActivity(project.id, "projeto", `Orçamento ${quote.number} aprovado. Projeto ${project.code} aberto.`, user.id);
   revalidateQuote(quote.id, { leadId: quote.leadId, clientId, projectId: project.id });
   return ok(`Orçamento aprovado. Projeto ${project.code} criado.`, project.id);
 }

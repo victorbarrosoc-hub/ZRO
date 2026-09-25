@@ -213,7 +213,7 @@ export function CallSheetEditor({
   return (
     <div className="grid grid-cols-1 gap-4">
       <Card>
-        <CardHeader title="O dia" description="O essencial para todo mundo chegar no lugar e na hora certa." />
+        <CardHeader title="O dia" />
         <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4 [&>div]:content-start">
           <Field label="Título" htmlFor="cs-title" className="sm:col-span-2">
             <Input id="cs-title" value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="Ex.: Diária 3 · Pipa" />
@@ -272,11 +272,6 @@ export function CallSheetEditor({
       <Card>
         <CardHeader
           title="Cronograma"
-          description={
-            <>
-              Horário e atividade de cada momento.<span className="hidden md:inline"> Enter numa célula cria a próxima linha.</span>
-            </>
-          }
           action={
             state.schedule.length > 1 ? (
               <Button variant="ghost" size="sm" onClick={sortSchedule}>
@@ -305,7 +300,7 @@ export function CallSheetEditor({
       <Card>
         <CardHeader
           title="Equipe"
-          description={state.crew.length ? `${state.crew.length} ${state.crew.length > 1 ? "pessoas" : "pessoa"} na ordem do dia` : "Quem vai estar no set."}
+          description={state.crew.length ? `${state.crew.length} ${state.crew.length > 1 ? "pessoas" : "pessoa"} na ordem do dia` : undefined}
           action={
             eventCrew.length ? (
               <Menu>
@@ -357,7 +352,6 @@ export function CallSheetEditor({
       <Card>
         <CardHeader
           title="Contatos"
-          description="Quem procurar no local: recepção, cliente, produção."
           action={
             project.clientContact ? (
               <Button variant="ghost" size="sm" onClick={addClientContact}>
@@ -384,7 +378,7 @@ export function CallSheetEditor({
       </Card>
 
       <Card>
-        <CardHeader title="Observações" description="Autorizações, figurino, alimentação, o que levar." />
+        <CardHeader title="Observações" />
         <div className="p-5 sm:p-6">
           <label htmlFor="cs-notes" className="sr-only">
             Observações

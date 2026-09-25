@@ -25,7 +25,6 @@ export default async function ProcessosPage() {
       <PageHeader
         label="Processos"
         title="Modelos de projeto"
-        description="Tarefas padrão por etapa, de Origem a Entrega. Novo projeto de uma categoria já nasce com as tarefas do modelo dela."
         actions={
           <ButtonLink href="/painel/processos/novo" variant="primary">
             <Plus /> Novo modelo
@@ -88,7 +87,6 @@ export default async function ProcessosPage() {
         <Card>
           <EmptyState
             title="Nenhum modelo ainda"
-            description="Monte as tarefas padrão de um tipo de projeto, etapa por etapa."
             action={
               <ButtonLink href="/painel/processos/novo" variant="primary">
                 <Plus /> Novo modelo

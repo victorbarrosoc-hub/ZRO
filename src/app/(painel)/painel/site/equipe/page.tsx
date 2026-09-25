@@ -14,14 +14,12 @@ export default async function SiteEquipePage() {
   await requireUser();
   const team = await listTeamAdmin();
   const policy = getImagePolicy();
-  const published = team.filter((t) => t.published).length;
 
   return (
     <div className="grid gap-8">
       <PageHeader
         label="Site"
         title="Equipe"
-        description={`${published} de ${team.length} no site. Aparece em “Quem dirige”, na página inicial e em Sobre.`}
         actions={<NewTeamMemberButton policy={policy} />}
       />
       <SiteTabs active="equipe" />
@@ -73,7 +71,6 @@ export default async function SiteEquipePage() {
         <Card>
           <EmptyState
             title="Ninguém na equipe do site"
-            description="Sem ninguém publicado, a seção “Quem dirige” some do site."
             action={<NewTeamMemberButton policy={policy} />}
           />
         </Card>

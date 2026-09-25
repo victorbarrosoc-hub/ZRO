@@ -16,7 +16,6 @@ export default async function KitsPage() {
       <PageHeader
         label="Processos"
         title="Kits de equipamento"
-        description="Listas prontas para o checklist de saída e retorno de cada projeto."
         actions={<NewKitButton />}
       />
       <ProcessosTabs active="kits" counts={counts} />
@@ -57,7 +56,6 @@ export default async function KitsPage() {
         <Card>
           <EmptyState
             title="Nenhum kit ainda"
-            description="Monte a lista de um kit (câmera, áudio, luz...) para usar nos checklists."
             action={<NewKitButton />}
           />
         </Card>

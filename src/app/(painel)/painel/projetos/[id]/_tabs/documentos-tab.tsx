@@ -26,7 +26,6 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
       <Card className="flex flex-col">
         <CardHeader
           title="Ordens do dia"
-          description="Horários, local, equipe e contatos de cada diária."
           action={<NewDocButton action={newCallSheet} projectId={projectId} label="Nova" />}
         />
         {sheets.length ? (
@@ -71,7 +70,6 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
       <Card className="flex flex-col">
         <CardHeader
           title="Checklists de equipamento"
-          description="O que sai e o que volta de cada diária."
           action={<NewDocButton action={newChecklist} projectId={projectId} label="Novo" />}
         />
         {docs.checklists.length ? (
@@ -124,7 +122,6 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
       <Card className="flex flex-col">
         <CardHeader
           title="Roteiros e shot lists"
-          description="Roteiro, decupagem e a lista de planos do set."
           action={<NewScriptMenu projectId={projectId} />}
         />
         {docs.scripts.length ? (

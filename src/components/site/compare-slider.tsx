@@ -21,7 +21,7 @@ export function CompareSlider({ src, alt = "" }: { src: string; alt?: string }) 
         className="object-cover"
         style={{ filter: "contrast(1.25) brightness(0.95) saturate(1.1)" }}
       />
-      <div className="pointer-events-none absolute inset-0 bg-[#0a2a6b] mix-blend-color opacity-60" />
+      <div className="pointer-events-none absolute inset-0 bg-abs-deep mix-blend-color opacity-70" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_80%_at_50%_30%,transparent,rgb(0_0_0/0.45))]" />
 
       {/* Bruto */}

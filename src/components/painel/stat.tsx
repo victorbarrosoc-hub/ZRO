@@ -22,7 +22,7 @@ export function StatTile({
   return (
     <div
       className={cn(
-        "relative flex flex-col justify-between gap-6 rounded-[22px] border border-line bg-[linear-gradient(180deg,rgb(255_255_255/0.035),rgb(255_255_255/0.012))] p-5",
+        "@container relative flex flex-col justify-between gap-6 rounded-[22px] border border-line bg-[linear-gradient(180deg,rgb(255_255_255/0.035),rgb(255_255_255/0.012))] p-5",
         tone === "danger" && "border-danger/25",
         className,
       )}
@@ -32,8 +32,10 @@ export function StatTile({
         {icon ? <span className="text-mute [&_svg]:size-4">{icon}</span> : null}
       </div>
       <div>
-        <p className="text-[28px] leading-none font-semibold tracking-[-0.03em] text-white">{value}</p>
-        {sub ? <p className="mt-2 text-[13px] text-mute">{sub}</p> : null}
+        {/* O número encolhe com a largura do cartão (container query): valor em reais não estoura no celular. */}
+        <p className="text-[clamp(17px,11cqi,28px)] leading-none font-semibold tracking-[-0.03em] whitespace-nowrap text-white">{value}</p>
+        {/* Sempre com a linha de apoio (vazia se preciso): numa fileira, os números ficam na mesma altura. */}
+        <p className="mt-2 truncate text-[13px] text-mute">{sub ?? "\u00a0"}</p>
       </div>
     </div>
   );

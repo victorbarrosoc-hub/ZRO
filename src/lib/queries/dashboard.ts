@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, lte, notInArray } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { addDaysISO, todayISO } from "@/lib/format";
 
@@ -192,3 +192,124 @@ export async function getLeadCountByStage() {
   const rows = await db.select({ stage: leads.stage }).from(leads).where(inArray(leads.stage, ["novo", "conversa", "orcamento", "negociacao"]));
   return rows.length;
 }
+
+/* ============================== Controle geral ============================== */
+
+/**
+ * Projetos ativos com o dinheiro de cada um: contratado, recebido, custos (lançados + equipe sem
+ * lançamento), falta pagar da equipe, imposto estimado e margem. Mesma conta da aba Financeiro do projeto.
+ */
+export async function getProjectsOverview(taxRate: number, today = todayISO()) {
+  const rows = await db
+    .select({
+      id: projects.id,
+      code: projects.code,
+      title: projects.title,
+      stage: projects.stage,
+      status: projects.status,
+      dueDate: projects.dueDate,
+      value: projects.value,
+      clientId: projects.clientId,
+      clientName: clients.name,
+    })
+    .from(projects)
+    .leftJoin(clients, eq(projects.clientId, clients.id))
+    .where(inArray(projects.status, ["ativo", "pausado"]))
+    .orderBy(sql`${projects.dueDate} is null`, asc(projects.dueDate));
+  if (!rows.length) return [];
+  const ids = rows.map((r) => r.id);
+
+  const [entries, crew, nextDiarias] = await Promise.all([
+    db
+      .select({
+        projectId: financeEntries.projectId,
+        kind: financeEntries.kind,
+        amount: financeEntries.amount,
+        paidAmount: financeEntries.paidAmount,
+        crewId: financeEntries.crewId,
+        category: financeEntries.category,
+      })
+      .from(financeEntries)
+      .where(inArray(financeEntries.projectId, ids)),
+    db
+      .select({ id: schema.projectCrew.id, projectId: schema.projectCrew.projectId, amount: schema.projectCrew.amount })
+      .from(schema.projectCrew)
+      .where(inArray(schema.projectCrew.projectId, ids)),
+    db
+      .select({ projectId: events.projectId, date: sql<string>`min(${events.date})` })
+      .from(events)
+      .where(and(inArray(events.projectId, ids), eq(events.type, "diaria"), gte(sql`coalesce(${events.endDate}, ${events.date})`, today)))
+      .groupBy(events.projectId),
+  ]);
+
+  return rows.map((p) => {
+    const mine = entries.filter((e) => e.projectId === p.id);
+    const inn = mine.filter((e) => e.kind === "entrada");
+    const out = mine.filter((e) => e.kind === "saida");
+    const crewPending = crew
+      .filter((c) => c.projectId === p.id && !mine.some((e) => e.crewId === c.id))
+      .reduce((s, c) => s + c.amount, 0);
+    const crewOut = out.filter((e) => e.crewId || e.category === "freela");
+    const received = inn.reduce((s, e) => s + e.paidAmount, 0);
+    const costs = out.reduce((s, e) => s + e.amount, 0) + crewPending;
+    const tax = Math.round((p.value * taxRate) / 100);
+    return {
+      ...p,
+      received,
+      receivable: inn.reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0),
+      costs,
+      crewOpen: crewOut.reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0) + crewPending,
+      tax,
+      margin: p.value > 0 ? p.value - costs - tax : null,
+      nextDiaria: nextDiarias.find((d) => d.projectId === p.id)?.date ?? null,
+    };
+  });
+}
+
+export type ProjectOverviewRow = Awaited<ReturnType<typeof getProjectsOverview>>[number];
+
+/** Quem a ZRO ainda precisa pagar: pagamentos de freela em aberto, por pessoa. */
+export async function getFreelaPayables(today = todayISO()) {
+  const rows = await db
+    .select({
+      id: financeEntries.id,
+      kind: financeEntries.kind,
+      description: financeEntries.description,
+      amount: financeEntries.amount,
+      paidAmount: financeEntries.paidAmount,
+      dueDate: financeEntries.dueDate,
+      projectId: financeEntries.projectId,
+      projectTitle: projects.title,
+      freelancerId: financeEntries.freelancerId,
+      freelancerName: schema.freelancers.name,
+      pixKey: schema.freelancers.pixKey,
+    })
+    .from(financeEntries)
+    .innerJoin(schema.freelancers, eq(financeEntries.freelancerId, schema.freelancers.id))
+    .leftJoin(projects, eq(financeEntries.projectId, projects.id))
+    .where(and(eq(financeEntries.kind, "saida"), sql`${financeEntries.paidAmount} < ${financeEntries.amount}`))
+    .orderBy(asc(financeEntries.dueDate));
+
+  const people = new Map<
+    string,
+    { freelancerId: string; name: string; pixKey: string | null; open: number; late: number; nextDue: string; entries: typeof rows }
+  >();
+  for (const r of rows) {
+    const id = r.freelancerId!;
+    const p = people.get(id) ?? { freelancerId: id, name: r.freelancerName, pixKey: r.pixKey, open: 0, late: 0, nextDue: r.dueDate, entries: [] };
+    const open = r.amount - r.paidAmount;
+    p.open += open;
+    if (r.dueDate < today) p.late += open;
+    if (r.dueDate < p.nextDue) p.nextDue = r.dueDate;
+    p.entries.push(r);
+    people.set(id, p);
+  }
+  const list = [...people.values()].sort((a, b) => b.late - a.late || a.nextDue.localeCompare(b.nextDue));
+  return {
+    people: list,
+    total: list.reduce((s, p) => s + p.open, 0),
+    late: list.reduce((s, p) => s + p.late, 0),
+  };
+}
+
+export type FreelaPayables = Awaited<ReturnType<typeof getFreelaPayables>>;

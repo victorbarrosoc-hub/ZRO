@@ -25,7 +25,6 @@ export default async function AjustesPage() {
       <PageHeader
         label="Ajustes"
         title="Empresa e site"
-        description="Dados da empresa, WhatsApp comercial, impostos e padrões dos orçamentos."
       />
       <AjustesTabs active="geral" />
 
@@ -54,26 +53,25 @@ export default async function AjustesPage() {
           <Card id="whatsapp" className={noWhatsapp ? "scroll-mt-24 border-warn/40" : "scroll-mt-24"}>
             <CardHeader
               title="WhatsApp comercial"
-              description="Para onde o funil do site manda os pedidos de orçamento, com a mensagem pronta. Também aparece no rodapé."
               action={<MessageCircle className="size-4 text-mute" aria-hidden />}
             />
             <WhatsappForm number={whatsapp.number} />
           </Card>
 
           <Card>
-            <CardHeader title="Empresa" description="Rodapé do site, página de privacidade e propostas." />
+            <CardHeader title="Empresa" />
             <CompanyForm company={company} />
           </Card>
         </div>
 
         <div className="grid gap-4 xl:col-span-5">
           <Card>
-            <CardHeader title="Impostos" description="Confirme com o contador." />
+            <CardHeader title="Impostos" />
             <TaxesForm rate={taxes.rate} />
           </Card>
 
           <Card>
-            <CardHeader title="Orçamentos" description="O que todo orçamento novo já traz preenchido." />
+            <CardHeader title="Orçamentos" />
             <QuoteDefaultsForm quote={quote} />
           </Card>
 
@@ -81,7 +79,6 @@ export default async function AjustesPage() {
             <Card className="border-danger/25">
               <CardHeader
                 title="Dados de exemplo"
-                description="Projetos, leads, clientes, freelas, orçamentos e lançamentos fictícios, para a área interna não abrir vazia."
               />
               <div className="grid gap-4 p-5 sm:p-6">
                 <p className="text-[14px] text-ash">

@@ -1,9 +1,9 @@
 import "server-only";
-import { eq, like } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 
-const { projects, projectTemplates, projectTasks } = schema;
+const { projects, projectTemplates, projectTasks, financeEntries } = schema;
 
 /** Próximo código de projeto do ano: ZRO-2026-005. */
 export async function nextProjectCode(year = Number(todayISO().slice(0, 4))) {
@@ -67,4 +67,45 @@ export async function createProject(input: {
   }
   if (templateId) await applyTemplate(row.id, templateId);
   return row;
+}
+
+/**
+ * Valor do projeto → recebimento no financeiro, sem precisar lançar à mão.
+ * - Projeto com valor e nenhuma entrada: cria o recebimento (vence no prazo do projeto).
+ * - Uma entrada só, sem baixa e com o valor antigo: acompanha o valor novo.
+ * - Parcelas ou baixas feitas: não mexe (a aba Financeiro mostra a diferença).
+ * Entradas do projeto sempre ficam no nome do cliente do projeto.
+ */
+export async function syncProjectReceivable(projectId: string, previousValue?: number) {
+  const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+  if (!project) return null;
+  const entradas = await db
+    .select()
+    .from(financeEntries)
+    .where(and(eq(financeEntries.projectId, project.id), eq(financeEntries.kind, "entrada")));
+
+  const otherClient = entradas.filter((e) => e.clientId !== project.clientId);
+  for (const e of otherClient) {
+    await db.update(financeEntries).set({ clientId: project.clientId }).where(eq(financeEntries.id, e.id));
+  }
+
+  if (project.value <= 0) return null;
+  if (!entradas.length) {
+    await db.insert(financeEntries).values({
+      kind: "entrada",
+      category: "cliente",
+      description: `${project.title} · valor do projeto`,
+      projectId: project.id,
+      clientId: project.clientId,
+      amount: project.value,
+      dueDate: project.dueDate ?? project.startDate ?? todayISO(),
+    });
+    return "created" as const;
+  }
+  const only = entradas.length === 1 ? entradas[0] : null;
+  if (only && only.paidAmount === 0 && previousValue != null && only.amount === previousValue && previousValue !== project.value) {
+    await db.update(financeEntries).set({ amount: project.value }).where(eq(financeEntries.id, only.id));
+    return "updated" as const;
+  }
+  return null;
 }

@@ -43,8 +43,17 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
-  icons: {
-    icon: "/icon.svg",
+  // Ícones: pelos arquivos em src/app (icon.svg e apple-icon.png). Não declarar `icons` aqui:
+  // se declarar, o Next ignora os arquivos e o iPhone fica sem o ícone da Tela de Início.
+  // Manifest: src/app/manifest.ts (a área interna troca pelo /interno.webmanifest).
+  appleWebApp: {
+    capable: true,
+    title: "ZRO",
+    statusBarStyle: "black",
+  },
+  other: {
+    // O Next 16 só gera "mobile-web-app-capable"; iPhones anteriores ao iOS 16.4 ainda leem esta.
+    "apple-mobile-web-app-capable": "yes",
   },
 };
 

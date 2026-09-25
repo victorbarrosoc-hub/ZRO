@@ -1,10 +1,10 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
+import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import {
@@ -24,9 +24,11 @@ import {
 } from "@/lib/domain";
 import { brl, todayISO } from "@/lib/format";
 import { registerPayment } from "@/lib/services/finance";
-import { applyTemplate, createProject } from "@/lib/services/projects";
+import { logProjectActivity } from "@/lib/services/activity";
+import { applyTemplate, createProject, syncProjectReceivable } from "@/lib/services/projects";
+import { syncProjectTeam, teamSyncNote } from "@/lib/services/team";
 
-const { projects, projectTasks, projectDeliverables, projectCrew, financeEntries, freelancers, clients, projectTemplates } = schema;
+const { projects, projectTasks, projectDeliverables, projectCrew, financeEntries, freelancers, clients, projectTemplates, events, eventCrew } = schema;
 
 /* ============================== Utilitários ============================== */
 
@@ -80,12 +82,6 @@ async function projectById(id: string | undefined) {
   return (await db.query.projects.findFirst({ where: eq(projects.id, id) })) ?? null;
 }
 
-/** "Rafael Moura · captação com câmera (SERHS · Conteúdo 2026)" */
-function crewEntryDescription(name: string, fn: string, projectTitle: string) {
-  const label = optionLabel(FUNCTIONS, fn);
-  return `${name} · ${label.charAt(0).toLowerCase()}${label.slice(1)} (${projectTitle})`;
-}
-
 /* ============================== Projeto ============================== */
 
 const ProjectSchema = z
@@ -119,7 +115,7 @@ async function clientExists(id: string | undefined) {
 }
 
 export async function createProjectAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = readProject(fd);
   if (!parsed.success) return fromZod(parsed.error);
   const briefing = str(fd, "briefing");
@@ -142,7 +138,9 @@ export async function createProjectAction(_prev: ActionResult | null, fd: FormDa
     briefing: briefing ?? null,
     templateId: templateId ?? null,
   });
-  touch(row.id, { clients: [parsed.data.clientId] });
+  await syncProjectReceivable(row.id);
+  await logProjectActivity(row.id, "projeto", `Projeto ${row.code} aberto: ${parsed.data.title}.`, user.id);
+  touch(row.id, { finance: true, clients: [parsed.data.clientId] });
   redirect(`/painel/projetos/${row.id}`);
 }
 
@@ -165,18 +163,27 @@ export async function updateProject(_prev: ActionResult | null, fd: FormData): P
       value: parsed.data.value ?? 0,
     })
     .where(eq(projects.id, project.id));
+  const receivable = await syncProjectReceivable(project.id, project.value);
+  if (parsed.data.title !== project.title) await syncProjectTeam(project.id);
   touch(project.id, { finance: true, clients: [project.clientId, parsed.data.clientId], agenda: true });
-  return ok("Projeto atualizado.");
+  return ok(
+    receivable === "created"
+      ? "Projeto atualizado. O recebimento entrou no financeiro."
+      : receivable === "updated"
+        ? "Projeto atualizado. O recebimento acompanhou o valor novo."
+        : "Projeto atualizado.",
+  );
 }
 
 export async function setProjectStatus(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const project = await projectById(str(fd, "id"));
   if (!project) return fail("Projeto não encontrado.");
   const parsed = z.enum(STATUS_KEYS, { message: "Status inválido." }).safeParse(str(fd, "status"));
   if (!parsed.success) return fromZod(parsed.error);
   if (parsed.data === project.status) return ok();
   await db.update(projects).set({ status: parsed.data }).where(eq(projects.id, project.id));
+  await logProjectActivity(project.id, "projeto", `${project.title}: ${optionLabel(PROJECT_STATUS, parsed.data).toLowerCase()}.`, user.id);
   touch(project.id, { clients: [project.clientId] });
   return ok(`Projeto marcado como ${optionLabel(PROJECT_STATUS, parsed.data).toLowerCase()}.`);
 }
@@ -186,7 +193,7 @@ export async function setProjectStatus(_prev: ActionResult | null, fd: FormData)
  * sem as 6 respostas, o projeto não avança além de Conceito.
  */
 export async function moveProjectStage(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const project = await projectById(str(fd, "id"));
   if (!project) return fail("Projeto não encontrado.");
   const parsed = z.enum(STAGE_KEYS, { message: "Etapa inválida." }).safeParse(str(fd, "to"));
@@ -203,8 +210,9 @@ export async function moveProjectStage(_prev: ActionResult | null, fd: FormData)
   }
 
   await db.update(projects).set({ stage: parsed.data }).where(eq(projects.id, project.id));
-  touch(project.id);
   const s = STAGES[to];
+  await logProjectActivity(project.id, "projeto", `${project.title} ${to > from ? "avançou" : "voltou"} para ${s.n} ${s.label}.`, user.id);
+  touch(project.id, { clients: [project.clientId] });
   return ok(`${to > from ? "Avançou" : "Voltou"} para ${s.n} ${s.label}.`);
 }
 
@@ -450,11 +458,21 @@ const CrewSchema = z
     work: z.string().max(200, "Descrição longa demais.").optional(),
     startDate: optionalDate,
     dueDate: optionalDate,
+    mode: z.enum(["diaria", "fechado"]),
+    dailyRate: z.number({ message: "Valor da diária inválido." }).int().nonnegative("O valor não pode ser negativo.").optional(),
     amount: z.number({ message: "Valor inválido." }).int().nonnegative("O valor não pode ser negativo."),
   })
   .refine((d) => Boolean(d.freelancerId) || (d.name ?? "").length >= 2, {
     message: "Escolha um freela ou digite o nome.",
     path: ["name"],
+  })
+  .refine((d) => d.mode === "fechado" || d.dailyRate != null, {
+    message: "Digite o valor da diária.",
+    path: ["dailyRate"],
+  })
+  .refine((d) => d.mode === "fechado" || Boolean(d.freelancerId), {
+    message: "Por diária só vale para freela cadastrado (a agenda escala pelo cadastro).",
+    path: ["freelancerId"],
   })
   .refine((d) => !d.startDate || !d.dueDate || d.dueDate >= d.startDate, {
     message: "O prazo não pode ser antes do início.",
@@ -469,8 +487,25 @@ function readCrew(fd: FormData) {
     work: str(fd, "work"),
     startDate: str(fd, "startDate"),
     dueDate: str(fd, "dueDate"),
+    mode: str(fd, "mode") === "diaria" ? "diaria" : "fechado",
+    dailyRate: money(fd, "dailyRate"),
     amount: money(fd, "amount") ?? 0,
   });
+}
+
+/** Colunas da equipe a partir do formulário (por diária: o valor vem da agenda). */
+function crewValues(d: z.infer<typeof CrewSchema>) {
+  const perDay = d.mode === "diaria";
+  return {
+    function: d.function,
+    work: d.work ?? null,
+    startDate: perDay ? null : (d.startDate ?? null),
+    dueDate: perDay ? null : (d.dueDate ?? null),
+    dailyRate: perDay ? (d.dailyRate ?? 0) : null,
+    amount: perDay ? 0 : d.amount,
+    // Montado ou mexido à mão: não sai sozinho da equipe se a pessoa for tirada das diárias.
+    source: "manual",
+  };
 }
 
 async function crewById(id: string | undefined) {
@@ -484,19 +519,51 @@ async function freelancerName(id: string | undefined) {
   return f?.name ?? null;
 }
 
+/**
+ * Diárias marcadas no formulário da equipe → escalação na agenda do projeto.
+ * Só mexe na escalação desta pessoa nesta função (ou sem função).
+ */
+async function applyCrewDiarias(fd: FormData, projectId: string, freelancerId: string | undefined, fn: string) {
+  if (str(fd, "diariasField") !== "1" || !freelancerId) return;
+  const diarias = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(and(eq(events.projectId, projectId), eq(events.type, "diaria")));
+  if (!diarias.length) return;
+  const ids = new Set(diarias.map((d) => d.id));
+  const wanted = new Set(list(fd, "diarias").filter((id) => ids.has(id)));
+  const current = await db
+    .select()
+    .from(eventCrew)
+    .where(and(eq(eventCrew.freelancerId, freelancerId), inArray(eventCrew.eventId, [...ids])));
+
+  const drop = current.filter((c) => !wanted.has(c.eventId) && (c.function === fn || c.function == null));
+  if (drop.length) await db.delete(eventCrew).where(inArray(eventCrew.id, drop.map((c) => c.id)));
+  const add = [...wanted].filter((eventId) => !current.some((c) => c.eventId === eventId));
+  if (add.length) await db.insert(eventCrew).values(add.map((eventId) => ({ eventId, freelancerId, function: fn })));
+}
+
 export async function addCrewMember(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   await requireUser();
   const project = await projectById(str(fd, "projectId"));
   if (!project) return fail("Projeto não encontrado.");
   const parsed = readCrew(fd);
   if (!parsed.success) return fromZod(parsed.error);
-  const { freelancerId, name, ...rest } = parsed.data;
+  const { freelancerId, name } = parsed.data;
   // O nome fica guardado também: se o cadastro do freela sumir, a equipe continua legível.
   const snapshot = freelancerId ? await freelancerName(freelancerId) : name;
   if (freelancerId && !snapshot) return fail("Freela não encontrado.", { freelancerId: ["Freela não encontrado."] });
-  await db.insert(projectCrew).values({ ...rest, projectId: project.id, freelancerId: freelancerId ?? null, name: snapshot ?? null });
-  touch(project.id, { freelancers: [freelancerId] });
-  return ok(`${snapshot} entrou na equipe.`);
+  const values = crewValues(parsed.data);
+  await db.insert(projectCrew).values({
+    ...values,
+    projectId: project.id,
+    freelancerId: freelancerId ?? null,
+    name: snapshot ?? null,
+  });
+  await applyCrewDiarias(fd, project.id, freelancerId, parsed.data.function);
+  const report = await syncProjectTeam(project.id);
+  touch(project.id, { finance: true, agenda: true, freelancers: [freelancerId] });
+  return ok([`${snapshot} entrou na equipe.`, report.paymentsCreated ? "Pagamento lançado no financeiro." : ""].join(" ").trim());
 }
 
 export async function updateCrewMember(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
@@ -507,46 +574,29 @@ export async function updateCrewMember(_prev: ActionResult | null, fd: FormData)
   if (!project) return fail("Projeto não encontrado.");
   const parsed = readCrew(fd);
   if (!parsed.success) return fromZod(parsed.error);
-  const { freelancerId, name, ...rest } = parsed.data;
+  const { freelancerId, name } = parsed.data;
   const snapshot = freelancerId ? await freelancerName(freelancerId) : name;
   if (freelancerId && !snapshot) return fail("Freela não encontrado.", { freelancerId: ["Freela não encontrado."] });
 
   await db
     .update(projectCrew)
-    .set({
-      ...rest,
-      work: rest.work ?? null,
-      startDate: rest.startDate ?? null,
-      dueDate: rest.dueDate ?? null,
-      freelancerId: freelancerId ?? null,
-      name: snapshot ?? null,
-    })
+    .set({ ...crewValues(parsed.data), freelancerId: freelancerId ?? null, name: snapshot ?? null })
     .where(eq(projectCrew.id, member.id));
+  await applyCrewDiarias(fd, project.id, freelancerId, parsed.data.function);
+  const report = await syncProjectTeam(project.id);
 
-  // Mantém o pagamento gerado em dia com a equipe, sem mexer no que já foi pago.
-  let note = "";
+  // Pagamento já com baixa maior que o valor novo, ou dividido em mais de um lançamento: avisa.
   const linked = await db.select().from(financeEntries).where(eq(financeEntries.crewId, member.id));
-  if (linked.length === 1) {
-    const entry = linked[0];
-    if (rest.amount >= entry.paidAmount && rest.amount > 0) {
-      await db
-        .update(financeEntries)
-        .set({
-          amount: rest.amount,
-          description: crewEntryDescription(snapshot ?? "Sem nome", rest.function, project.title),
-          freelancerId: freelancerId ?? null,
-          ...(entry.paidAmount === 0 && rest.dueDate ? { dueDate: rest.dueDate } : {}),
-        })
-        .where(eq(financeEntries.id, entry.id));
-      if (entry.amount !== rest.amount) note = " O pagamento no financeiro foi ajustado.";
-    } else if (entry.amount !== rest.amount) {
-      note = ` O pagamento no financeiro continua em ${brl(entry.amount)} (já foram pagos ${brl(entry.paidAmount)}).`;
-    }
-  } else if (linked.length > 1 && linked.reduce((s, e) => s + e.amount, 0) !== rest.amount) {
-    note = " Confira os pagamentos no financeiro: há mais de um lançamento para esta pessoa.";
+  const updated = await crewById(member.id);
+  const total = linked.reduce((s, e) => s + e.amount, 0);
+  let note = report.paymentsCreated || report.paymentsUpdated ? " Financeiro atualizado." : "";
+  if (updated && linked.length && total !== updated.amount) {
+    note =
+      linked.length > 1
+        ? " Confira os pagamentos no financeiro: há mais de um lançamento para esta pessoa."
+        : ` O pagamento no financeiro continua em ${brl(total)} (já teve baixa).`;
   }
-
-  touch(project.id, { finance: linked.length > 0, freelancers: [member.freelancerId, freelancerId] });
+  touch(project.id, { finance: true, agenda: true, freelancers: [member.freelancerId, freelancerId] });
   return ok(`Equipe atualizada.${note}`);
 }
 
@@ -559,38 +609,34 @@ export async function deleteCrewMember(_prev: ActionResult | null, fd: FormData)
     .delete(financeEntries)
     .where(and(eq(financeEntries.crewId, member.id), eq(financeEntries.paidAmount, 0)))
     .returning({ id: financeEntries.id });
+  // Sai também das diárias do projeto nesta função (senão a agenda colocaria de volta).
+  if (member.freelancerId) {
+    const diarias = await db.select({ id: events.id }).from(events).where(eq(events.projectId, member.projectId));
+    if (diarias.length) {
+      await db.delete(eventCrew).where(
+        and(
+          eq(eventCrew.freelancerId, member.freelancerId),
+          inArray(eventCrew.eventId, diarias.map((d) => d.id)),
+          or(eq(eventCrew.function, member.function), isNull(eventCrew.function)),
+        ),
+      );
+    }
+  }
   await db.delete(projectCrew).where(eq(projectCrew.id, member.id));
-  touch(member.projectId, { finance: true, freelancers: [member.freelancerId] });
-  return ok(removed.length ? "Removido da equipe. O pagamento em aberto saiu do financeiro." : "Removido da equipe.");
+  await syncProjectTeam(member.projectId);
+  touch(member.projectId, { finance: true, agenda: true, freelancers: [member.freelancerId] });
+  return ok(removed.length ? "Removido da equipe e das diárias. O pagamento em aberto saiu do financeiro." : "Removido da equipe e das diárias.");
 }
 
-/** Cria a saída no financeiro para um membro da equipe (uma vez só). */
+/** Lança no financeiro o pagamento de quem ainda não tem (equipes antigas, de antes da automação). */
 export async function generateCrewPayment(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   await requireUser();
   const member = await crewById(str(fd, "id"));
   if (!member) return fail("Pessoa não encontrada na equipe.");
-  const project = await projectById(member.projectId);
-  if (!project) return fail("Projeto não encontrado.");
-  if (member.amount <= 0) return fail("Defina o valor antes de gerar o pagamento.");
-  const existing = await db.query.financeEntries.findFirst({ where: eq(financeEntries.crewId, member.id), columns: { id: true } });
-  if (existing) return fail("O pagamento desta pessoa já foi gerado.");
-
-  const name = (member.freelancerId ? await freelancerName(member.freelancerId) : null) ?? member.name ?? "Sem nome";
-  const [entry] = await db
-    .insert(financeEntries)
-    .values({
-      kind: "saida",
-      category: "freela",
-      description: crewEntryDescription(name, member.function, project.title),
-      projectId: project.id,
-      freelancerId: member.freelancerId,
-      crewId: member.id,
-      amount: member.amount,
-      dueDate: member.dueDate ?? todayISO(),
-    })
-    .returning({ id: financeEntries.id });
-  touch(project.id, { finance: true, freelancers: [member.freelancerId] });
-  return ok(`Pagamento de ${brl(member.amount)} gerado no financeiro.`, entry.id);
+  if (member.amount <= 0) return fail("Defina o valor antes de lançar o pagamento.");
+  const report = await syncProjectTeam(member.projectId);
+  touch(member.projectId, { finance: true, freelancers: [member.freelancerId] });
+  return ok(teamSyncNote(report) || "Pagamento lançado no financeiro.");
 }
 
 /* ============================== Financeiro do projeto ============================== */
@@ -624,9 +670,15 @@ export async function createProjectEntry(_prev: ActionResult | null, fd: FormDat
     notes: str(fd, "notes"),
   });
   if (!parsed.success) return fromZod(parsed.error);
+  // Custo de uma diária (alimentação, deslocamento...): a diária precisa ser deste projeto.
+  const eventId = str(fd, "eventId");
+  const event = eventId
+    ? await db.query.events.findFirst({ where: and(eq(events.id, eventId), eq(events.projectId, project.id)), columns: { id: true } })
+    : null;
   await db.insert(financeEntries).values({
     ...parsed.data,
     projectId: project.id,
+    eventId: parsed.data.kind === "saida" ? (event?.id ?? null) : null,
     clientId: parsed.data.kind === "entrada" ? project.clientId : null,
   });
   touch(project.id, { finance: true, clients: [project.clientId] });
@@ -636,7 +688,7 @@ export async function createProjectEntry(_prev: ActionResult | null, fd: FormDat
 
 /** Baixa total ou parcial de um lançamento do projeto (recebimento ou pagamento). */
 export async function payProjectEntry(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const entryId = str(fd, "entryId");
   const entry = entryId ? await db.query.financeEntries.findFirst({ where: eq(financeEntries.id, entryId) }) : null;
   if (!entry) return fail("Lançamento não encontrado.");
@@ -658,6 +710,9 @@ export async function payProjectEntry(_prev: ActionResult | null, fd: FormData):
     await registerPayment({ entryId: entry.id, amount: parsed.data.amount, date: parsed.data.date, method: parsed.data.method });
   } catch (e) {
     return fail(e instanceof Error ? e.message : "Não foi possível registrar.");
+  }
+  if (entry.kind === "entrada") {
+    await logProjectActivity(entry.projectId, "financeiro", `Recebido ${brl(parsed.data.amount)} · ${entry.description}.`, user.id);
   }
   touch(entry.projectId ?? str(fd, "projectId"), { finance: true, freelancers: [entry.freelancerId], clients: [entry.clientId] });
   const rest = open - parsed.data.amount;

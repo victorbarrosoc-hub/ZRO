@@ -8,6 +8,7 @@ import type { ProjectDetail, ProjectSummary } from "@/lib/queries/projects";
 import { EditBriefingButton } from "../_components/briefing-dialog";
 import { CreativeRuleForm } from "../_components/creative-rule-form";
 import { percent } from "../_components/meter";
+import { StageStepper } from "../_components/stage-stepper";
 import { StageChecklist } from "../_components/task-board";
 
 /** Aba "Visão geral": números do projeto, briefing, tarefas da etapa e a regra criativa. */
@@ -23,13 +24,15 @@ export function ProjectOverviewTab({ project, summary }: { project: ProjectDetai
 
   return (
     <div className="grid grid-cols-1 gap-4">
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Resumo do projeto">
+      <StageStepper projectId={project.id} stage={project.stage} answers={project.creativeRule ?? null} />
+
+      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-label="Resumo do projeto">
         <Link href={tab("tarefas")} scroll={false} className={tileLink}>
           <StatTile
             className={tileHover}
-            label="Tarefas concluídas"
+            label="Tarefas"
             value={`${tasks.pct}%`}
-            sub={tasks.total ? `${tasks.done} de ${tasks.total} tarefas` : "Nenhuma tarefa ainda"}
+            sub={tasks.total ? `${tasks.done} de ${tasks.total}` : "Nenhuma ainda"}
           />
         </Link>
         <Link href={tab("entregas")} scroll={false} className={tileLink}>
@@ -39,30 +42,32 @@ export function ProjectOverviewTab({ project, summary }: { project: ProjectDetai
             value={`${deliverables.delivered} de ${deliverables.total}`}
             sub={
               deliverables.total
-                ? `entregues${deliverables.withClient ? ` · ${deliverables.withClient} com o cliente agora` : ""}`
-                : "Nenhuma entrega cadastrada"
+                ? `entregues${deliverables.withClient ? ` · ${deliverables.withClient} com o cliente` : ""}`
+                : "Nenhuma ainda"
             }
           />
         </Link>
         <Link href={tab("equipe")} scroll={false} className={tileLink}>
           <StatTile
             className={tileHover}
-            label="Custo da equipe"
-            value={brl(crew.total)}
-            sub={crew.people ? `${crew.people} pessoa${crew.people > 1 ? "s" : ""} na equipe` : "Equipe ainda vazia"}
+            label="Equipe"
+            value={brl(finance.breakdown.crew.total)}
+            sub={
+              finance.breakdown.crew.open
+                ? `falta pagar ${brl(finance.breakdown.crew.open)}`
+                : crew.people
+                  ? `${crew.people} pessoa${crew.people > 1 ? "s" : ""}, tudo pago`
+                  : "Ninguém ainda"
+            }
           />
         </Link>
         <Link href={tab("financeiro")} scroll={false} className={tileLink}>
           <StatTile
             className={tileHover}
             tone={finance.contracted > 0 && finance.margin < 0 ? "danger" : "default"}
-            label="Margem estimada"
+            label="Margem"
             value={finance.contracted > 0 ? brl(finance.margin) : "—"}
-            sub={
-              finance.contracted > 0
-                ? `${percent(finance.marginPct)} do valor, depois de custos e imposto`
-                : "Defina o valor contratado do projeto"
-            }
+            sub={finance.contracted > 0 ? `${percent(finance.marginPct)} do valor` : "Sem valor contratado"}
           />
         </Link>
       </section>
@@ -75,7 +80,7 @@ export function ProjectOverviewTab({ project, summary }: { project: ProjectDetai
               {project.briefing ? (
                 <p className="text-[15px] leading-relaxed whitespace-pre-line text-ash">{project.briefing}</p>
               ) : (
-                <p className="text-[14px] text-mute">Sem briefing ainda. Escreva a ideia, o pedido do cliente e o que já se sabe.</p>
+                <p className="text-[14px] text-mute">Sem briefing ainda.</p>
               )}
               {project.notes ? (
                 <div className="mt-5 border-t border-line pt-4">
@@ -107,10 +112,7 @@ export function ProjectOverviewTab({ project, summary }: { project: ProjectDetai
         </div>
 
         <Card id="regra-criativa" className="scroll-mt-24 xl:col-span-7">
-          <CardHeader
-            title="Regra criativa"
-            description="Antes de qualquer projeto, a equipe deve responder. Sem as 6 respostas, o projeto não passa de Conceito."
-          />
+          <CardHeader title="Regra criativa" />
           <div className="px-5 pt-5 pb-5 sm:px-6 sm:pb-6">
             <CreativeRuleForm projectId={project.id} answers={project.creativeRule ?? null} collapsible />
           </div>

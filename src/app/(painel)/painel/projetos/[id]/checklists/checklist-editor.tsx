@@ -198,7 +198,7 @@ export function ChecklistEditor({
       </Card>
 
       <Card>
-        <CardHeader title="Itens" description={total ? `${total} ${total === 1 ? "item" : "itens"} na lista` : "Monte a lista com um kit pronto ou item por item."} />
+        <CardHeader title="Itens" description={total ? `${total} ${total === 1 ? "item" : "itens"} na lista` : undefined} />
         <div className="grid gap-3 px-5 pt-4 sm:px-6 lg:grid-cols-2">
           <div className="flex flex-col gap-2 sm:flex-row">
             <label htmlFor="ck-kit" className="sr-only">
