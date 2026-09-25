@@ -79,6 +79,6 @@ Referência: `brand/absolute-zro/referencia-board.png` (o Victor pediu "igual, �
 - **Paleta:** preto `#000000`, azul profundo `#0B1F2D`, azul Absolute `#2D7BFF` (5,4:1 sobre o preto, serve para texto), branco frio `#F5F7FA`.
 - **Tipografia:** Montserrat Light + Medium (token `font-absolute`). O resto do site segue com Inter.
 - **Código:** `src/components/brand/absolute-logo.tsx` (`AbsoluteLogo` horizontal/empilhado, `AbsoluteSymbol`, `AbsoluteEclipse`, `AbsoluteLens`). O anel sempre usa `--color-abs-blue`; o resto usa `currentColor`. Em tamanhos pequenos ou impressão, `glow={false}`.
-- **Fotos:** recortadas do próprio board, em `public/media/absolute/` (eclipse, cartão, estúdio, porta, corredor, câmera, Instagram, moletom, caderno, paisagem). Estão na resolução do board; para versões maiores, gerar de novo (Higgsfield, só com aprovação e custo informado ao Victor).
+- **Imagens:** só a arte da marca, recortada do board: eclipse e paisagem (`public/media/absolute/`). **Sem mockups** (estúdio, porta, moletom, caderno, cartão, perfil de Instagram): o Victor não quer mostrar o que a ZRO não tem de verdade.
 
 Histórico: antes do board houve duas rodadas de propostas (|ZRO| com azul Kelvin e ABSOLUTE by ZRO), descartadas pelo Victor.

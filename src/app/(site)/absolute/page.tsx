@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 /*
  * A página segue o board da Absolute (brand/absolute-zro/referencia-board.png): painéis pretos
  * separados por um fio, rótulos em caixa alta bem espaçados, Montserrat, o azul só na luz.
- * As fotos vêm do próprio board (public/media/absolute).
+ * Só a arte da marca (eclipse e paisagem). Sem mockups de estúdio, porta, roupa ou perfil:
+ * a página não mostra nada que a ZRO não tenha de verdade.
  */
 
 const SERVICES = [
@@ -40,13 +41,6 @@ const STEPS = [
   { name: "Eclipse", sub: "Mistério / origem", step: "O bruto", Icon: AbsoluteEclipse },
   { name: "Lente", sub: "Precisão / controle", step: "O grading", Icon: AbsoluteLens },
   { name: "Absolute ring", sub: "Estado final", step: "A entrega", Icon: AbsoluteSymbol },
-];
-
-const STRIP = [
-  { src: "/media/absolute/camera.jpg", w: 548, h: 510, alt: "Monitor de câmera com a assinatura Absolute ZRO" },
-  { src: "/media/absolute/instagram.jpg", w: 540, h: 510, alt: "Perfil @absolutezro no Instagram" },
-  { src: "/media/absolute/moletom.jpg", w: 440, h: 510, alt: "Moletom preto com o logo Absolute ZRO" },
-  { src: "/media/absolute/caderno.jpg", w: 502, h: 510, alt: "Caderno preto com o logo Absolute ZRO" },
 ];
 
 /** Rótulo do board: caixa alta, Montserrat, bem espaçado. */
@@ -118,71 +112,23 @@ export default function AbsolutePage() {
             </div>
           </div>
 
-          {/* Linha 2: o caminho (os três símbolos) · cartão */}
-          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,72fr)_minmax(0,28fr)]">
-            <Panel className="px-6 py-10 sm:px-9">
-              <Tag>Do bruto ao absoluto</Tag>
-              <ol className="mt-8 grid gap-px bg-white/10 sm:grid-cols-3">
-                {STEPS.map(({ name, sub, step, Icon }, i) => (
-                  <Reveal as="li" key={name} delay={i * 0.08} className="grid justify-items-center gap-4 bg-black px-4 py-8 text-center">
-                    <Icon className="size-28 sm:size-32" />
-                    <p className="text-[11px] tracking-[0.42em] text-abs-ice uppercase">{name}</p>
-                    <p className="text-[10px] tracking-[0.35em] text-abs-ice/55 uppercase">{sub}</p>
-                    <p className="mt-2 text-[13px] font-light text-abs-ice/80">
-                      <span className="mr-2 font-mono text-[11px] text-abs-blue">0{i + 1}</span>
-                      {step}
-                    </p>
-                  </Reveal>
-                ))}
-              </ol>
-            </Panel>
-            <Panel className="min-h-[260px]">
-              <Photo
-                src="/media/absolute/cartao.jpg"
-                w={730}
-                h={512}
-                alt="Cartão preto com o logo Absolute ZRO em relevo"
-                sizes="(min-width: 1024px) 28vw, 100vw"
-                className="absolute inset-0"
-              />
-            </Panel>
-          </div>
-
-          {/* Linha 3: o estúdio */}
-          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,57fr)_minmax(0,21fr)_minmax(0,22fr)]">
-            <Panel className="aspect-[1502/626] lg:aspect-auto lg:min-h-[400px]">
-              <Photo
-                src="/media/absolute/estudio.jpg"
-                w={1502}
-                h={626}
-                alt="Studio de finalização: sala de color escura com o anel azul na parede"
-                sizes="(min-width: 1024px) 57vw, 100vw"
-                className="absolute inset-0 object-left"
-              />
-            </Panel>
-            <div className="grid grid-cols-2 gap-px bg-white/10 lg:contents">
-              <Panel className="aspect-[532/626] lg:aspect-auto">
-                <Photo
-                  src="/media/absolute/porta.jpg"
-                  w={532}
-                  h={626}
-                  alt="Porta preta com a assinatura Absolute ZRO"
-                  sizes="(min-width: 1024px) 21vw, 50vw"
-                  className="absolute inset-0"
-                />
-              </Panel>
-              <Panel className="aspect-[576/626] lg:aspect-auto">
-                <Photo
-                  src="/media/absolute/corredor.jpg"
-                  w={576}
-                  h={626}
-                  alt="Corredor com o anel azul aceso e a parede Color grading & finishing"
-                  sizes="(min-width: 1024px) 22vw, 50vw"
-                  className="absolute inset-0"
-                />
-              </Panel>
-            </div>
-          </div>
+          {/* Linha 2: o caminho (os três símbolos) */}
+          <Panel className="px-6 py-10 sm:px-9">
+            <Tag>Do bruto ao absoluto</Tag>
+            <ol className="mt-8 grid gap-px bg-white/10 sm:grid-cols-3">
+              {STEPS.map(({ name, sub, step, Icon }, i) => (
+                <Reveal as="li" key={name} delay={i * 0.08} className="grid justify-items-center gap-4 bg-black px-4 py-10 text-center">
+                  <Icon className="size-28 sm:size-36" />
+                  <p className="text-[11px] tracking-[0.42em] text-abs-ice uppercase">{name}</p>
+                  <p className="text-[10px] tracking-[0.35em] text-abs-ice/55 uppercase">{sub}</p>
+                  <p className="mt-2 text-[13px] font-light text-abs-ice/80">
+                    <span className="mr-2 font-mono text-[11px] text-abs-blue">0{i + 1}</span>
+                    {step}
+                  </p>
+                </Reveal>
+              ))}
+            </ol>
+          </Panel>
 
           {/* Linha 4: bruto × absoluto (arraste) */}
           <Panel className="grid gap-8 px-6 py-10 sm:px-9 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:items-center">
@@ -231,15 +177,6 @@ export default function AbsolutePage() {
                 ))}
               </div>
             </Panel>
-          </div>
-
-          {/* Linha 6: a marca no mundo */}
-          <div className="grid grid-cols-2 gap-px bg-white/10 lg:grid-cols-4">
-            {STRIP.map((p) => (
-              <Panel key={p.src} className="aspect-square">
-                <Photo src={p.src} w={p.w} h={p.h} alt={p.alt} sizes="(min-width: 1024px) 25vw, 50vw" className="absolute inset-0" />
-              </Panel>
-            ))}
           </div>
 
           {/* Fecho: a paisagem do board · o convite */}

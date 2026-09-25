@@ -61,7 +61,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Publicado em https://zrofilmes.vercel.app, com WhatsApp, e-mail e filmes do YouTube configurados
 - [x] Integração: diária na agenda → equipe do projeto (valor por diária) → pagamento no financeiro → histórico do cliente no CRM; dashboard com abas (Resumo, Projetos, Freelas a pagar, Fluxo)
 - [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
-- [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, fotos do board em `public/media/absolute/`
+- [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, arte do board (eclipse e paisagem) em `public/media/absolute/`, sem mockups
 
 ## Escolhas provisórias (a confirmar com o Victor)
 
@@ -75,6 +75,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - **WhatsApp comercial:** (84) 98748-0000 · **e-mail de contato:** zro.contato@gmail.com
 - **YouTube:** https://www.youtube.com/@ZROFilmes (os filmes do portfólio vêm de lá, em `scripts/lib/base-data.ts`)
 - **Clientes no site:** todos podem aparecer
+- **Nada de mostrar o que não é real:** sem mockups de estúdio, porta, roupa, perfil ou números inventados no site. Só arte da marca e trabalho de verdade.
 - **Dados nunca podem sumir:** a área interna só roda no endereço oficial (prévias redirecionam), o deploy para se houver dois bancos, e Ajustes → Dados e backup mostra o banco em uso e baixa backup. Não mexer nisso sem falar com o Victor.
 
 ## Estrutura
