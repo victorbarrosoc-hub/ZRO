@@ -38,8 +38,38 @@ export function fieldError(state: ActionResult | null, name: string) {
 }
 
 /**
+ * Devolve ao formulário o que foi enviado. O React 19 limpa os campos não
+ * controlados depois de toda action, inclusive quando ela volta com erro;
+ * sem isso, a pessoa perdia o que tinha digitado.
+ */
+function restoreForm(form: HTMLFormElement, data: FormData) {
+  const seen = new Map<string, number>();
+  for (const el of Array.from(form.elements)) {
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) continue;
+    if (!el.name || el.disabled) continue;
+    const values = data.getAll(el.name).map(String);
+    if (el instanceof HTMLInputElement) {
+      if (el.type === "checkbox" || el.type === "radio") {
+        el.checked = values.includes(el.value || "on");
+        continue;
+      }
+      if (el.type === "file" || el.type === "hidden" || el.type === "submit" || el.type === "button") continue;
+    }
+    if (el instanceof HTMLSelectElement && el.multiple) {
+      for (const option of Array.from(el.options)) option.selected = values.includes(option.value);
+      continue;
+    }
+    const index = seen.get(el.name) ?? 0;
+    seen.set(el.name, index + 1);
+    if (values[index] !== undefined) el.value = values[index];
+  }
+}
+
+/**
  * Formulário ligado a uma Server Action com toast de sucesso/erro.
  * `children` pode ser uma função que recebe o estado (para mostrar erros por campo).
+ * Depois de salvar, o formulário volta aos valores iniciais (padrão do React);
+ * quando dá erro, o que foi digitado continua lá.
  */
 export function ActionForm({
   action,
@@ -54,24 +84,32 @@ export function ActionForm({
   className?: string;
   onSuccess?: (state: Extract<ActionResult, { ok: true }>) => void;
   successMessage?: string;
+  /** Mantido por compatibilidade: o React já limpa o formulário quando dá certo. */
   resetOnSuccess?: boolean;
 }) {
-  const [state, formAction] = useActionState<ActionResult | null, FormData>(action, null);
   const formRef = useRef<HTMLFormElement>(null);
-  const handled = useRef<ActionResult | null>(null);
+  const submitted = useRef<FormData | null>(null);
+
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(async (prev, formData) => {
+    submitted.current = formData;
+    const result = await action(prev, formData);
+    // Aviso e callback saem daqui, e não de um efeito: se a revalidação tirar
+    // este formulário da tela (excluir, pagar numa lista filtrada), o aviso aparece mesmo assim.
+    if (result.ok) {
+      const msg = result.message ?? successMessage;
+      if (msg) toast.success(msg);
+      onSuccess?.(result);
+    } else {
+      toast.error(result.error);
+    }
+    return result;
+  }, null);
 
   useEffect(() => {
-    if (!state || handled.current === state) return;
-    handled.current = state;
-    if (state.ok) {
-      const msg = state.message ?? successMessage;
-      if (msg) toast.success(msg);
-      if (resetOnSuccess) formRef.current?.reset();
-      onSuccess?.(state);
-    } else {
-      toast.error(state.error);
-    }
-  }, [state, onSuccess, successMessage, resetOnSuccess]);
+    if (!state || !formRef.current) return;
+    if (!state.ok && submitted.current) restoreForm(formRef.current, submitted.current);
+    else if (state.ok && resetOnSuccess) formRef.current.reset();
+  }, [state, resetOnSuccess]);
 
   return (
     <form ref={formRef} action={formAction} className={className} noValidate>
@@ -151,6 +189,7 @@ export function FormModal({
 /**
  * Botão que pede confirmação antes de rodar uma action (ex.: excluir).
  * A action recebe um FormData com os `fields` passados.
+ * Para abrir a partir de um menu, passe `open`/`onOpenChange` e deixe sem `trigger`.
  */
 export function ConfirmAction({
   trigger,
@@ -162,8 +201,10 @@ export function ConfirmAction({
   destructive = true,
   successMessage,
   onDone,
+  open: controlledOpen,
+  onOpenChange,
 }: {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   title: string;
   description?: string;
   confirmLabel?: string;
@@ -172,11 +213,15 @@ export function ConfirmAction({
   destructive?: boolean;
   successMessage?: string;
   onDone?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   return (
     <Modal open={open} onOpenChange={setOpen}>
-      <ModalTrigger asChild>{trigger}</ModalTrigger>
+      {trigger ? <ModalTrigger asChild>{trigger}</ModalTrigger> : null}
       <ModalContent title={title} description={description} size="sm">
         <ActionForm
           action={action}

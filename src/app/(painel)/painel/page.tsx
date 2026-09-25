@@ -68,10 +68,10 @@ export default async function PainelPage() {
       {data.lateIn.count || data.lateOut.count ? (
         <section className={cn("grid gap-3", data.lateIn.count && data.lateOut.count ? "lg:grid-cols-2" : null)} aria-label="Atrasados">
           {data.lateIn.count ? (
-            <LateBanner title="Recebimentos atrasados" total={data.lateIn.total} count={data.lateIn.count} first={data.lateIn.items[0]} />
+            <LateBanner kind="entrada" title="Recebimentos atrasados" total={data.lateIn.total} count={data.lateIn.count} first={data.lateIn.items[0]} />
           ) : null}
           {data.lateOut.count ? (
-            <LateBanner title="Pagamentos atrasados" total={data.lateOut.total} count={data.lateOut.count} first={data.lateOut.items[0]} />
+            <LateBanner kind="saida" title="Pagamentos atrasados" total={data.lateOut.total} count={data.lateOut.count} first={data.lateOut.items[0]} />
           ) : null}
         </section>
       ) : null}
@@ -234,11 +234,13 @@ export default async function PainelPage() {
 }
 
 function LateBanner({
+  kind,
   title,
   total,
   count,
   first,
 }: {
+  kind: "entrada" | "saida";
   title: string;
   total: number;
   count: number;
@@ -246,7 +248,7 @@ function LateBanner({
 }) {
   return (
     <Link
-      href="/painel/financeiro?status=atrasado"
+      href={`/painel/financeiro?status=atrasado&tipo=${kind}`}
       className="group flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-card border border-danger/25 bg-danger/[0.04] px-5 py-4 transition-colors hover:border-danger/45"
     >
       <span className="flex items-center gap-3">

@@ -271,9 +271,10 @@
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+/* Só transform: o centro da janela vem da propriedade `translate` do Tailwind (-translate-x/y-1/2); somar os dois fazia a janela pular. */
 @keyframes modal-in {
-  from { transform: translate(-50%, calc(-50% + 12px)) scale(0.98); opacity: 0; }
-  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  from { transform: translateY(12px) scale(0.98); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
 @keyframes pop-in {
   from { transform: translateY(-4px) scale(0.98); opacity: 0; }

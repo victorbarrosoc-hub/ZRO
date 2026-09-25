@@ -85,8 +85,15 @@ export function CashflowChart({ months, current }: { months: FlowMonth[]; curren
   const BASE_GAP = 2; // respiro de superfície dos dois lados da linha de base
 
   const ticks = [scaleMax, scaleMax / 2, 0, -scaleMax / 2, -scaleMax];
-  const hovered = hover != null ? months[hover] : null;
   const currentIndex = months.findIndex((m) => m.key === current);
+  // Mês estreito (12 meses no celular): rótulo em meses alternados, sempre com o atual.
+  const labelEvery = Math.max(1, Math.ceil(34 / band));
+  // Janela que atravessa o ano: janeiro ganha o ano ("jan/27").
+  const spansYears = new Set(months.map((m) => m.key.slice(0, 4))).size > 1;
+  const monthLabel = (key: string) => (spansYears && key.endsWith("-01") ? `${monthShort(key)}/${key.slice(2, 4)}` : monthShort(key));
+  const showLabel = (i: number) =>
+    i === currentIndex || (i % labelEvery === 0 && (currentIndex < 0 || Math.abs(i - currentIndex) >= labelEvery));
+  const hovered = hover != null ? months[hover] : null;
 
   return (
     <div>
@@ -198,14 +205,16 @@ export function CashflowChart({ months, current }: { months: FlowMonth[]; curren
                     />
                   ) : null}
                   {/* mês */}
-                  <text
-                    x={cx}
-                    y={HEIGHT - 8}
-                    textAnchor="middle"
-                    className={cn("text-[12px]", isCurrent ? "fill-white font-medium" : "fill-mute")}
-                  >
-                    {monthShort(m.key)}
-                  </text>
+                  {showLabel(i) ? (
+                    <text
+                      x={cx}
+                      y={HEIGHT - 8}
+                      textAnchor="middle"
+                      className={cn("text-[12px]", isCurrent ? "fill-white font-medium" : "fill-mute")}
+                    >
+                      {monthLabel(m.key)}
+                    </text>
+                  ) : null}
                   {/* rótulo direto: só o saldo do mês atual */}
                   {isCurrent ? (
                     <text x={cx} y={PAD.top - 12} textAnchor="middle" className="fill-light text-[11px] font-medium tabular-nums">

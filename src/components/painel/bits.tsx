@@ -119,7 +119,7 @@ export function TabLinks({
   className?: string;
 }) {
   return (
-    <nav className={cn("-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0", className)} aria-label="Seções">
+    <nav className={cn("-mx-4 min-w-0 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0", className)} aria-label="Seções">
       <ul className="flex w-max gap-1 rounded-full border border-line bg-white/[0.02] p-1">
         {tabs.map((t) => {
           const on = t.key === active;
