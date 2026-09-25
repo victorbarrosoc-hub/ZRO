@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { BackstageStrip } from "@/components/site/backstage-strip";
 import { TeamSection } from "@/components/site/home/sections";
 import { LitLines, Reveal } from "@/components/site/reveal";
 import { RotatingBadge } from "@/components/site/rotating-badge";
@@ -29,6 +30,15 @@ const VALUES = [
   { title: "Criatividade", text: "Buscar caminhos que não sejam óbvios." },
   { title: "Colaboração", text: "Grandes filmes são construídos por pessoas diferentes trabalhando em torno de uma mesma visão." },
   { title: "Excelência", text: "Cada etapa importa: pré-produção, produção, direção, fotografia, edição, cor e finalização." },
+];
+
+/* Bastidores reais da Copa Philipeia (enviados pelo Victor), em public/media/bastidores. */
+const BACKSTAGE = [
+  { src: "/media/bastidores/copa-philipeia-1.jpg", alt: "Bastidores: equipe da ZRO no set, câmeras, luz e o elenco com a camisa do Brasil" },
+  { src: "/media/bastidores/copa-philipeia-2.jpg", alt: "Bastidores: set na cervejaria, bandeira do Brasil, equipe no monitor e a camisa Contando histórias" },
+  { src: "/media/bastidores/copa-philipeia-3.jpg", alt: "Bastidores em preto e branco e cor: equipe, elenco comemorando e o set montado" },
+  { src: "/media/bastidores/copa-philipeia-4.jpg", alt: "Bastidores: direção com o elenco e a equipe da ZRO na cervejaria" },
+  { src: "/media/bastidores/copa-philipeia-5.jpg", alt: "Frames do filme Copa Philipeia: sorrisos, apresentadora e a torcida" },
 ];
 
 export default async function SobrePage() {
@@ -167,6 +177,27 @@ export default async function SobrePage() {
               <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Bastidores: fotos reais de set */}
+      <section className="section-y pt-0" aria-labelledby="bastidores-titulo">
+        <div className="container-zro">
+          <div className="mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+            <Reveal className="max-w-3xl">
+              <p className="label mb-5 text-mute">Bastidores</p>
+              <h2 id="bastidores-titulo" className="text-h2 text-white">
+                No ponto exato onde intenção vira direção.
+              </h2>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <Link href="/filmes/copa-philipeia" className="group inline-flex items-center gap-2 text-ui text-ash transition-colors hover:text-white">
+                Copa Philipeia · ver o filme
+                <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
+              </Link>
+            </Reveal>
+          </div>
+          <BackstageStrip posts={BACKSTAGE} />
         </div>
       </section>
 
