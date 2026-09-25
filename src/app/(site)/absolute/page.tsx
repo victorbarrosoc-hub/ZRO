@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Absolute ZRO",
-  description: "Do bruto ao absoluto. Color grading, finalização de imagem e construção de look.",
+  description: "Color grading e finalização para publicidade, cinema e conteúdo. Do bruto ao absoluto.",
 };
 
 /*
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
  * a página não mostra nada que a ZRO não tenha de verdade.
  */
 
+/* Texto base em docs/marca/absolute-texto.md: casa de cor high-end, rótulos no inglês do mercado, sem nome de pessoa. */
 const SERVICES = [
-  { title: "Color grading", text: "A cor como decisão: cada tom a serviço da narrativa." },
-  { title: "Finalização de imagem", text: "Limpeza, estabilização, ajustes finos e masterização." },
-  { title: "Acabamento", text: "Os detalhes que separam o bom do absoluto." },
-  { title: "Construção de look", text: "Uma linguagem visual própria para o seu filme ou marca." },
-  { title: "Pós para produtoras", text: "Uma extensão técnica e estética do seu time." },
+  { title: "Color grading", text: "Balanço, match entre planos e tratamento de pele." },
+  { title: "Look development", text: "O look do projeto, construído com direção e fotografia." },
+  { title: "Finishing", text: "Limpeza, estabilização e ajustes finos." },
+  { title: "Mastering", text: "Master final e versões de entrega." },
 ];
 
 const VERBS = [
@@ -38,11 +38,11 @@ const VERBS = [
   ["Conta.", "Aperfeiçoa."],
 ];
 
-/* Os três símbolos como o caminho da imagem: do bruto ao estado final. */
+/* Os três símbolos como o caminho do material: do bruto à entrega. */
 const STEPS = [
-  { name: "Eclipse", sub: "Mistério / origem", step: "O bruto", Icon: AbsoluteEclipse },
-  { name: "Lente", sub: "Precisão / controle", step: "O grading", Icon: AbsoluteLens },
-  { name: "Absolute ring", sub: "Estado final", step: "A entrega", Icon: AbsoluteSymbol },
+  { name: "O bruto", sub: "LOG · RAW", Icon: AbsoluteEclipse },
+  { name: "O grading", sub: "Balanço · match · pele · look", Icon: AbsoluteLens },
+  { name: "A entrega", sub: "Master · versões", Icon: AbsoluteSymbol },
 ];
 
 /** Rótulo do board: caixa alta, Montserrat, bem espaçado. */
@@ -65,7 +65,7 @@ export default function AbsolutePage() {
       <div className="mx-auto max-w-[1600px] px-3 sm:px-5">
         {/* Board: fios de 1px entre os painéis */}
         <div className="grid gap-px border border-white/10 bg-white/10">
-          {/* Linha 1: logo · eclipse · o que nos move */}
+          {/* Linha 1: logo · eclipse · quem é */}
           <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,60fr)_minmax(0,20fr)_minmax(0,20fr)]">
             <Panel className="grid min-h-[420px] place-content-center justify-items-center gap-7 px-6 py-20 text-center lg:min-h-[520px]">
               <Reveal>
@@ -99,21 +99,16 @@ export default function AbsolutePage() {
               </Panel>
               <Panel className="grid content-center px-6 py-10 sm:px-9">
                 <Tag className="leading-[2.3]">
-                  Precisão
+                  Cada frame
                   <br />
-                  Controle
+                  tem uma
                   <br />
-                  Profundidade
-                  <br />
-                  Cor
-                  <br />é o que
-                  <br />
-                  nos move.
+                  temperatura.
                 </Tag>
                 <span className="my-7 block h-px w-9 bg-abs-blue" aria-hidden />
                 <p className="text-[13px] leading-[1.8] font-light text-abs-ice/85">
-                  A Absolute ZRO é o braço especializado em color grading e finalização da ZRO. Aqui, cada frame é tratado com
-                  precisão, controle e intenção, para que a imagem atinja seu estado mais absoluto.
+                  Color grading e finalização para publicidade, cinema e conteúdo. Extensão do time de pós da produtora, alinhada com
+                  direção e fotografia.
                 </p>
                 <p className="mt-6 text-[12px] tracking-[0.08em] text-abs-ice">Do bruto ao absoluto.</p>
               </Panel>
@@ -124,15 +119,14 @@ export default function AbsolutePage() {
           <Panel className="px-6 py-10 sm:px-9">
             <Tag>Do bruto ao absoluto</Tag>
             <ol className="mt-8 grid gap-px bg-white/10 sm:grid-cols-3">
-              {STEPS.map(({ name, sub, step, Icon }, i) => (
+              {STEPS.map(({ name, sub, Icon }, i) => (
                 <Reveal as="li" key={name} delay={i * 0.08} className="grid justify-items-center gap-4 bg-black px-4 py-10 text-center">
                   <Icon className="size-28 sm:size-36" />
-                  <p className="text-[11px] tracking-[0.42em] text-abs-ice uppercase">{name}</p>
-                  <p className="text-[10px] tracking-[0.35em] text-abs-ice/55 uppercase">{sub}</p>
-                  <p className="mt-2 text-[13px] font-light text-abs-ice/80">
-                    <span className="mr-2 font-mono text-[11px] text-abs-blue">0{i + 1}</span>
-                    {step}
+                  <p className="text-[11px] tracking-[0.42em] text-abs-ice uppercase">
+                    <span className="mr-2 font-mono tracking-normal text-abs-blue">0{i + 1}</span>
+                    {name}
                   </p>
+                  <p className="text-[10px] tracking-[0.35em] text-abs-ice/55 uppercase">{sub}</p>
                 </Reveal>
               ))}
             </ol>
@@ -175,14 +169,14 @@ export default function AbsolutePage() {
 
           {/* Frames finalizados: trabalho real da ZRO */}
           <Panel className="px-6 pt-10 pb-6 sm:px-9">
-            <Tag>A imagem em seu estado absoluto</Tag>
+            <Tag>Frames</Tag>
           </Panel>
           <FramesMosaic frames={FRAMES} variant="board" />
 
           {/* Linha 5: o que fazemos · ZRO × Absolute */}
           <div className="grid gap-px bg-white/10 lg:grid-cols-2">
             <Panel className="px-6 py-10 sm:px-9">
-              <Tag>O que fazemos</Tag>
+              <Tag>Serviços</Tag>
               <ul className="mt-6">
                 {SERVICES.map((s, i) => (
                   <Reveal as="li" key={s.title} delay={i * 0.05} className="grid gap-1 border-b border-white/10 py-5 last:border-b-0 sm:grid-cols-[48px_1fr]">
@@ -229,13 +223,13 @@ export default function AbsolutePage() {
             <Panel className="grid content-center justify-items-start gap-8 px-6 py-16 sm:px-12">
               <AbsoluteSymbol className="size-20" />
               <p className="max-w-md text-[clamp(28px,3.4vw,48px)] leading-[1.1] font-light tracking-[-0.01em] text-abs-ice">
-                Color como <span className="text-abs-blue">decisão</span>.
+                Agenda <span className="text-abs-blue">aberta</span>.
               </p>
               <Link
                 href="/orcamento?tipo=finalizacao"
                 className="group inline-flex h-12 items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-[14px] font-medium text-abs-deep transition-colors hover:bg-white"
               >
-                Enviar um projeto para finalizar
+                Enviar um projeto
                 <span className="grid size-9 place-items-center rounded-full bg-abs-deep text-abs-ice transition-transform duration-500 ease-out-expo group-hover:rotate-45">
                   <ArrowUpRight className="size-4" aria-hidden />
                 </span>
