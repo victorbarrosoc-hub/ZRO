@@ -8,6 +8,7 @@ import { eq, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import type { DB } from "../../src/lib/db/client";
 import * as s from "../../src/lib/db/schema";
+import { ensureDatabaseIdentity } from "../../src/lib/db/summary";
 import { hashPassword } from "../../src/lib/auth/password";
 import {
   DEFAULT_CATALOG,
@@ -276,4 +277,5 @@ export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: bo
   await ensureTeam(db);
   await ensureFilms(db);
   await ensureShowcaseClients(db);
+  await ensureDatabaseIdentity(db);
 }

@@ -20,7 +20,7 @@ export default async function ContaPage() {
 
       <div className="grid gap-4 xl:grid-cols-12 xl:items-start">
         <Card className="xl:col-span-7">
-          <CardHeader title="Trocar senha" description="Vale a partir do próximo login." />
+          <CardHeader title="Trocar senha" description="Vale na hora. Você continua conectado aqui; os outros aparelhos pedem login de novo." />
           <ChangePasswordForm email={user.email} />
         </Card>
         <Card className="xl:col-span-5">
@@ -35,8 +35,8 @@ export default async function ContaPage() {
             />
           </div>
           <p className="border-t border-line px-5 py-4 text-[13px] text-mute sm:px-6">
-            Trocar a senha não desconecta quem já está logado em outro aparelho. Esqueceu a senha? O outro sócio não
-            consegue redefinir por aqui: fale com quem cuida do sistema.
+            Trocar a senha desconecta os outros aparelhos em que você estava logado. Esqueceu a senha? O outro sócio
+            não consegue redefinir por aqui: fale com quem cuida do sistema.
           </p>
         </Card>
       </div>
