@@ -1,0 +1,647 @@
+/**
+ * Banco da ZRO (SQLite/libSQL via Drizzle).
+ * Dinheiro sempre em centavos (inteiro). Datas de calendário em texto "AAAA-MM-DD".
+ */
+import { relations } from "drizzle-orm";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import type { CreativeRuleAnswers } from "@/lib/domain";
+
+const id = () => text().primaryKey().$defaultFn(() => crypto.randomUUID());
+const createdAt = () =>
+  integer({ mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date());
+const updatedAt = () =>
+  integer({ mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date())
+    .$onUpdateFn(() => new Date());
+
+/* ============================== Acesso ============================== */
+
+export const users = sqliteTable("users", {
+  id: id(),
+  name: text().notNull(),
+  email: text().notNull().unique(),
+  passwordHash: text().notNull(),
+  role: text().notNull().default("socio"),
+  lastLoginAt: integer({ mode: "timestamp_ms" }),
+  createdAt: createdAt(),
+});
+
+/** Tentativas de login, para frear força bruta. */
+export const loginAttempts = sqliteTable(
+  "login_attempts",
+  {
+    id: id(),
+    email: text().notNull(),
+    ip: text(),
+    success: integer({ mode: "boolean" }).notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [index("login_attempts_email_idx").on(t.email, t.createdAt)],
+);
+
+/** Configurações em chave/valor (dados da empresa, WhatsApp, alíquota...). */
+export const settings = sqliteTable("settings", {
+  key: text().primaryKey(),
+  value: text({ mode: "json" }).$type<unknown>().notNull(),
+  updatedAt: updatedAt(),
+});
+
+/* ============================== Site ============================== */
+
+export const films = sqliteTable(
+  "films",
+  {
+    id: id(),
+    slug: text().notNull(),
+    title: text().notNull(),
+    client: text(),
+    category: text().notNull(),
+    year: integer(),
+    duration: text(),
+    format: text().notNull().default("16:9"),
+    videoUrl: text(),
+    posterUrl: text(),
+    previewUrl: text(),
+    summary: text(),
+    intention: text(),
+    credits: text({ mode: "json" }).$type<{ role: string; name: string }[]>(),
+    stills: text({ mode: "json" }).$type<string[]>(),
+    featured: integer({ mode: "boolean" }).notNull().default(false),
+    published: integer({ mode: "boolean" }).notNull().default(true),
+    sortOrder: integer().notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("films_slug_idx").on(t.slug)],
+);
+
+export const teamMembers = sqliteTable("team_members", {
+  id: id(),
+  name: text().notNull(),
+  role: text().notNull(),
+  quote: text(),
+  photoUrl: text(),
+  instagram: text(),
+  sortOrder: integer().notNull().default(0),
+  published: integer({ mode: "boolean" }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export const showcaseClients = sqliteTable("showcase_clients", {
+  id: id(),
+  name: text().notNull(),
+  logoUrl: text(),
+  sortOrder: integer().notNull().default(0),
+  published: integer({ mode: "boolean" }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+export const faqs = sqliteTable("faqs", {
+  id: id(),
+  question: text().notNull(),
+  answer: text().notNull(),
+  sortOrder: integer().notNull().default(0),
+  published: integer({ mode: "boolean" }).notNull().default(true),
+  createdAt: createdAt(),
+});
+
+/* ============================== CRM ============================== */
+
+export const clients = sqliteTable(
+  "clients",
+  {
+    id: id(),
+    name: text().notNull(),
+    segment: text(),
+    city: text(),
+    document: text(),
+    contactName: text(),
+    email: text(),
+    phone: text(),
+    instagram: text(),
+    source: text().notNull().default("outro"),
+    notes: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("clients_name_idx").on(t.name)],
+);
+
+export const leads = sqliteTable(
+  "leads",
+  {
+    id: id(),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    name: text().notNull(),
+    company: text(),
+    segment: text(),
+    email: text(),
+    phone: text(),
+    projectType: text(),
+    idea: text(),
+    timing: text(),
+    city: text(),
+    days: text(),
+    videos: text(),
+    format: text(),
+    extras: text({ mode: "json" }).$type<string[]>(),
+    budget: text(),
+    stage: text().notNull().default("novo"),
+    lostReason: text(),
+    source: text().notNull().default("site"),
+    estimatedValue: integer(),
+    followUpAt: text(),
+    notes: text(),
+    consentAt: integer({ mode: "timestamp_ms" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("leads_stage_idx").on(t.stage), index("leads_created_idx").on(t.createdAt)],
+);
+
+/** Histórico de interações (lead, cliente ou projeto). */
+export const activities = sqliteTable(
+  "activities",
+  {
+    id: id(),
+    leadId: text().references(() => leads.id, { onDelete: "cascade" }),
+    clientId: text().references(() => clients.id, { onDelete: "cascade" }),
+    projectId: text().references(() => projects.id, { onDelete: "cascade" }),
+    type: text().notNull().default("nota"),
+    content: text().notNull(),
+    authorId: text().references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("activities_lead_idx").on(t.leadId), index("activities_project_idx").on(t.projectId)],
+);
+
+/* ============================== Freelas ============================== */
+
+export const freelancers = sqliteTable(
+  "freelancers",
+  {
+    id: id(),
+    name: text().notNull(),
+    city: text(),
+    phone: text(),
+    email: text(),
+    instagram: text(),
+    pixKey: text(),
+    functions: text({ mode: "json" }).$type<string[]>().notNull().default([]),
+    equipment: text(),
+    notes: text(),
+    active: integer({ mode: "boolean" }).notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("freelancers_name_idx").on(t.name)],
+);
+
+/** Valor padrão de um freela por função (e, opcionalmente, por tipo de job). */
+export const freelancerRates = sqliteTable(
+  "freelancer_rates",
+  {
+    id: id(),
+    freelancerId: text()
+      .notNull()
+      .references(() => freelancers.id, { onDelete: "cascade" }),
+    function: text().notNull(),
+    category: text(),
+    amount: integer().notNull(),
+    unit: text().notNull().default("diaria"),
+  },
+  (t) => [index("freelancer_rates_freelancer_idx").on(t.freelancerId)],
+);
+
+/* ============================== Projetos ============================== */
+
+export const projects = sqliteTable(
+  "projects",
+  {
+    id: id(),
+    code: text().notNull(),
+    title: text().notNull(),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    leadId: text().references(() => leads.id, { onDelete: "set null" }),
+    quoteId: text(),
+    category: text().notNull().default("filme-de-marca"),
+    stage: text().notNull().default("origem"),
+    status: text().notNull().default("ativo"),
+    startDate: text(),
+    dueDate: text(),
+    value: integer().notNull().default(0),
+    briefing: text(),
+    creativeRule: text({ mode: "json" }).$type<CreativeRuleAnswers>(),
+    driveUrl: text(),
+    notes: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("projects_code_idx").on(t.code), index("projects_stage_idx").on(t.stage)],
+);
+
+export const projectDeliverables = sqliteTable(
+  "project_deliverables",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    format: text(),
+    duration: text(),
+    quantity: integer().notNull().default(1),
+    dueDate: text(),
+    status: text().notNull().default("pendente"),
+    revision: integer().notNull().default(0),
+    link: text(),
+    sortOrder: integer().notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("deliverables_project_idx").on(t.projectId)],
+);
+
+export const projectTasks = sqliteTable(
+  "project_tasks",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    stage: text().notNull(),
+    title: text().notNull(),
+    done: integer({ mode: "boolean" }).notNull().default(false),
+    sortOrder: integer().notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("tasks_project_idx").on(t.projectId)],
+);
+
+/** Equipe do projeto: quem trabalha, em qual função, por quanto. */
+export const projectCrew = sqliteTable(
+  "project_crew",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    freelancerId: text().references(() => freelancers.id, { onDelete: "set null" }),
+    name: text(),
+    function: text().notNull(),
+    work: text(),
+    startDate: text(),
+    dueDate: text(),
+    deliveredAt: text(),
+    amount: integer().notNull().default(0),
+    notes: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("crew_project_idx").on(t.projectId), index("crew_freelancer_idx").on(t.freelancerId)],
+);
+
+/* ============================== Agenda ============================== */
+
+export const events = sqliteTable(
+  "events",
+  {
+    id: id(),
+    projectId: text().references(() => projects.id, { onDelete: "cascade" }),
+    type: text().notNull().default("diaria"),
+    title: text().notNull(),
+    date: text().notNull(),
+    endDate: text(),
+    startTime: text(),
+    endTime: text(),
+    location: text(),
+    notes: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("events_date_idx").on(t.date)],
+);
+
+/** Quem está escalado em cada diária (para avisar conflito de agenda). */
+export const eventCrew = sqliteTable(
+  "event_crew",
+  {
+    id: id(),
+    eventId: text()
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    freelancerId: text()
+      .notNull()
+      .references(() => freelancers.id, { onDelete: "cascade" }),
+    function: text(),
+  },
+  (t) => [
+    index("event_crew_event_idx").on(t.eventId),
+    uniqueIndex("event_crew_unique_idx").on(t.eventId, t.freelancerId),
+  ],
+);
+
+/* ============================== Orçamentos ============================== */
+
+export const catalogItems = sqliteTable("catalog_items", {
+  id: id(),
+  name: text().notNull(),
+  description: text(),
+  group: text().notNull().default("extra"),
+  unit: text().notNull().default("unidade"),
+  price: integer().notNull().default(0),
+  cost: integer().notNull().default(0),
+  active: integer({ mode: "boolean" }).notNull().default(true),
+  sortOrder: integer().notNull().default(0),
+  createdAt: createdAt(),
+});
+
+export const quotes = sqliteTable(
+  "quotes",
+  {
+    id: id(),
+    number: text().notNull(),
+    version: integer().notNull().default(1),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    leadId: text().references(() => leads.id, { onDelete: "set null" }),
+    projectId: text(),
+    title: text().notNull(),
+    category: text(),
+    status: text().notNull().default("rascunho"),
+    issueDate: text().notNull(),
+    validUntil: text(),
+    period: text(),
+    scope: text(),
+    paymentTerms: text(),
+    conditions: text(),
+    discount: integer().notNull().default(0),
+    taxRate: real().notNull().default(0),
+    internalNotes: text(),
+    sentAt: integer({ mode: "timestamp_ms" }),
+    decidedAt: integer({ mode: "timestamp_ms" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("quotes_number_version_idx").on(t.number, t.version)],
+);
+
+export const quoteItems = sqliteTable(
+  "quote_items",
+  {
+    id: id(),
+    quoteId: text()
+      .notNull()
+      .references(() => quotes.id, { onDelete: "cascade" }),
+    catalogItemId: text().references(() => catalogItems.id, { onDelete: "set null" }),
+    description: text().notNull(),
+    detail: text(),
+    quantity: real().notNull().default(1),
+    unit: text(),
+    unitPrice: integer().notNull().default(0),
+    unitCost: integer().notNull().default(0),
+    sortOrder: integer().notNull().default(0),
+  },
+  (t) => [index("quote_items_quote_idx").on(t.quoteId)],
+);
+
+/* ============================== Financeiro ============================== */
+
+export const financeEntries = sqliteTable(
+  "finance_entries",
+  {
+    id: id(),
+    kind: text().notNull(),
+    category: text().notNull(),
+    description: text().notNull(),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    freelancerId: text().references(() => freelancers.id, { onDelete: "set null" }),
+    crewId: text().references(() => projectCrew.id, { onDelete: "set null" }),
+    quoteId: text(),
+    amount: integer().notNull(),
+    paidAmount: integer().notNull().default(0),
+    dueDate: text().notNull(),
+    paidAt: text(),
+    competence: text(),
+    installment: text(),
+    notes: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("finance_due_idx").on(t.dueDate),
+    index("finance_project_idx").on(t.projectId),
+    index("finance_kind_idx").on(t.kind),
+  ],
+);
+
+/** Baixas (inclusive parciais) de um lançamento. */
+export const financePayments = sqliteTable(
+  "finance_payments",
+  {
+    id: id(),
+    entryId: text()
+      .notNull()
+      .references(() => financeEntries.id, { onDelete: "cascade" }),
+    amount: integer().notNull(),
+    date: text().notNull(),
+    method: text(),
+    notes: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("finance_payments_entry_idx").on(t.entryId)],
+);
+
+/* ============================== Processos ============================== */
+
+/** Modelo de projeto: tarefas padrão por etapa. */
+export const projectTemplates = sqliteTable("project_templates", {
+  id: id(),
+  name: text().notNull(),
+  category: text(),
+  description: text(),
+  tasks: text({ mode: "json" }).$type<{ stage: string; title: string }[]>().notNull().default([]),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const equipmentKits = sqliteTable("equipment_kits", {
+  id: id(),
+  name: text().notNull(),
+  description: text(),
+  items: text({ mode: "json" }).$type<{ name: string; qty: number }[]>().notNull().default([]),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Checklist de equipamento de um projeto, com saída e retorno. */
+export const projectChecklists = sqliteTable(
+  "project_checklists",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    date: text(),
+    items: text({ mode: "json" })
+      .$type<{ name: string; qty: number; out: boolean; back: boolean }[]>()
+      .notNull()
+      .default([]),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("checklists_project_idx").on(t.projectId)],
+);
+
+/** Ordem do dia. */
+export const callSheets = sqliteTable(
+  "call_sheets",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    eventId: text().references(() => events.id, { onDelete: "set null" }),
+    title: text().notNull(),
+    date: text().notNull(),
+    callTime: text(),
+    location: text(),
+    locationUrl: text(),
+    schedule: text({ mode: "json" })
+      .$type<{ time: string; activity: string; notes?: string }[]>()
+      .notNull()
+      .default([]),
+    crew: text({ mode: "json" })
+      .$type<{ name: string; role: string; phone?: string; call?: string }[]>()
+      .notNull()
+      .default([]),
+    contacts: text({ mode: "json" }).$type<{ name: string; role: string; phone?: string }[]>().notNull().default([]),
+    notes: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("call_sheets_project_idx").on(t.projectId)],
+);
+
+/** Roteiros, decupagens e shot lists. */
+export const scripts = sqliteTable(
+  "scripts",
+  {
+    id: id(),
+    projectId: text()
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    kind: text().notNull().default("roteiro"),
+    title: text().notNull(),
+    content: text(),
+    shots: text({ mode: "json" })
+      .$type<{ scene: string; shot: string; description: string; lens?: string; movement?: string; done?: boolean }[]>()
+      .notNull()
+      .default([]),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("scripts_project_idx").on(t.projectId)],
+);
+
+/* ============================== Relações ============================== */
+
+export const clientsRelations = relations(clients, ({ many }) => ({
+  leads: many(leads),
+  projects: many(projects),
+  quotes: many(quotes),
+}));
+
+export const leadsRelations = relations(leads, ({ one, many }) => ({
+  client: one(clients, { fields: [leads.clientId], references: [clients.id] }),
+  activities: many(activities),
+}));
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  lead: one(leads, { fields: [activities.leadId], references: [leads.id] }),
+  client: one(clients, { fields: [activities.clientId], references: [clients.id] }),
+  project: one(projects, { fields: [activities.projectId], references: [projects.id] }),
+  author: one(users, { fields: [activities.authorId], references: [users.id] }),
+}));
+
+export const freelancersRelations = relations(freelancers, ({ many }) => ({
+  rates: many(freelancerRates),
+  crew: many(projectCrew),
+}));
+
+export const freelancerRatesRelations = relations(freelancerRates, ({ one }) => ({
+  freelancer: one(freelancers, { fields: [freelancerRates.freelancerId], references: [freelancers.id] }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  client: one(clients, { fields: [projects.clientId], references: [clients.id] }),
+  lead: one(leads, { fields: [projects.leadId], references: [leads.id] }),
+  deliverables: many(projectDeliverables),
+  tasks: many(projectTasks),
+  crew: many(projectCrew),
+  events: many(events),
+  entries: many(financeEntries),
+  checklists: many(projectChecklists),
+  callSheets: many(callSheets),
+  scripts: many(scripts),
+}));
+
+export const projectDeliverablesRelations = relations(projectDeliverables, ({ one }) => ({
+  project: one(projects, { fields: [projectDeliverables.projectId], references: [projects.id] }),
+}));
+
+export const projectTasksRelations = relations(projectTasks, ({ one }) => ({
+  project: one(projects, { fields: [projectTasks.projectId], references: [projects.id] }),
+}));
+
+export const projectCrewRelations = relations(projectCrew, ({ one }) => ({
+  project: one(projects, { fields: [projectCrew.projectId], references: [projects.id] }),
+  freelancer: one(freelancers, { fields: [projectCrew.freelancerId], references: [freelancers.id] }),
+}));
+
+export const eventsRelations = relations(events, ({ one, many }) => ({
+  project: one(projects, { fields: [events.projectId], references: [projects.id] }),
+  crew: many(eventCrew),
+}));
+
+export const eventCrewRelations = relations(eventCrew, ({ one }) => ({
+  event: one(events, { fields: [eventCrew.eventId], references: [events.id] }),
+  freelancer: one(freelancers, { fields: [eventCrew.freelancerId], references: [freelancers.id] }),
+}));
+
+export const quotesRelations = relations(quotes, ({ one, many }) => ({
+  client: one(clients, { fields: [quotes.clientId], references: [clients.id] }),
+  lead: one(leads, { fields: [quotes.leadId], references: [leads.id] }),
+  items: many(quoteItems),
+}));
+
+export const quoteItemsRelations = relations(quoteItems, ({ one }) => ({
+  quote: one(quotes, { fields: [quoteItems.quoteId], references: [quotes.id] }),
+  catalogItem: one(catalogItems, { fields: [quoteItems.catalogItemId], references: [catalogItems.id] }),
+}));
+
+export const financeEntriesRelations = relations(financeEntries, ({ one, many }) => ({
+  project: one(projects, { fields: [financeEntries.projectId], references: [projects.id] }),
+  client: one(clients, { fields: [financeEntries.clientId], references: [clients.id] }),
+  freelancer: one(freelancers, { fields: [financeEntries.freelancerId], references: [freelancers.id] }),
+  crew: one(projectCrew, { fields: [financeEntries.crewId], references: [projectCrew.id] }),
+  payments: many(financePayments),
+}));
+
+export const financePaymentsRelations = relations(financePayments, ({ one }) => ({
+  entry: one(financeEntries, { fields: [financePayments.entryId], references: [financeEntries.id] }),
+}));
+
+export const projectChecklistsRelations = relations(projectChecklists, ({ one }) => ({
+  project: one(projects, { fields: [projectChecklists.projectId], references: [projects.id] }),
+}));
+
+export const callSheetsRelations = relations(callSheets, ({ one }) => ({
+  project: one(projects, { fields: [callSheets.projectId], references: [projects.id] }),
+  event: one(events, { fields: [callSheets.eventId], references: [events.id] }),
+}));
+
+export const scriptsRelations = relations(scripts, ({ one }) => ({
+  project: one(projects, { fields: [scripts.projectId], references: [projects.id] }),
+}));

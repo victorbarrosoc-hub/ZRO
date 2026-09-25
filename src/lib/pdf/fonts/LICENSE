@@ -1,0 +1,14 @@
+Fontes usadas no PDF dos orçamentos (src/lib/pdf/quote-document.tsx).
+
+Inter (Regular 400, Medium 500, SemiBold 600)
+  Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)
+  Licença: SIL Open Font License 1.1, texto completo em OFL-Inter.txt
+  Origem: instâncias estáticas servidas pelo Google Fonts (fonts.gstatic.com, Inter v20)
+
+Geist Mono (Regular 400, Medium 500)
+  Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
+  Licença: SIL Open Font License 1.1, texto completo em OFL-GeistMono.txt
+  Origem: instâncias estáticas servidas pelo Google Fonts (fonts.gstatic.com, Geist Mono v6)
+
+As fontes vão embutidas (em subconjunto) nos PDFs gerados, o que a OFL permite.
+Não renomear os arquivos: o registro em src/lib/pdf/fonts.ts usa estes nomes.
