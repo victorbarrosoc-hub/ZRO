@@ -46,14 +46,19 @@ const found = await databaseSummary(db);
 // Continuidade: em produção, cada deploy precisa usar o MESMO banco do deploy anterior.
 // Banco vazio, ou que não viu o último deploy publicado, é banco trocado ou cópia nova:
 // publicar esconderia o CRM. Melhor parar e deixar o site no ar como está.
+// O banco oficial registra os deploys desde o bf5a852 (25/09/2026). Daqui pra frente,
+// banco sem esse histórico também é banco trocado.
+const EXIGIR_HISTORICO = true;
 const previousSha = process.env.VERCEL_GIT_PREVIOUS_SHA;
 if (process.env.VERCEL_ENV === "production" && previousSha && process.env.ZRO_ACEITAR_BANCO_NOVO !== "1") {
   const seen = found.identity?.deploys ?? [];
   const problem = !found.firstSetupAt
     ? "este deploy recebeu um banco VAZIO, mas o site já tinha sido publicado antes"
-    : seen.length > 0 && !seen.includes(previousSha)
-      ? "este banco não é o mesmo que o último deploy publicado usava"
-      : null;
+    : seen.length === 0 && EXIGIR_HISTORICO
+      ? "este banco não tem o histórico de publicações que o banco oficial tem"
+      : seen.length > 0 && !seen.includes(previousSha)
+        ? "este banco não é o mesmo que o último deploy publicado usava"
+        : null;
   if (problem) {
     console.error(
       `\n✖ Deploy parado para proteger os dados: ${problem}.\n` +
