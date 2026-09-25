@@ -24,7 +24,7 @@ Antes de propor ou construir qualquer coisa, leia:
 
 ## Sócios
 
-- **Victor Barroso:** criativo. Está nas produções e cuida do nível de qualidade da entrega. **É o colorista: assina a cor da Absolute ZRO.** É quem conversa com o Claude aqui.
+- **Victor Barroso:** criativo. Está nas produções e cuida do nível de qualidade da entrega. Faz a cor da Absolute ZRO, mas **os textos públicos não levam o nome dele**: a Absolute assina como empresa (casa de color grading high-end, pensando em equipe). É quem conversa com o Claude aqui.
 - **Edu Cardoso** (Eduardo Rocha Cardoso): administrativo e financeiro. Cuida da parte burocrática: propostas, notas, certidões e contratos.
 - A área interna da plataforma é **só para os dois**.
 
