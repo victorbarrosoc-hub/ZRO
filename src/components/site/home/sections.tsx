@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { AbsoluteLogo } from "@/components/brand/absolute-logo";
 import { Symbol } from "@/components/brand/logo";
 import { FilmGrid } from "@/components/site/film-grid";
 import type { FilmSummary } from "@/components/site/film-card";
@@ -142,8 +141,14 @@ export function ServicesSection() {
             className="group relative grid overflow-hidden rounded-media border border-white/10 bg-black font-absolute transition-colors duration-500 hover:border-abs-blue/45 sm:grid-cols-[minmax(0,1fr)_280px]"
           >
             <div className="grid content-center justify-items-start gap-6 p-7 sm:p-10">
-              <AbsoluteLogo className="h-auto w-full max-w-[440px] text-abs-ice" />
-              <p className="text-[10px] tracking-[0.55em] text-abs-ice/80 uppercase sm:text-[11px]">Color grading &amp; finishing</p>
+              <Image
+                src="/media/absolute/logo.png"
+                width={1520}
+                height={310}
+                alt="Absolute ZRO · Color grading & finishing"
+                sizes="(min-width: 640px) 520px, 90vw"
+                className="-ml-[3%] h-auto w-full max-w-[520px] mix-blend-screen"
+              />
               <p className="mt-6 text-[clamp(22px,2.4vw,32px)] leading-tight font-light text-abs-ice">Do bruto ao absoluto.</p>
               <span className="inline-flex items-center gap-3 text-[13px] text-abs-ice/70 transition-colors group-hover:text-abs-ice">
                 Conhecer a Absolute ZRO
