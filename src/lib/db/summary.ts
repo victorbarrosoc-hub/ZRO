@@ -10,7 +10,12 @@ import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import type { DB } from "./client";
 import * as s from "./schema";
 
-export type DatabaseIdentity = { id: string; createdAt: string };
+export type DatabaseIdentity = {
+  id: string;
+  createdAt: string;
+  /** Commits dos deploys que já rodaram neste banco (os mais recentes). */
+  deploys?: string[];
+};
 
 /** Cria a identidade na primeira vez e devolve a que já existe nas outras. */
 export async function ensureDatabaseIdentity(db: DB): Promise<DatabaseIdentity> {
@@ -20,6 +25,16 @@ export async function ensureDatabaseIdentity(db: DB): Promise<DatabaseIdentity> 
     .onConflictDoNothing();
   const row = await db.query.settings.findFirst({ where: eq(s.settings.key, "database") });
   return row!.value as DatabaseIdentity;
+}
+
+/** Anota no banco que este deploy rodou nele (para o próximo conferir que é o mesmo banco). */
+export async function recordDeploy(db: DB, sha: string) {
+  const current = await ensureDatabaseIdentity(db);
+  const deploys = [...(current.deploys ?? []).filter((d) => d !== sha), sha].slice(-30);
+  await db
+    .update(s.settings)
+    .set({ value: { ...current, deploys }, updatedAt: new Date() })
+    .where(eq(s.settings.key, "database"));
 }
 
 const COUNTED = [

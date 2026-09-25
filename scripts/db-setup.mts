@@ -38,10 +38,36 @@ if (local) mkdirSync("./data", { recursive: true });
 const { db } = await import("../src/lib/db/client");
 const s = await import("../src/lib/db/schema");
 const { ensureBaseData } = await import("./lib/base-data");
-const { databaseSummary, ensureDatabaseIdentity, summaryLine } = await import("../src/lib/db/summary");
+const { databaseSummary, ensureDatabaseIdentity, recordDeploy, summaryLine } = await import("../src/lib/db/summary");
 
 await migrate(db, { migrationsFolder: "./drizzle" });
 const found = await databaseSummary(db);
+
+// Continuidade: em produção, cada deploy precisa usar o MESMO banco do deploy anterior.
+// Banco vazio, ou que não viu o último deploy publicado, é banco trocado ou cópia nova:
+// publicar esconderia o CRM. Melhor parar e deixar o site no ar como está.
+const previousSha = process.env.VERCEL_GIT_PREVIOUS_SHA;
+if (process.env.VERCEL_ENV === "production" && previousSha && process.env.ZRO_ACEITAR_BANCO_NOVO !== "1") {
+  const seen = found.identity?.deploys ?? [];
+  const problem = !found.firstSetupAt
+    ? "este deploy recebeu um banco VAZIO, mas o site já tinha sido publicado antes"
+    : seen.length > 0 && !seen.includes(previousSha)
+      ? "este banco não é o mesmo que o último deploy publicado usava"
+      : null;
+  if (problem) {
+    console.error(
+      `\n✖ Deploy parado para proteger os dados: ${problem}.\n` +
+        `  Banco deste deploy: ${databaseLabel(url)}.\n` +
+        "  Causas prováveis: a integração do banco criando uma cópia nova a cada deploy\n" +
+        "  (Vercel → Integrations → Turso → Deployment Actions) ou o banco foi trocado.\n" +
+        "  O site no ar continua com os dados de antes.\n" +
+        "  Trocou o banco de propósito? Crie a variável ZRO_ACEITAR_BANCO_NOVO=1, publique\n" +
+        "  de novo e depois apague a variável. Veja o DEPLOY.md.\n",
+    );
+    process.exit(1);
+  }
+}
+
 await ensureBaseData(db, { allowGeneratedPasswords: local });
 await db
   .insert(s.films)
@@ -61,5 +87,6 @@ await db
   })
   .onConflictDoNothing();
 const identity = await ensureDatabaseIdentity(db);
+if (process.env.VERCEL_GIT_COMMIT_SHA) await recordDeploy(db, process.env.VERCEL_GIT_COMMIT_SHA);
 const where = process.env.VERCEL_ENV ? ` · ambiente ${process.env.VERCEL_ENV}` : "";
 console.log(`Banco pronto: ${databaseLabel(url)} · id ${identity.id.slice(0, 8)}${where} · ${summaryLine(found)}`);

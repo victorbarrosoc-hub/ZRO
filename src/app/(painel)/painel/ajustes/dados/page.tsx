@@ -52,6 +52,16 @@ export default async function DadosPage() {
                     value: summary.identity ? <span className="font-mono">{summary.identity.id.slice(0, 8)}</span> : "—",
                   },
                   { label: "Criado em", value: summary.firstSetupAt ? dateTimeBR(summary.firstSetupAt) : "—" },
+                  {
+                    label: "Publicações neste banco",
+                    value: summary.identity?.deploys?.length ? (
+                      <span className="tabular-nums">
+                        {summary.identity.deploys.length} · última <span className="font-mono">{summary.identity.deploys.at(-1)!.slice(0, 7)}</span>
+                      </span>
+                    ) : (
+                      "—"
+                    ),
+                  },
                 ]}
               />
             </div>
