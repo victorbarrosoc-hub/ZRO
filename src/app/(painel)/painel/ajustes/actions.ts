@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { createSession } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db";
 import { bool, fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
@@ -327,9 +328,12 @@ export async function changePassword(_prev: ActionResult | null, fd: FormData): 
     return fail("A senha atual não confere.", { current: ["A senha atual não confere."] });
   }
 
-  await db.update(users).set({ passwordHash: await hashPassword(parsed.data.next) }).where(eq(users.id, user.id));
+  const passwordHash = await hashPassword(parsed.data.next);
+  await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+  // A sessão é presa à senha: renova a deste aparelho; os outros saem.
+  await createSession({ id: me.id, name: me.name, passwordHash });
   revalidatePath("/painel/ajustes/conta");
-  return ok("Senha trocada. Use a nova no próximo login.");
+  return ok("Senha trocada. Os outros aparelhos vão pedir login de novo.");
 }
 
 /* ============================== Dados de exemplo ============================== */

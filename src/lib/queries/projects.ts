@@ -66,9 +66,10 @@ export async function listProjects(filters: { q?: string; status?: ProjectStatus
     .where(where.length ? and(...where) : undefined)
     .orderBy(
       // Em "Todos", o que está andando vem antes do que já fechou.
-      status === "todos"
-        ? sql`case ${projects.status} when 'ativo' then 0 when 'pausado' then 1 when 'concluido' then 2 else 3 end`
-        : sql`0`,
+      // (Sem ordem neutra tipo "order by 0": no SQLite, número vira posição de coluna e dá erro.)
+      ...(status === "todos"
+        ? [sql`case ${projects.status} when 'ativo' then 0 when 'pausado' then 1 when 'concluido' then 2 else 3 end`]
+        : []),
       sql`${projects.dueDate} is null`,
       status === "concluidos" ? desc(projects.dueDate) : asc(projects.dueDate),
       desc(projects.code),
