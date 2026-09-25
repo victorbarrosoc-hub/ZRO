@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
+import { AbsoluteEclipse, AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
 import { Logo } from "@/components/brand/logo";
 import { CompareSlider } from "@/components/site/compare-slider";
-import { LitLines, Reveal } from "@/components/site/reveal";
+import { Reveal } from "@/components/site/reveal";
 
 export const metadata: Metadata = {
   title: "Absolute ZRO",
@@ -35,30 +35,60 @@ export default function AbsolutePage() {
         aria-hidden
       />
 
-      <section className="container-zro pt-36 pb-20 sm:pt-44">
-        <Reveal className="mb-12 flex flex-wrap items-center gap-x-8 gap-y-5 sm:mb-16">
-          <AbsoluteLogo className="h-10 text-logo sm:h-12" />
-          <span className="label text-abs-ice/70">Finalização e color grading</span>
-        </Reveal>
-        <h1 className="text-display text-white">
-          <LitLines lines={["Do bruto", <span key="b" className="text-abs-blue">ao absoluto.</span>]} delay={0.1} />
-        </h1>
-        <Reveal delay={0.4} className="mt-10 grid gap-8 lg:grid-cols-2">
-          <p className="max-w-xl text-body-lg text-abs-ice/75">
-            O braço de finalização da ZRO. Color grading, finalização de imagem, acabamento e construção de look, para
-            os nossos filmes e para outras produtoras.
-          </p>
-          <div className="flex items-end lg:justify-end">
+      {/* Herói no desenho do board: o logo é o título, o eclipse acende a borda. */}
+      <section className="container-zro grid min-h-[88svh] items-center gap-10 pt-28 pb-16 sm:pt-40 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-6">
+        <div className="relative z-10">
+          <Reveal>
+            <h1>
+              <AbsoluteLogo className="h-auto w-full max-w-[660px] text-abs-ice" />
+            </h1>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="mt-8 font-absolute text-[11px] tracking-[0.55em] text-abs-ice/80 uppercase sm:text-[13px]">
+              Color grading &amp; finishing
+            </p>
+          </Reveal>
+          <Reveal delay={0.3} className="mt-16 grid gap-8 sm:mt-20">
+            <p className="font-absolute text-[12px] tracking-[0.5em] text-abs-ice uppercase sm:text-[13px]">Do bruto ao absoluto.</p>
+            <p className="max-w-lg text-body-lg text-abs-ice/70">
+              O braço de finalização da ZRO. Color grading, finalização de imagem, acabamento e construção de look, para os nossos
+              filmes e para outras produtoras.
+            </p>
             <Link
               href="/orcamento?tipo=finalizacao"
-              className="group inline-flex h-12 items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-ui font-medium text-abs-deep transition-colors hover:bg-white"
+              className="group inline-flex h-12 w-fit items-center gap-4 rounded-full bg-abs-ice pr-1.5 pl-6 text-ui font-medium text-abs-deep transition-colors hover:bg-white"
             >
               Falar sobre finalização
               <span className="grid size-9 place-items-center rounded-full bg-abs-deep text-abs-ice transition-transform duration-500 ease-out-expo group-hover:rotate-45">
                 <ArrowUpRight className="size-4" aria-hidden />
               </span>
             </Link>
-          </div>
+          </Reveal>
+        </div>
+        <Reveal delay={0.2} className="relative order-first lg:order-none">
+          <AbsoluteEclipse className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[420px] lg:max-w-[560px]" />
+        </Reveal>
+      </section>
+
+      {/* O que move a Absolute: as palavras do conceito, empilhadas como no board. */}
+      <section className="container-zro grid gap-12 pb-24 sm:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] sm:items-end">
+        <Reveal>
+          <p className="font-absolute text-[13px] leading-[2.2] tracking-[0.5em] text-abs-ice uppercase">
+            Precisão
+            <br />
+            Controle
+            <br />
+            Profundidade
+            <br />
+            Cor
+            <br />é o que nos move.
+          </p>
+          <span className="mt-8 block h-px w-12 bg-abs-blue" aria-hidden />
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="max-w-xl text-body-lg text-ash">
+            Aqui, cada frame é tratado com precisão, controle e intenção, para que a imagem atinja seu estado mais absoluto.
+          </p>
         </Reveal>
       </section>
 
@@ -101,7 +131,7 @@ export default function AbsolutePage() {
               <Logo className="h-[22px] text-white/45" />
             </p>
             <p className="flex h-14 items-center border-b border-abs-blue/20">
-              <AbsoluteLogo className="h-7 text-logo" />
+              <AbsoluteLogo className="h-auto w-full max-w-[240px] text-abs-ice" glow={false} />
             </p>
             {VERBS.map(([a, b], i) => (
               <Reveal key={a} delay={i * 0.05} className="col-span-2 grid grid-cols-2 border-b border-abs-blue/20">
@@ -115,7 +145,7 @@ export default function AbsolutePage() {
 
       <section className="container-zro section-y text-center">
         <Reveal>
-          <AbsoluteSymbol className="mx-auto mb-10 h-9 text-logo" />
+          <AbsoluteSymbol className="mx-auto mb-10 size-20" />
           <p className="mx-auto max-w-4xl text-h1 text-white">
             Color como <span className="accent text-abs-blue">decisão</span>.
           </p>

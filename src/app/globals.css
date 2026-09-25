@@ -26,10 +26,11 @@
   --color-paper-mute: #5c5c5c;
   --color-paper-line: rgb(11 11 11 / 0.12);
 
-  /* Absolute ZRO: paleta "Kelvin" (provisória, aguardando o Victor) */
-  --color-abs-ice: #dce8ff; /* brilho: realce, halo, texto sobre o profundo */
-  --color-abs-blue: #8ab0ff; /* principal: logo, detalhes, texto (9,45:1 sobre --void) */
-  --color-abs-deep: #17336e; /* profundo: fundos e o azul do logo sobre o claro */
+  /* Absolute ZRO: paleta do board (preto, azul profundo, azul Absolute, branco frio) */
+  --color-abs-ice: #f5f7fa; /* branco frio: texto e realce sobre o profundo */
+  --color-abs-blue: #2d7bff; /* azul Absolute: anel, detalhes, texto (5,4:1 sobre preto) */
+  --color-abs-deep: #0b1f2d; /* azul profundo: fundos e superfícies */
+  --font-absolute: var(--font-montserrat), var(--font-inter), ui-sans-serif, sans-serif;
 
   /* Status (área interna) */
   --color-ok: #5fbf8a;
