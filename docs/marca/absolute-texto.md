@@ -82,7 +82,7 @@ Advertising · Film · Content
 Natal, BR · by @zrofilmes
 ```
 
-**Post 1: A ZRO apresenta**
+**Post 1: A ZRO apresenta** (3 slides: eclipse com "A ZRO apresenta" e o logo · logo e "Do bruto ao absoluto." · manifesto com "Cada frame tem uma temperatura." e a linha de quem é)
 
 ```
 A ZRO apresenta Absolute ZRO.
@@ -92,7 +92,7 @@ Color grading e finalização para publicidade, cinema e conteúdo.
 Do bruto ao absoluto.
 ```
 
-**Post 2: identidade**
+**Post 2: 0 K** (1 slide: o anel com "0 K" e "Zero absoluto.")
 
 ```
 Cada frame tem uma temperatura.
@@ -100,7 +100,7 @@ Cada frame tem uma temperatura.
 A nossa começa no zero absoluto: 0 K.
 ```
 
-**Post 3: Do bruto ao absoluto**
+**Post 3: Do bruto ao absoluto** (2 slides: paisagem com o feixe e o logo · "Agenda aberta." com os serviços)
 
 ```
 Do bruto ao absoluto.
