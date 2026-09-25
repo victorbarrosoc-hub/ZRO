@@ -142,7 +142,7 @@ export function ServicesSection() {
           >
             <div className="flex flex-wrap items-end justify-between gap-8">
               <div className="max-w-2xl">
-                <AbsoluteLogo className="mb-7 h-9 text-logo sm:h-10" />
+                <AbsoluteLogo className="mb-7 h-auto w-full max-w-[420px] text-abs-ice" />
                 <p className="text-h2 text-white">
                   Do bruto ao absoluto.
                 </p>

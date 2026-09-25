@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Instrument_Serif, Inter } from "next/font/google";
+import { Geist_Mono, Instrument_Serif, Inter, Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
 import { SITE_URL } from "@/lib/site-url";
 import "./globals.css";
@@ -17,6 +17,15 @@ const instrument = Instrument_Serif({
   style: ["normal", "italic"],
   variable: "--font-instrument",
   display: "swap",
+});
+
+// Absolute ZRO (tipografia do board: Light + Medium). Sem preload: só baixa onde a Absolute aparece.
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-montserrat",
+  display: "swap",
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
@@ -66,7 +75,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${instrument.variable} ${geistMono.variable}`}
+      className={`${inter.variable} ${instrument.variable} ${geistMono.variable} ${montserrat.variable}`}
       suppressHydrationWarning
     >
       <body>

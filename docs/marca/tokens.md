@@ -30,21 +30,19 @@ Qualquer valor novo nasce aqui primeiro.
 | `--paper-ink` | `#0B0B0B` |
 | `--paper-mute` | `#5C5C5C` |
 
-### Absolute ZRO: paleta "Kelvin" (provisória, aguardando o Victor)
-
-Escolhida entre três paletas (ver `identidade-visual.md` → Absolute ZRO). Os nomes dos tokens não mudaram, só os valores.
+### Absolute ZRO: paleta do board (escolhida pelo Victor)
 
 | Token | Valor | Papel | Uso |
 | --- | --- | --- | --- |
-| `--abs-blue` | `#8AB0FF` | principal | barras do logo, destaques, títulos em azul, rótulos, estado ativo |
-| `--abs-deep` | `#17336E` | profundo | fundos e faixas (com transparência) e o azul do logo sobre o claro |
-| `--abs-ice` | `#DCE8FF` | brilho | halo, realce, texto claro sobre o profundo, botão claro |
+| `--abs-blue` | `#2D7BFF` | azul Absolute | o anel do logo, símbolos, destaques, títulos em azul |
+| `--abs-deep` | `#0B1F2D` | azul profundo | fundos, faixas e superfícies |
+| `--abs-ice` | `#F5F7FA` | branco frio | texto e botão claro nas telas da Absolute |
+| `--font-absolute` | Montserrat | tipografia | logo, assinatura e rótulos espaçados (Light 300, Medium 500) |
 
 Contraste (WCAG 2.x):
 
-- `--abs-blue` sobre `#000`: **9,73:1** · sobre `--void`: **9,45:1** → serve para texto pequeno (AA)
-- `--abs-blue` sobre `--paper`: 1,92:1 → no claro, **nunca** como texto; use `--abs-deep` (10,80:1)
-- `--abs-ice` sobre `--void`: 16,53:1
+- `--abs-blue` sobre `#000`: **5,4:1** → serve para texto (AA)
+- `--abs-ice` sobre `--abs-deep`: 16:1
 
 Regra: o azul é da Absolute ZRO. Fora das telas da Absolute, a ZRO continua preto e branco.
 

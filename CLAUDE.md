@@ -61,7 +61,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Publicado em https://zrofilmes.vercel.app, com WhatsApp, e-mail e filmes do YouTube configurados
 - [x] Integração: diária na agenda → equipe do projeto (valor por diária) → pagamento no financeiro → histórico do cliente no CRM; dashboard com abas (Resumo, Projetos, Freelas a pagar, Fluxo)
 - [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
-- [ ] Absolute ZRO: logo e cor provisórios (|ZRO| + azul Kelvin), aguardando o Victor escolher entre as 3 propostas
+- [x] Absolute ZRO: identidade do board escolhido pelo Victor (A B S O L U T E + ZR com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat). Fotos de mockup do board: pendentes (Higgsfield, com aprovação)
 
 ## Escolhas provisórias (a confirmar com o Victor)
 

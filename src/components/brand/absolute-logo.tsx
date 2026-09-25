@@ -1,107 +1,170 @@
-import { cn } from "@/lib/utils";
+"use client";
 
 /*
- * Absolute ZRO: proposta 02 "Módulo", aplicada como PROVISÓRIA (aguardando o Victor).
- * O logo real da ZRO entre as barras do valor absoluto: |ZRO|. Como |0| = 0,
- * o zero continua sendo o zero, só que em estado absoluto.
- *
- * - Base em currentColor (use text-logo, text-white, text-paper-ink...).
- * - As barras usam o azul da Absolute (token --color-abs-blue). Sobre fundo
- *   claro, passe accentClassName="text-abs-deep".
- * - "ABSOLUTE" está em contorno (Geist Mono 500), então não depende de fonte.
- * - As outras propostas e as paletas estão em docs/marca/identidade-visual.md.
+ * Absolute ZRO: logo e símbolos (direção escolhida pelo Victor a partir do board de referência).
+ * - "A B S O L U T E" em Montserrat Light, bem espaçado (em contorno: não depende da fonte).
+ * - "ZR" do logo oficial da ZRO + o O virando o Anel Absolute: um anel azul que brilha.
+ * - Símbolos: Anel (estado final), Eclipse (mistério, origem) e Lente (precisão, controle).
+ * Paleta: preto #000000, azul profundo #0B1F2D, azul Absolute #2D7BFF, branco frio #F5F7FA.
+ * Base em currentColor; o azul vem de --color-abs-blue.
  */
+import { useId } from "react";
+import { cn } from "@/lib/utils";
 
-/* Paths do logo oficial, os mesmos de components/brand/logo.tsx. */
-const ZRO_PATH =
-  "M9 1H275V9L109 269H275V326H0V318L165 58H9ZM307 1H422C497 1 540 38 540 100C540 150 510 183 457 193L554 326H473L388 199H375V326H307ZM375 60H414C450 60 471 75 471 100C471 125 450 141 414 141H375ZM607 0H894A20 20 0 0 1 914 20V307A20 20 0 0 1 894 327H607A20 20 0 0 1 587 307V20A20 20 0 0 1 607 0ZM750.5 42A121.5 121.5 0 1 0 750.5 285A121.5 121.5 0 1 0 750.5 42Z";
-const O_PATH =
-  "M20 0H307A20 20 0 0 1 327 20V307A20 20 0 0 1 307 327H20A20 20 0 0 1 0 307V20A20 20 0 0 1 20 0ZM163.5 42A121.5 121.5 0 1 0 163.5 285A121.5 121.5 0 1 0 163.5 42Z";
+/* Z e R do logo oficial (components/brand/logo.tsx), sem o O. */
+const ZR_PATH =
+  "M9 1H275V9L109 269H275V326H0V318L165 58H9ZM307 1H422C497 1 540 38 540 100C540 150 510 183 457 193L554 326H473L388 199H375V326H307ZM375 60H414C450 60 471 75 471 100C471 125 450 141 414 141H375Z";
 
-/* "ABSOLUTE" em contorno, já no espaçamento de cada versão. */
-const ABSOLUTE_STACKED =
-  "M102 116L123.1 44L136.9 44L158 116L146.9 116L141.8 97.2L118.2 97.2L113.1 116ZM139 87.4L130 55.1L121 87.4ZM231.2 116L231.2 44L252.1 44Q264 44 270.1 49.2Q276.3 54.3 276.3 63.6Q276.3 68 274.3 71.5Q272.3 75 268.4 77.1Q266 78.4 263 78.9Q267.1 79.4 270.2 80.8Q274.7 83 277 87Q279.4 90.9 279.4 96Q279.4 105.6 272.8 110.8Q266.3 116 254.5 116ZM241.8 106.1L254.6 106.1Q261.6 106.1 265 103.3Q268.3 100.5 268.3 95.5Q268.3 90.2 264.8 87.3Q261.3 84.4 254.6 84.4L241.8 84.4ZM241.8 74.5L252.3 74.5Q259 74.5 262.1 71.8Q265.3 69.2 265.3 64.3Q265.3 59.3 262.1 56.6Q259 53.9 252.3 53.9L241.8 53.9ZM377.3 117.6Q369.5 117.6 363.7 114.5Q357.9 111.3 354.4 105.7Q351 100.1 350.4 92.6L361.3 91.9Q362 97 364.1 100.6Q366.3 104.1 369.7 105.9Q373.2 107.7 377.7 107.7Q382.2 107.7 385.2 106.5Q388.3 105.4 389.9 103.1Q391.5 100.9 391.5 97.7Q391.5 94.4 390 92.1Q388.5 89.7 384.5 87.8Q380.6 85.8 373 83.7Q365.6 81.6 360.9 79Q356.2 76.5 354.1 72.7Q352 68.9 352 63.3Q352 57.1 354.9 52.4Q357.8 47.7 363.2 45Q368.6 42.4 376.2 42.4Q383.7 42.4 389 45.3Q394.4 48.3 397.5 53.5Q400.6 58.7 401.3 65.7L390.3 66.3Q389.8 62.2 388 59Q386.3 55.9 383.2 54.1Q380.2 52.3 375.9 52.3Q369.9 52.3 366.4 55.2Q362.9 58 362.9 62.8Q362.9 65.8 364.4 67.9Q365.8 70 369.3 71.5Q372.9 73.1 379.3 74.9Q387.9 77.3 392.9 80.4Q398 83.5 400.2 87.6Q402.5 91.8 402.5 97.7Q402.5 103.5 399.3 108.1Q396.2 112.7 390.6 115.1Q384.9 117.6 377.3 117.6ZM499.6 117.6Q491 117.6 485.1 113.3Q479.1 108.9 476 100.5Q472.9 92.1 472.9 80.1Q472.9 67.9 476 59.5Q479.1 51.1 485.1 46.7Q491 42.4 499.6 42.4Q508.3 42.4 514.2 46.7Q520.2 51.1 523.3 59.5Q526.4 67.9 526.4 80.1Q526.4 92.1 523.3 100.5Q520.2 108.9 514.2 113.3Q508.3 117.6 499.6 117.6ZM499.6 107.7Q504.7 107.7 508.2 104.6Q511.7 101.6 513.5 95.4Q515.3 89.2 515.3 80.1Q515.3 71 513.5 64.7Q511.7 58.5 508.2 55.4Q504.7 52.3 499.6 52.3Q494.6 52.3 491.1 55.4Q487.6 58.5 485.7 64.7Q483.9 71 483.9 80.1Q483.9 89.2 485.7 95.4Q487.6 101.6 491.1 104.6Q494.6 107.7 499.6 107.7ZM602.4 116L602.4 44L613 44L613 106L647.4 106L647.4 116ZM746.1 117.6Q734.5 117.6 728 110.5Q721.5 103.4 721.5 91L721.5 44L732.2 44L732.2 91.4Q732.2 99.3 735.7 103.5Q739.3 107.7 746.1 107.7Q752.8 107.7 756.4 103.5Q759.9 99.3 759.9 91.4L759.9 44L770.6 44L770.6 91Q770.6 103.4 764.1 110.5Q757.6 117.6 746.1 117.6ZM864 116L864 54L842.9 54L842.9 44L895.6 44L895.6 54L874.5 54L874.5 116ZM971 116L971 44L1015.2 44L1015.2 54L981.6 54L981.6 75L1014 75L1014 84.8L981.6 84.8L981.6 106L1016 106L1016 116Z";
-const ABSOLUTE_HORIZONTAL =
-  "M0 259.5L30.5 155.5L50.4 155.5L80.9 259.5L64.9 259.5L57.4 232.4L23.4 232.4L16 259.5ZM53.5 218.2L40.4 171.5L27.4 218.2ZM117.3 259.5L117.3 155.5L147.5 155.5Q164.6 155.5 173.6 163Q182.5 170.4 182.5 183.8Q182.5 190.2 179.6 195.3Q176.7 200.3 171.1 203.3Q167.6 205.2 163.3 205.9Q169.2 206.6 173.7 208.7Q180.2 211.9 183.5 217.5Q186.9 223.2 186.9 230.6Q186.9 244.4 177.5 252Q168 259.5 151 259.5ZM132.7 245.2L151.2 245.2Q161.3 245.2 166.1 241.1Q170.9 237.1 170.9 229.9Q170.9 222.3 165.9 218.1Q160.8 213.8 151.2 213.8L132.7 213.8ZM132.7 199.6L147.8 199.6Q157.5 199.6 162 195.7Q166.6 191.8 166.6 184.8Q166.6 177.6 162 173.7Q157.5 169.9 147.8 169.9L132.7 169.9ZM259.1 261.8Q247.8 261.8 239.4 257.3Q231 252.8 226 244.6Q221 236.5 220.2 225.7L236 224.6Q237 232.1 240.1 237.2Q243.2 242.4 248.1 244.9Q253.1 247.5 259.7 247.5Q266.2 247.5 270.6 245.8Q274.9 244.1 277.3 240.9Q279.6 237.7 279.6 233Q279.6 228.3 277.4 224.9Q275.2 221.6 269.5 218.7Q263.8 215.9 252.8 212.8Q242.1 209.8 235.4 206.1Q228.7 202.4 225.6 196.9Q222.5 191.4 222.5 183.3Q222.5 174.4 226.7 167.6Q230.9 160.8 238.7 157Q246.5 153.2 257.5 153.2Q268.4 153.2 276 157.4Q283.7 161.7 288.2 169.2Q292.7 176.7 293.7 186.9L277.9 187.7Q277.1 181.7 274.6 177.2Q272 172.6 267.6 170.1Q263.2 167.5 257.1 167.5Q248.4 167.5 243.4 171.6Q238.3 175.7 238.3 182.6Q238.3 187 240.4 190Q242.4 193 247.6 195.3Q252.7 197.5 261.9 200.2Q274.4 203.6 281.7 208Q289 212.5 292.2 218.5Q295.5 224.5 295.5 233Q295.5 241.5 290.9 248.1Q286.4 254.7 278.2 258.3Q270.1 261.8 259.1 261.8ZM366.5 261.8Q354 261.8 345.5 255.6Q336.9 249.3 332.4 237.1Q327.8 224.9 327.8 207.7Q327.8 190.1 332.4 177.9Q336.9 165.8 345.5 159.5Q354 153.2 366.5 153.2Q378.9 153.2 387.6 159.5Q396.2 165.8 400.7 177.9Q405.2 190.1 405.2 207.7Q405.2 224.9 400.7 237.1Q396.2 249.3 387.6 255.6Q378.9 261.8 366.5 261.8ZM366.5 247.5Q373.8 247.5 378.9 243.1Q383.9 238.7 386.6 229.8Q389.2 220.8 389.2 207.7Q389.2 194.5 386.6 185.5Q383.9 176.5 378.9 172Q373.8 167.5 366.5 167.5Q359.2 167.5 354.1 172Q349.1 176.5 346.4 185.5Q343.8 194.5 343.8 207.7Q343.8 220.8 346.4 229.8Q349.1 238.7 354.1 243.1Q359.2 247.5 366.5 247.5ZM445.6 259.5L445.6 155.5L461 155.5L461 245L510.6 245L510.6 259.5ZM583.9 261.8Q567.2 261.8 557.8 251.6Q548.4 241.3 548.4 223.3L548.4 155.5L563.8 155.5L563.8 223.9Q563.8 235.3 568.9 241.4Q574.1 247.5 583.9 247.5Q593.7 247.5 598.8 241.4Q603.9 235.3 603.9 223.9L603.9 155.5L619.3 155.5L619.3 223.3Q619.3 241.3 609.9 251.6Q600.6 261.8 583.9 261.8ZM684.9 259.5L684.9 170L654.5 170L654.5 155.5L730.6 155.5L730.6 170L700.2 170L700.2 259.5ZM770.2 259.5L770.2 155.5L834.1 155.5L834.1 170L785.6 170L785.6 200.3L832.3 200.3L832.3 214.4L785.6 214.4L785.6 245L835.2 245L835.2 259.5Z";
+/* "ABSOLUTE" em Montserrat Light, espaçamento 0,62em. Maiúsculas com 62% da altura do ZRO. */
+const ABSOLUTE_PATH =
+  "M1 203L95 0L110 0L203 203L187 203L99 9L105 9L17 203ZM36 146L41 133L162 133L167 146ZM420 203L420 0L504 0Q537 0 556 13Q574 27 574 52Q574 68 566 80Q559 91 545 97Q531 102 514 102L519 97Q540 97 555 103Q570 109 577 120Q585 132 585 149Q585 175 566 189Q548 203 510 203ZM434 190L510 190Q539 190 555 180Q570 170 570 148Q570 126 555 116Q539 106 510 106L433 106L433 94L504 94Q530 94 545 84Q559 73 559 53Q559 33 545 23Q530 13 504 13L434 13ZM871 204Q848 204 828 197Q808 189 797 177L804 166Q814 177 832 184Q850 191 871 191Q891 191 904 186Q917 181 923 172Q929 163 929 152Q929 139 922 131Q915 123 904 118Q893 114 879 110Q866 107 852 104Q839 100 827 94Q816 88 809 78Q802 68 802 52Q802 38 810 26Q818 14 833 6Q849 -1 874 -1Q891 -1 908 3Q924 8 936 17L930 29Q917 20 903 16Q888 12 874 12Q855 12 842 17Q829 23 823 32Q817 41 817 52Q817 65 824 73Q831 81 842 86Q853 90 867 93Q881 97 894 100Q907 104 919 110Q930 115 937 125Q944 135 944 151Q944 165 936 177Q928 190 912 197Q896 204 871 204ZM1260 204Q1237 204 1218 197Q1199 189 1185 175Q1170 161 1162 142Q1154 124 1154 102Q1154 79 1162 61Q1170 42 1185 28Q1199 14 1218 6Q1237 -1 1260 -1Q1283 -1 1302 6Q1321 14 1335 28Q1350 42 1358 60Q1366 79 1366 102Q1366 124 1358 143Q1350 161 1335 175Q1321 189 1302 197Q1283 204 1260 204ZM1260 191Q1279 191 1296 184Q1313 177 1325 165Q1337 153 1344 137Q1351 121 1351 102Q1351 82 1344 66Q1337 50 1325 38Q1313 26 1296 19Q1279 12 1260 12Q1241 12 1224 19Q1208 26 1195 38Q1183 50 1176 66Q1169 82 1169 102Q1169 121 1176 137Q1183 153 1195 165Q1208 177 1224 184Q1241 191 1260 191ZM1597 203L1597 0L1612 0L1612 190L1728 190L1728 203ZM2022 204Q1984 204 1962 182Q1940 160 1940 117L1940 0L1955 0L1955 116Q1955 154 1973 173Q1990 191 2022 191Q2053 191 2071 173Q2088 154 2088 116L2088 0L2103 0L2103 117Q2103 160 2081 182Q2060 204 2022 204ZM2387 203L2387 13L2314 13L2314 0L2475 0L2475 13L2401 13L2401 203ZM2691 203L2691 0L2827 0L2827 13L2706 13L2706 190L2831 190L2831 203ZM2704 106L2704 93L2814 93L2814 106Z";
+const ABSOLUTE_CAP = 203;
 
-type BrandProps = {
+/* Versão menor, para a assinatura empilhada. */
+const ABSOLUTE_SMALL_PATH =
+  "M1 77L36 0L42 0L77 77L71 77L38 4L40 4L7 77ZM14 55L15 51L61 51L63 55ZM159 77L159 0L191 0Q204 0 211 5Q218 10 218 20Q218 26 215 30Q212 35 207 37Q201 39 195 39L197 37Q205 37 210 39Q216 41 219 46Q222 50 222 57Q222 66 215 72Q208 77 193 77ZM165 72L193 72Q205 72 210 68Q216 65 216 56Q216 48 210 44Q205 40 193 40L164 40L164 36L191 36Q201 36 207 32Q212 28 212 20Q212 13 207 9Q201 5 191 5L165 5ZM330 78Q322 78 314 75Q306 72 302 67L305 63Q309 67 316 70Q323 73 330 73Q338 73 343 71Q348 69 350 65Q352 62 352 58Q352 53 350 50Q347 47 343 45Q339 43 334 42Q328 41 323 39Q318 38 314 36Q310 34 307 30Q304 26 304 20Q304 14 307 10Q310 5 316 2Q322 -1 332 -1Q338 -1 344 1Q350 3 355 6L353 11Q348 8 342 6Q337 4 332 4Q324 4 319 6Q315 9 312 12Q310 16 310 20Q310 25 313 28Q315 31 319 32Q324 34 329 35Q334 37 339 38Q344 39 348 42Q353 44 355 48Q358 51 358 57Q358 63 355 67Q352 72 346 75Q340 78 330 78ZM478 78Q469 78 462 75Q455 72 449 66Q444 61 441 54Q438 47 438 39Q438 30 441 23Q444 16 449 11Q455 5 462 2Q469 -1 478 -1Q487 -1 494 2Q501 5 507 11Q512 16 515 23Q518 30 518 39Q518 47 515 54Q512 61 507 66Q501 72 494 75Q487 78 478 78ZM478 72Q485 72 492 70Q498 67 502 63Q507 58 510 52Q512 46 512 39Q512 31 510 25Q507 19 502 14Q498 10 492 7Q485 5 478 5Q471 5 464 7Q458 10 453 14Q449 19 446 25Q444 31 444 39Q444 46 446 52Q449 58 453 63Q458 67 464 70Q471 72 478 72ZM606 77L606 0L611 0L611 72L656 72L656 77ZM767 78Q753 78 744 69Q736 61 736 44L736 0L742 0L742 44Q742 59 748 65Q755 72 767 72Q779 72 786 65Q792 59 792 44L792 0L798 0L798 44Q798 61 789 69Q781 78 767 78ZM905 77L905 5L878 5L878 0L939 0L939 5L911 5L911 77ZM1021 77L1021 0L1072 0L1072 5L1026 5L1026 72L1074 72L1074 77ZM1026 40L1026 35L1067 35L1067 40Z";
+
+const H = 327;
+const RING_R = 168;
+
+function useSvgId(prefix: string) {
+  return `${prefix}-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+}
+
+/** O anel azul com brilho, centrado em (cx, cy). Raio e traço nas unidades do desenho. */
+function Ring({ cx, cy, r, stroke, glow, id }: { cx: number; cy: number; r: number; stroke: number; glow: boolean; id: string }) {
+  return (
+    // Cor pelo token (com o hex de reserva): o anel é sempre o azul Absolute, qualquer que seja a cor do texto.
+    <g style={{ color: "var(--color-abs-blue, #2d7bff)" }}>
+      <defs>
+        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9cc4ff" />
+          <stop offset="0.45" stopColor="currentColor" />
+          <stop offset="1" stopColor="#1d5fe0" />
+        </linearGradient>
+        {glow ? (
+          <filter id={`${id}-f`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation={stroke * 0.9} />
+          </filter>
+        ) : null}
+      </defs>
+      {glow ? (
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={stroke * 2.6} opacity={0.9} filter={`url(#${id}-f)`} />
+      ) : null}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={`url(#${id}-g)`} strokeWidth={stroke} />
+      {glow ? <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e3efff" strokeWidth={stroke * 0.22} opacity={0.85} /> : null}
+    </g>
+  );
+}
+
+type LogoProps = {
   className?: string;
   "aria-label"?: string;
-  /** Classe de cor das barras azuis. Padrão: text-abs-blue. */
-  accentClassName?: string;
+  /** Brilho do anel (desligue em tamanhos muito pequenos ou impressão). */
+  glow?: boolean;
 };
-
-function a11y(label: string | undefined, decorative: boolean) {
-  return decorative
-    ? ({ "aria-hidden": true } as const)
-    : ({ role: "img", "aria-label": label } as const);
-}
 
 /**
  * Logo da Absolute ZRO.
- * - horizontal (padrão): ABSOLUTE |ZRO|, para cabeçalhos e assinaturas em linha
- * - stacked: |ABSOLUTE / ZRO| num bloco só, para heróis, cartões e capas
+ * - horizontal (padrão): A B S O L U T E  Z R ◯, como no topo do board
+ * - stacked: A B S O L U T E em cima, Z R ◯ embaixo (porta, moletom, caderno)
  */
 export function AbsoluteLogo({
   className,
   "aria-label": label = "Absolute ZRO",
-  accentClassName,
+  glow = true,
   variant = "horizontal",
-}: BrandProps & { variant?: "horizontal" | "stacked" }) {
-  const accent = cn("text-abs-blue", accentClassName);
-
+}: LogoProps & { variant?: "horizontal" | "stacked" }) {
+  const id = useSvgId("abs");
+  const pad = glow ? 70 : 12;
   if (variant === "stacked") {
+    const w = 1074;
+    const zroTop = 188;
+    const h = zroTop + H;
     return (
-      <svg
-        viewBox="0 0 1118 547"
-        fill="currentColor"
-        {...a11y(label, false)}
-        className={cn("h-20 w-auto", className)}
-      >
-        <g className={accent}>
-          <rect width="22" height="547" fill="currentColor" />
-          <rect x="1096" width="22" height="547" fill="currentColor" />
+      <svg viewBox={`${-pad} ${-pad} ${w + pad * 2} ${h + pad * 2}`} role="img" aria-label={label} className={cn("h-24 w-auto", className)}>
+        <path fill="currentColor" d={ABSOLUTE_SMALL_PATH} transform="translate(0 0)" />
+        <g transform={`translate(70 ${zroTop})`}>
+          <path fill="currentColor" d={ZR_PATH} />
+          <Ring cx={554 + 44 + RING_R} cy={H / 2} r={RING_R} stroke={24} glow={glow} id={id} />
         </g>
-        <path d={ABSOLUTE_STACKED} />
-        <path fillRule="evenodd" transform="translate(102 176)" d={ZRO_PATH} />
       </svg>
     );
   }
-
+  const w = 4015;
   return (
-    <svg
-      viewBox="0 0 2061.2 415"
-      fill="currentColor"
-      {...a11y(label, false)}
-      className={cn("h-8 w-auto", className)}
-    >
-      <path d={ABSOLUTE_HORIZONTAL} />
-      <g className={accent}>
-        <rect x="959.2" width="22" height="415" fill="currentColor" />
-        <rect x="2039.2" width="22" height="415" fill="currentColor" />
+    <svg viewBox={`${-pad} ${-pad} ${w + pad * 2} ${H + pad * 2}`} role="img" aria-label={label} className={cn("h-10 w-auto", className)}>
+      <path fill="currentColor" d={ABSOLUTE_PATH} transform={`translate(0 ${H - 1 - ABSOLUTE_CAP})`} />
+      <g transform="translate(3081 0)">
+        <path fill="currentColor" d={ZR_PATH} />
+        <Ring cx={554 + 44 + RING_R} cy={H / 2} r={RING_R} stroke={24} glow={glow} id={id} />
       </g>
-      <path fillRule="evenodd" transform="translate(1053.2 44)" d={ZRO_PATH} />
     </svg>
   );
 }
 
-/**
- * Símbolo da Absolute ZRO: o "O" da ZRO entre as barras, |O|.
- * Para avatar, favicon, marca d'água e selos. Sem aria-label, fica decorativo.
- */
-export function AbsoluteSymbol({ className, "aria-label": label, accentClassName }: BrandProps) {
+/** Anel Absolute sozinho: o estado final. Avatar, ícone, selo. */
+export function AbsoluteSymbol({ className, "aria-label": label, glow = true }: LogoProps) {
+  const id = useSvgId("ring");
   return (
-    <svg
-      viewBox="0 0 495 411"
-      fill="currentColor"
-      {...a11y(label, !label)}
-      className={cn("h-6 w-auto", className)}
-    >
-      <g className={cn("text-abs-blue", accentClassName)}>
-        <rect width="26" height="411" fill="currentColor" />
-        <rect x="469" width="26" height="411" fill="currentColor" />
-      </g>
-      <path fillRule="evenodd" transform="translate(84 42)" d={O_PATH} />
+    <svg viewBox="0 0 400 400" {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} className={cn("size-10", className)}>
+      <Ring cx={200} cy={200} r={128} stroke={18} glow={glow} id={id} />
+    </svg>
+  );
+}
+
+/** Eclipse: disco escuro com a borda acesa em azul. Mistério, origem. */
+export function AbsoluteEclipse({ className, "aria-label": label }: Omit<LogoProps, "glow">) {
+  const id = useSvgId("ecl");
+  return (
+    <svg viewBox="0 0 400 400" {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} className={cn("size-40 text-abs-blue", className)}>
+      <defs>
+        <linearGradient id={`${id}-rim`} x1="0.15" y1="0.85" x2="1" y2="0.3">
+          <stop offset="0.5" stopColor="currentColor" stopOpacity="0" />
+          <stop offset="0.82" stopColor="currentColor" stopOpacity="0.8" />
+          <stop offset="1" stopColor="#d6e6ff" />
+        </linearGradient>
+        <radialGradient id={`${id}-disc`} cx="0.35" cy="0.4" r="0.7">
+          <stop offset="0" stopColor="#05080d" />
+          <stop offset="1" stopColor="#000" />
+        </radialGradient>
+        <radialGradient id={`${id}-flare`}>
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="0.25" stopColor="#bcd6ff" stopOpacity="0.9" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+        <filter id={`${id}-blur`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="10" />
+        </filter>
+      </defs>
+      <circle cx="200" cy="200" r="150" fill="none" stroke={`url(#${id}-rim)`} strokeWidth="22" filter={`url(#${id}-blur)`} opacity="0.9" />
+      <circle cx="200" cy="200" r="150" fill={`url(#${id}-disc)`} />
+      <circle cx="200" cy="200" r="150" fill="none" stroke={`url(#${id}-rim)`} strokeWidth="3.5" />
+      <ellipse cx="341" cy="150" rx="26" ry="9" fill={`url(#${id}-flare)`} transform="rotate(-62 341 150)" />
+      <circle cx="341" cy="150" r="4" fill="#fff" />
+    </svg>
+  );
+}
+
+/** Lente: anéis concêntricos e o ponto de luz no centro. Precisão, controle. */
+export function AbsoluteLens({ className, "aria-label": label }: Omit<LogoProps, "glow">) {
+  const id = useSvgId("lens");
+  return (
+    <svg viewBox="0 0 400 400" {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })} className={cn("size-40 text-abs-blue", className)}>
+      <defs>
+        <radialGradient id={`${id}-core`}>
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="0.18" stopColor="#9cc4ff" />
+          <stop offset="0.5" stopColor="currentColor" stopOpacity="0.55" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {[150, 122, 96].map((r, i) => (
+        <circle key={r} cx="200" cy="200" r={r} fill="none" stroke="currentColor" strokeWidth={2.5} opacity={0.22 + i * 0.14} />
+      ))}
+      <circle cx="200" cy="200" r="70" fill="#02060c" stroke="currentColor" strokeOpacity="0.5" strokeWidth="2" />
+      <circle cx="200" cy="200" r="58" fill={`url(#${id}-core)`} />
+      <circle cx="200" cy="200" r="7" fill="#fff" />
     </svg>
   );
 }
