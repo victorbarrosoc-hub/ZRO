@@ -34,7 +34,7 @@ Produtoras, agências, diretores e diretores de fotografia: gente que já sabe o
 | Peça | Texto |
 | --- | --- |
 | Assinatura | Do bruto ao absoluto. |
-| Frase de abertura | Cada frame tem uma temperatura. *(provisória; alternativas: "A última decisão do filme é a cor." e "Cor é decisão, não filtro.")* |
+| Frase de abertura | Cada frame tem uma temperatura. *(confirmada pelo Victor)* |
 | Quem é | Absolute ZRO. Color grading e finalização para publicidade, cinema e conteúdo. |
 | Serviços | Color grading · Look development · Finishing · Mastering |
 | Parceria | Extensão do time de pós da produtora, alinhada com direção e fotografia. |

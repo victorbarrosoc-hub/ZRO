@@ -76,6 +76,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - **WhatsApp comercial:** (84) 98748-0000 · **e-mail de contato:** zro.contato@gmail.com
 - **YouTube:** https://www.youtube.com/@ZROFilmes (os filmes do portfólio vêm de lá, em `scripts/lib/base-data.ts`)
 - **Clientes no site:** todos podem aparecer
+- **Absolute ZRO:** frase de abertura "Cada frame tem uma temperatura."; assina como empresa (sem nome de pessoa); tom de casa de cor high-end (texto base em `docs/marca/absolute-texto.md`)
 - **Nada de mostrar o que não é real:** sem mockups de estúdio, porta, roupa, perfil ou números inventados no site. Só arte da marca e trabalho de verdade.
 - **Dados nunca podem sumir:** a área interna só roda no endereço oficial (prévias redirecionam), o deploy para se houver dois bancos, e Ajustes → Dados e backup mostra o banco em uso e baixa backup. Não mexer nisso sem falar com o Victor.
 
