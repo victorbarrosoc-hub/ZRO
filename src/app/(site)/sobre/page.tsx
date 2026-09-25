@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { BackstageStrip } from "@/components/site/backstage-strip";
+import { MakingOfVideo } from "@/components/site/making-of";
 import { TeamSection } from "@/components/site/home/sections";
 import { LitLines, Reveal } from "@/components/site/reveal";
 import { RotatingBadge } from "@/components/site/rotating-badge";
@@ -40,6 +41,16 @@ const BACKSTAGE = [
   { src: "/media/bastidores/copa-philipeia-4.jpg", alt: "Bastidores: direção com o elenco e a equipe da ZRO na cervejaria" },
   { src: "/media/bastidores/copa-philipeia-5.jpg", alt: "Frames do filme Copa Philipeia: sorrisos, apresentadora e a torcida" },
 ];
+
+/* Making of em vídeo da Copa Philipeia (enviado pelo Victor): completo com som + trecho em loop, sem som. */
+const MAKING_OF = {
+  title: "Copa Philipeia",
+  client: "Philipeia",
+  duration: "0:32",
+  src: "/media/bastidores/making-of-copa-philipeia.mp4",
+  loop: "/media/bastidores/making-of-copa-philipeia-loop.mp4",
+  poster: "/media/bastidores/making-of-copa-philipeia.jpg",
+};
 
 export default async function SobrePage() {
   const team = await getTeam();
@@ -180,7 +191,7 @@ export default async function SobrePage() {
         </div>
       </section>
 
-      {/* Bastidores: fotos reais de set */}
+      {/* Bastidores: o making of em vídeo e fotos reais de set */}
       <section className="section-y pt-0" aria-labelledby="bastidores-titulo">
         <div className="container-zro">
           <div className="mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
@@ -197,6 +208,9 @@ export default async function SobrePage() {
               </Link>
             </Reveal>
           </div>
+          <Reveal className="mb-10 sm:mb-14">
+            <MakingOfVideo film={MAKING_OF} />
+          </Reveal>
           <BackstageStrip posts={BACKSTAGE} />
         </div>
       </section>
