@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
 const creds = readFileSync("data/credenciais-dev.txt", "utf8").split("\n").filter((l) => l.includes("@"))[0].trim().split(/\s+/);
-const out = process.argv[2];
+const out = process.argv[2] ?? (await import("node:os")).tmpdir();
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 const errors = [];
@@ -13,7 +13,7 @@ await page.fill("#email", creds[0]);
 await page.fill("#password", "errada");
 await page.click("button[type=submit]");
 await page.waitForTimeout(1500);
-console.log("erro exibido:", await page.locator("[role=alert]").last().innerText());
+console.log("erro exibido:", await page.locator("form [role=alert]").first().innerText());
 await page.fill("#password", creds[1]);
 await page.click("button[type=submit]");
 await page.waitForURL("**/painel", { timeout: 15000 });

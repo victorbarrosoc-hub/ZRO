@@ -57,7 +57,8 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Stack: Next.js 16 + Tailwind 4 + Drizzle/libSQL (SQLite local, Turso em produção), login próprio com sessão assinada
 - [x] Site público (início, filmes, sobre, Absolute ZRO, privacidade) e funil de orçamento até o WhatsApp
 - [x] Área interna: painel, freelas; CRM, projetos, agenda e documentos, orçamentos com PDF, financeiro, processos, site e ajustes
-- [ ] Publicar (Vercel + Turso) e configurar WhatsApp, links dos vídeos e dados reais
+- [x] Pronto pra Vercel: `vercel.json`, banco preparado no build, sitemap, robots e imagem de compartilhamento (passo a passo no `DEPLOY.md`)
+- [ ] Publicar em https://zrofilmes.vercel.app e configurar WhatsApp, links dos vídeos e dados reais
 
 ## Escolhas provisórias (a confirmar com o Victor)
 
@@ -69,6 +70,7 @@ Antes de propor ou construir qualquer coisa, leia:
 ## Estrutura
 
 ```
+DEPLOY.md              como publicar na Vercel (Turso, variáveis, primeiro acesso, custos)
 brand/                 logo oficial e referências (filme manifesto, story, quadros)
 docs/
   briefing.md          escopo do site e da área interna

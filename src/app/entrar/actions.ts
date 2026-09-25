@@ -58,7 +58,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
-  await createSession({ id: user.id, name: user.name });
+  await createSession(user);
 
   const target = next && next.startsWith("/painel") && !next.startsWith("//") ? next : "/painel";
   redirect(target);

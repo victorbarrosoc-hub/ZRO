@@ -10,6 +10,8 @@ export const SESSION_DAYS = 14;
 export type SessionPayload = {
   userId: string;
   name: string;
+  /** Impressão digital da senha no momento do login (ver passwordFingerprint). */
+  pv: string;
   expiresAt: number;
 };
 
@@ -39,7 +41,8 @@ export async function verifySessionToken(token: string | undefined): Promise<Ses
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
     if (typeof payload.userId !== "string" || typeof payload.name !== "string") return null;
-    return { userId: payload.userId, name: payload.name, expiresAt: Number(payload.expiresAt) };
+    const pv = typeof payload.pv === "string" ? payload.pv : "";
+    return { userId: payload.userId, name: payload.name, pv, expiresAt: Number(payload.expiresAt) };
   } catch {
     return null;
   }

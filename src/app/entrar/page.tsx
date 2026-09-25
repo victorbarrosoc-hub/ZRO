@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo, Symbol } from "@/components/brand/logo";
 import { LightPoint } from "@/components/brand/light-point";
-import { readSession } from "@/lib/auth/session";
+import { getSessionUser } from "@/lib/auth/dal";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default async function EntrarPage({ searchParams }: PageProps<"/entrar">) {
-  const session = await readSession();
-  if (session) redirect("/painel");
+  // Só pula o login com sessão realmente válida (senão, cookie velho vira loop com o /painel).
+  if (await getSessionUser()) redirect("/painel");
   const { next } = await searchParams;
 
   return (
