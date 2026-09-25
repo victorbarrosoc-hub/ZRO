@@ -14,11 +14,11 @@ import { cn } from "@/lib/utils";
 
 /* Z e R da Absolute (altura 300, traço 54), medidos no logo enviado pelo Victor: o R não tem haste. */
 const ZR_PATH =
-  "M0 0H341V54L103 246H341V300H0V246L238 54H0Z" +
-  "M420 0H595A101 101 0 0 1 595 202H420V148H595A47 47 0 0 0 595 54H420Z" +
-  "M420 202H525L681 300H576Z";
+  "M0 0H347V54L105 246H347V300H0V246L242 54H0Z" +
+  "M426 0H601A101 101 0 0 1 601 202H426V148H601A47 47 0 0 0 601 54H426Z" +
+  "M426 202H531L687 300H582Z";
 const ZR_H = 300;
-const ZR_W = 696;
+const ZR_W = 702;
 
 /* "ΛBSOLUTE": Montserrat Light, o A sem travessão, espaçamento 1,22em. Maiúsculas com 42% da altura do ZR. */
 const ABSOLUTE_PATH =
@@ -32,8 +32,8 @@ const ABSOLUTE_SMALL_PATH =
 const ABSOLUTE_SMALL_W = 1404;
 const ABSOLUTE_SMALL_CAP = 84;
 
-/* Anel: diâmetro de 1,34 vez a altura do ZR, traço fino, a 1/3 da altura depois do R. */
-const RING_R = 195;
+/* Anel: diâmetro de 1,34 vez a altura do ZR (medido no logo original), traço fino, a 1/3 da altura depois do R. */
+const RING_R = 192;
 const RING_STROKE = 13;
 const RING_GAP = 100;
 const ZRO_W = ZR_W + RING_GAP + (RING_R + RING_STROKE / 2) * 2;
