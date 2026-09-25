@@ -9,12 +9,13 @@ import type { ActionResult } from "@/lib/actions";
 import { FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
 import { brl, centsToInput, dateBR } from "@/lib/format";
 import { addCrewMember, deleteCrewMember, generateCrewPayment, updateCrewMember } from "../../actions";
-import { toastFirst } from "./toast-first";
+import { toastFirst } from "./run-action";
 
 // Estas respostas mudam a própria linha (ou a lista vazia): o aviso sai antes da tela mudar.
 const addCrewMemberT = toastFirst(addCrewMember);
 const deleteCrewMemberT = toastFirst(deleteCrewMember);
 const generateCrewPaymentT = toastFirst(generateCrewPayment);
+const updateCrewMemberT = toastFirst(updateCrewMember);
 
 export type CrewOption = {
   id: string;
@@ -258,7 +259,7 @@ export function EditCrewButton({ defaults, options, category, label }: { default
     <FormModal
       title="Editar equipe"
       description="Se o pagamento já foi gerado, o valor no financeiro acompanha."
-      action={updateCrewMember}
+      action={updateCrewMemberT}
       size="lg"
       trigger={
         <Button variant="ghost" size="icon" className="lg:size-8" aria-label={`Editar ${label}`}>

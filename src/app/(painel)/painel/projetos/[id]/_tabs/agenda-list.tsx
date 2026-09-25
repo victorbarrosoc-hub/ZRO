@@ -32,6 +32,7 @@ function ProjectEventRow({ ev, today }: { ev: AgendaEvent; today: string }) {
     days > 1 ? `${days} dias, até ${dayMonthShort(eventEnd(ev))}` : null,
     time || "dia todo",
     ev.location,
+    ev.callSheetId ? "ordem do dia pronta" : null,
   ].filter(Boolean);
 
   return (

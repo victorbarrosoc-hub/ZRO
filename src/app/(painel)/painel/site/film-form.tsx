@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpRight, Check, Minus, Plus, X } from "lucide-react";
-import { ActionForm, SubmitButton, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { FilmCard } from "@/components/site/film-card";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
@@ -15,6 +15,7 @@ import { parseVideo } from "@/lib/video";
 import { saveFilm } from "./actions";
 import { IconButton } from "./_components/list-controls";
 import { MediaThumb } from "./_components/media-thumb";
+import { StableForm, StableSubmit } from "./_components/stable-form";
 import { allowedImageHosts, imageSrcProblem, normalizeImageUrl, type ImagePolicy } from "./_lib/image-policy";
 
 export type FilmFormValues = {
@@ -164,7 +165,7 @@ export function FilmForm({
   const status = dirty ? "Alterações não salvas" : isNew ? "Filme novo" : "Tudo salvo";
 
   return (
-    <ActionForm action={saveFilm} onSuccess={onSuccess} className="grid gap-6 xl:grid-cols-12 xl:items-start">
+    <StableForm action={saveFilm} onSuccess={onSuccess} className="grid gap-6 xl:grid-cols-12 xl:items-start">
       {(state) => (
         <>
           {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
@@ -653,7 +654,7 @@ export function FilmForm({
               </ul>
 
               <div className="hidden gap-2 border-t border-line pt-4 xl:grid">
-                <SubmitButton className="w-full">{isNew ? "Criar filme" : "Salvar filme"}</SubmitButton>
+                <StableSubmit className="w-full">{isNew ? "Criar filme" : "Salvar filme"}</StableSubmit>
                 <p className={cn("text-center text-[12px]", dirty ? "text-warn" : "text-mute")}>{status}</p>
               </div>
               {!isNew && savedPublished && savedSlug ? (
@@ -672,11 +673,11 @@ export function FilmForm({
           {/* Barra de salvar (celular e tablet) */}
           <div className="sticky bottom-0 z-20 -mx-4 flex items-center justify-between gap-4 border-t border-line bg-void/90 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 xl:hidden">
             <p className={cn("text-[13px]", dirty ? "text-warn" : "text-mute")}>{status}</p>
-            <SubmitButton>{isNew ? "Criar filme" : "Salvar filme"}</SubmitButton>
+            <StableSubmit>{isNew ? "Criar filme" : "Salvar filme"}</StableSubmit>
           </div>
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }
 

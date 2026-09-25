@@ -1,4 +1,4 @@
-import { EntryStatusBadge, InfoList, Table, Td, Th } from "@/components/painel/bits";
+import { EntryStatusBadge, InfoList } from "@/components/painel/bits";
 import { HeroFigure } from "@/components/painel/stat";
 import { Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { FINANCE_CATEGORIES, FINANCE_KINDS, optionLabel } from "@/lib/domain";
@@ -9,6 +9,7 @@ import { DeleteEntryButton, NewEntryButton, PayEntryButton } from "../_component
 import { percent } from "../_components/meter";
 
 const KIND_TITLE: Record<string, string> = { entrada: "Entradas", saida: "Saídas", imposto: "Impostos" };
+const COLS = "lg:grid-cols-[minmax(0,1.6fr)_112px_96px_112px_112px_96px_minmax(0,1.1fr)_40px]";
 
 /** Aba "Financeiro": resultado estimado do projeto e os lançamentos ligados a ele. */
 export function ProjectFinanceTab({ project, summary }: { project: ProjectDetail; summary: ProjectSummary }) {
@@ -83,70 +84,85 @@ export function ProjectFinanceTab({ project, summary }: { project: ProjectDetail
       <Card>
         <CardHeader
           title="Lançamentos"
-          description="Entradas, saídas e impostos ligados a este projeto. Tudo aparece também no Financeiro."
+          description="Tudo que entra e sai por este projeto. Aparece também no Financeiro."
           action={<NewEntryButton projectId={project.id} />}
         />
         {groups.length ? (
-          <Table className="mt-4" minWidth={860}>
-            <thead>
-              <tr>
-                <Th>Descrição</Th>
-                <Th>Categoria</Th>
-                <Th>Vencimento</Th>
-                <Th align="right">Valor</Th>
-                <Th align="right">Pago</Th>
-                <Th>Status</Th>
-                <Th />
-              </tr>
-            </thead>
+          <div className="mt-4">
+            <div className={cn("hidden gap-x-4 px-6 pb-3 text-[12px] text-mute lg:grid", COLS)} aria-hidden>
+              <span>Descrição</span>
+              <span>Categoria</span>
+              <span>Vencimento</span>
+              <span className="text-right">Valor</span>
+              <span className="text-right">Pago</span>
+              <span>Status</span>
+              <span />
+              <span />
+            </div>
             {groups.map((g) => {
-              const total = g.entries.reduce((s, e) => s + e.amount, 0);
+              const total = g.entries.reduce((sum, e) => sum + e.amount, 0);
+              const title = KIND_TITLE[g.key] ?? g.label;
               return (
-                <tbody key={g.key}>
-                  <tr>
-                    <td colSpan={7} className="border-b border-line bg-white/[0.015] px-5 py-2.5 sm:px-6">
-                      <span className="label text-mute">{KIND_TITLE[g.key] ?? g.label}</span>
-                      <span className="ml-3 text-[12px] text-ash tabular-nums">{brl(total)}</span>
-                    </td>
-                  </tr>
-                  {g.entries.map((e) => {
-                    const status = entryStatus(e, today);
-                    return (
-                      <tr key={e.id}>
-                        <Td>
-                          <span className="block">{e.description}</span>
-                          {e.installment ? <span className="font-mono text-[11px] text-mute">Parcela {e.installment}</span> : null}
-                        </Td>
-                        <Td className="text-ash">{optionLabel(FINANCE_CATEGORIES, e.category)}</Td>
-                        <Td className={cn("whitespace-nowrap", status === "atrasado" ? "text-danger" : "text-ash")}>{dateBR(e.dueDate)}</Td>
-                        <Td align="right">{brl(e.amount)}</Td>
-                        <Td align="right" className="text-ash">
-                          {brl(e.paidAmount)}
-                        </Td>
-                        <Td>
-                          <EntryStatusBadge status={status} />
-                        </Td>
-                        <Td align="right">
-                          <span className="flex items-center justify-end gap-1">
-                            {status !== "pago" ? (
-                              <PayEntryButton
-                                projectId={project.id}
-                                entry={{ id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount }}
-                              />
-                            ) : null}
-                            <DeleteEntryButton
-                              projectId={project.id}
-                              entry={{ id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount }}
-                            />
-                          </span>
-                        </Td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                <section key={g.key} aria-label={title}>
+                  <h3 className="flex items-baseline gap-3 border-y border-line bg-white/[0.015] px-5 py-2.5 sm:px-6">
+                    <span className="label text-mute">{title}</span>
+                    <span className="text-[12px] text-ash tabular-nums">{brl(total)}</span>
+                  </h3>
+                  <ul>
+                    {g.entries.map((e) => {
+                      const status = entryStatus(e, today);
+                      const late = status === "atrasado";
+                      const entry = { id: e.id, kind: e.kind, description: e.description, amount: e.amount, paidAmount: e.paidAmount };
+                      const category = optionLabel(FINANCE_CATEGORIES, e.category);
+                      return (
+                        <li
+                          key={e.id}
+                          className={cn(
+                            "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2.5 border-b border-line px-5 py-4 last:border-b-0 sm:px-6 lg:gap-x-4",
+                            COLS,
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[14px] leading-snug text-light">{e.description}</p>
+                            <p className="mt-0.5 text-[12px] text-mute">
+                              {e.installment ? <span className="font-mono">Parcela {e.installment}</span> : null}
+                              <span className="lg:hidden">
+                                {e.installment ? " · " : ""}
+                                {category} ·{" "}
+                                <span className={late ? "text-danger" : undefined}>
+                                  {late ? "venceu" : "vence"} {dateBR(e.dueDate)}
+                                </span>
+                              </span>
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-end lg:order-last">
+                            <DeleteEntryButton projectId={project.id} entry={entry} />
+                          </div>
+                          <span className="hidden text-[13px] text-ash lg:block">{category}</span>
+                          <span className={cn("hidden text-[13px] tabular-nums lg:block", late ? "text-danger" : "text-ash")}>{dateBR(e.dueDate)}</span>
+                          <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-2 lg:contents">
+                            <span className="text-[15px] font-medium text-white tabular-nums lg:text-right lg:text-[14px] lg:font-normal lg:text-light">
+                              {brl(e.amount)}
+                            </span>
+                            <span className="text-[12px] text-mute tabular-nums lg:text-right lg:text-[14px] lg:text-ash">
+                              <span className="lg:hidden">pago </span>
+                              {brl(e.paidAmount)}
+                            </span>
+                            <span>
+                              <EntryStatusBadge status={status} />
+                            </span>
+                            <span className="ml-auto lg:ml-0 lg:text-right">
+                              {status !== "pago" ? <PayEntryButton projectId={project.id} entry={entry} /> : null}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
               );
             })}
-          </Table>
+          </div>
         ) : (
           <EmptyState
             title="Nenhum lançamento neste projeto"

@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/field";
 import { CREATIVE_RULE, type CreativeRuleAnswers } from "@/lib/domain";
 import { saveCreativeRule } from "../../actions";
 import { RuleProgress, countAnswered } from "./meter";
+import { toastFirst } from "./run-action";
+
+const saveCreativeRuleT = toastFirst(saveCreativeRule);
 
 const QUOTE = "Se não houver resposta clara, o projeto ainda não está pronto.";
 
@@ -71,7 +74,7 @@ export function CreativeRuleForm({
 
   return (
     <ActionForm
-      action={saveCreativeRule}
+      action={saveCreativeRuleT}
       className="grid gap-5"
       onSuccess={() => {
         if (collapsible && answered === CREATIVE_RULE.length) setEditing(false);

@@ -9,7 +9,7 @@ import { EntryStatusBadge, LeadStageBadge, QuoteStatusBadge } from "@/components
 import { Button, ButtonLink, buttonClasses } from "@/components/ui/button";
 import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/surface";
-import { CATEGORIES } from "@/lib/domain";
+import { CATEGORIES, QUOTE_STATUS } from "@/lib/domain";
 import { brl, centsToInput, dateBR, entryStatus, parseBRL, todayISO } from "@/lib/format";
 import type { CatalogOption } from "@/lib/queries/quotes";
 import {
@@ -103,7 +103,13 @@ export function QuoteEditor(props: Props) {
   const save = useCallback(async () => {
     const form = formRef.current;
     if (!form) return false;
-    const result = await saveQuote(null, new FormData(form));
+    let result: Awaited<ReturnType<typeof saveQuote>>;
+    try {
+      result = await saveQuote(null, new FormData(form));
+    } catch {
+      toast.error("Não foi possível salvar agora. Suas alterações continuam aqui: tente de novo.");
+      return false;
+    }
     if (result.ok) {
       setDirty(false);
       setErrors({});
@@ -352,7 +358,7 @@ export function QuoteEditor(props: Props) {
                     "inline-flex h-7 items-center rounded-full border px-2.5 font-mono text-[12px] transition-colors",
                     v.id === quote.id ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
                   )}
-                  title={v.status}
+                  title={QUOTE_STATUS.find((q) => q.key === v.status)?.label ?? v.status}
                 >
                   v{v.version}
                 </Link>
@@ -401,17 +407,17 @@ export function QuoteEditor(props: Props) {
                   ))}
                 </Select>
               </Field>
-              <Field label="Emissão" htmlFor="q-issue" className="lg:col-span-2" error={err("issueDate")}>
-                <Input id="q-issue" name="issueDate" type="date" defaultValue={quote.issueDate} disabled={!editable} />
+              <Field label="Emissão" htmlFor="q-issue" className="min-w-0 lg:col-span-2" error={err("issueDate")}>
+                <Input id="q-issue" name="issueDate" type="date" defaultValue={quote.issueDate} disabled={!editable} className="min-w-0 px-3" />
               </Field>
               <Field
                 label="Validade"
                 htmlFor="q-valid"
-                className="lg:col-span-2"
+                className="min-w-0 lg:col-span-2"
                 error={err("validUntil")}
                 hint={validity ? (validity.tone ? validity.label : `Vence ${validity.label}`) : undefined}
               >
-                <Input id="q-valid" name="validUntil" type="date" defaultValue={quote.validUntil ?? ""} disabled={!editable} />
+                <Input id="q-valid" name="validUntil" type="date" defaultValue={quote.validUntil ?? ""} disabled={!editable} className="min-w-0 px-3" />
               </Field>
               <Field label="Período (cronograma)" htmlFor="q-period" className="col-span-2 lg:col-span-2" error={err("period")}>
                 <Input id="q-period" name="period" defaultValue={quote.period ?? ""} placeholder="Ex.: novembro de 2026" disabled={!editable} maxLength={200} />
@@ -633,7 +639,7 @@ export function QuoteEditor(props: Props) {
                 <Textarea
                   id="q-cond"
                   name="conditions"
-                  rows={6}
+                  rows={8}
                   value={conditions}
                   onChange={(e) => setConditions(e.target.value)}
                   disabled={!editable}

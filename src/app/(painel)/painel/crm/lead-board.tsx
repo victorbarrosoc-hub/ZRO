@@ -47,7 +47,8 @@ function useFinePointer() {
 
 export function LeadBoard({ leads, today }: { leads: BoardLead[]; today: string }) {
   const [items, applyMove] = useOptimistic(leads, (state: BoardLead[], move: Move) =>
-    state.map((l) => (l.id === move.id ? { ...l, stage: move.stage, updatedAt: Date.now() } : l)),
+    // updatedAt no máximo: nas colunas encerradas o cartão recém-movido vai para o topo.
+    state.map((l) => (l.id === move.id ? { ...l, stage: move.stage, updatedAt: Number.MAX_SAFE_INTEGER } : l)),
   );
   const [, startTransition] = useTransition();
   const [dragging, setDragging] = useState<BoardLead | null>(null);
@@ -129,11 +130,9 @@ export function LeadBoard({ leads, today }: { leads: BoardLead[]; today: string 
                       <StageDot stage={stage.key} />
                       <span className="truncate">{stage.label}</span>
                     </h2>
-                    <span
-                      className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-white/[0.07] px-1.5 text-[11px] text-ash tabular-nums"
-                      aria-label={`${column.length} lead${column.length === 1 ? "" : "s"}`}
-                    >
-                      {column.length}
+                    <span className="relative grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-white/[0.07] px-1.5 text-[11px] text-ash tabular-nums">
+                      <span aria-hidden>{column.length}</span>
+                      <span className="sr-only">{`${column.length} lead${column.length === 1 ? "" : "s"}`}</span>
                     </span>
                   </div>
                   {anyValue ? (

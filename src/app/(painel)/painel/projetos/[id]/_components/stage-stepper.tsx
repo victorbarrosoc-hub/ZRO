@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { moveProjectStage } from "../../actions";
 import { CreativeRuleForm } from "./creative-rule-form";
 import { countAnswered } from "./meter";
+import { callAction } from "./run-action";
 
 const CONCEITO = STAGES.findIndex((s) => s.key === "conceito");
 
@@ -50,10 +51,7 @@ export function StageStepper({
     const blocked = to > idx && to > CONCEITO && !complete;
     startTransition(async () => {
       if (!blocked) setIdx(to);
-      const fd = new FormData();
-      fd.set("id", projectId);
-      fd.set("to", STAGES[to].key);
-      const result = await moveProjectStage(null, fd);
+      const result = await callAction(moveProjectStage, { id: projectId, to: STAGES[to].key });
       if (result.ok) {
         if (result.message) toast.success(result.message);
       } else {

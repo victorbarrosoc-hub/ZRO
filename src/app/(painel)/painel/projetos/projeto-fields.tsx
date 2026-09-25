@@ -43,8 +43,8 @@ export function ProjectFields({
   return (
     <>
       {defaults.id ? <input type="hidden" name="id" value={defaults.id} /> : null}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Título" htmlFor={`${p}-title`} error={fieldError(state, "title")} className="sm:col-span-2">
+      <div className="grid gap-4 sm:grid-cols-6">
+        <Field label="Título" htmlFor={`${p}-title`} error={fieldError(state, "title")} className="sm:col-span-6">
           <Input
             id={`${p}-title`}
             name="title"
@@ -54,7 +54,7 @@ export function ProjectFields({
             required
           />
         </Field>
-        <Field label="Cliente" htmlFor={`${p}-client`} error={fieldError(state, "clientId")}>
+        <Field label="Cliente" htmlFor={`${p}-client`} error={fieldError(state, "clientId")} className="sm:col-span-3">
           <Select id={`${p}-client`} name="clientId" defaultValue={defaults.clientId ?? ""}>
             <option value="">Sem cliente</option>
             {options.clients.map((c) => (
@@ -64,7 +64,7 @@ export function ProjectFields({
             ))}
           </Select>
         </Field>
-        <Field label="Categoria" htmlFor={`${p}-category`} error={fieldError(state, "category")}>
+        <Field label="Categoria" htmlFor={`${p}-category`} error={fieldError(state, "category")} className="sm:col-span-3">
           <Select id={`${p}-category`} name="category" value={category} onChange={(e) => setCategory(e.target.value)}>
             {CATEGORIES.map((c) => (
               <option key={c.key} value={c.key}>
@@ -79,7 +79,7 @@ export function ProjectFields({
             label="Modelo de tarefas"
             htmlFor={`${p}-template`}
             error={fieldError(state, "templateId")}
-            className="sm:col-span-2"
+            className="sm:col-span-6"
             hint={
               chosen
                 ? `${chosen.taskCount} tarefas de "${chosen.name}", distribuídas pelas 7 etapas.`
@@ -97,7 +97,7 @@ export function ProjectFields({
           </Field>
         ) : null}
 
-        <Field label="Início" htmlFor={`${p}-start`} error={fieldError(state, "startDate")}>
+        <Field label="Início" htmlFor={`${p}-start`} error={fieldError(state, "startDate")} className="sm:col-span-2">
           <Input
             id={`${p}-start`}
             name="startDate"
@@ -105,14 +105,14 @@ export function ProjectFields({
             defaultValue={mode === "create" ? todayISO() : (defaults.startDate ?? "")}
           />
         </Field>
-        <Field label="Prazo final" htmlFor={`${p}-due`} error={fieldError(state, "dueDate")}>
+        <Field label="Prazo final" htmlFor={`${p}-due`} error={fieldError(state, "dueDate")} className="sm:col-span-2">
           <Input id={`${p}-due`} name="dueDate" type="date" defaultValue={defaults.dueDate ?? ""} />
         </Field>
         <Field
           label="Valor contratado"
           htmlFor={`${p}-value`}
           error={fieldError(state, "value")}
-          hint="O que o cliente paga. Base da margem e do imposto estimado."
+          hint="Base da margem e do imposto."
           className="sm:col-span-2"
         >
           <MoneyInput id={`${p}-value`} name="value" placeholder="0,00" defaultValue={defaults.value ? centsToInput(defaults.value) : ""} />
@@ -121,7 +121,7 @@ export function ProjectFields({
 
       {mode === "create" ? (
         <Field label="Briefing" htmlFor={`${p}-briefing`} error={fieldError(state, "briefing")} hint="A ideia, o pedido do cliente, o que já se sabe.">
-          <Textarea id={`${p}-briefing`} name="briefing" rows={4} />
+          <Textarea id={`${p}-briefing`} name="briefing" rows={3} />
         </Field>
       ) : null}
     </>

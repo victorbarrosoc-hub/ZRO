@@ -12,7 +12,7 @@ import { addDaysISO, brl, dateBR, todayISO } from "@/lib/format";
 import { nextQuoteNumber, otherOpenQuotesForLead } from "@/lib/queries/quotes";
 import { ensureClientForLead } from "@/lib/services/clients";
 import { createProject } from "@/lib/services/projects";
-import { NEW_CLIENT_VALUE, installmentLabels, quoteCode, quoteTotals, scopeFromLead } from "@/lib/services/quotes";
+import { NEW_CLIENT_VALUE, installmentLabels, normalizeText, quoteCode, quoteTotals, scopeFromLead } from "@/lib/services/quotes";
 import { getSetting } from "@/lib/settings";
 
 const { quotes, quoteItems, clients, leads, projects, catalogItems, financeEntries } = schema;
@@ -203,7 +203,7 @@ function readItems(raw: FormDataEntryValue | null): { items: CleanItem[] } | { e
     items.push({
       catalogItemId: it.catalogItemId || null,
       description,
-      detail: it.detail?.trim() || null,
+      detail: normalizeText(it.detail)?.trim() || null,
       quantity: Math.round(it.quantity * 100) / 100,
       unit: it.unit && UNIT_KEYS.has(it.unit) ? it.unit : null,
       unitPrice: it.unitPrice,
@@ -218,7 +218,7 @@ export async function saveQuote(_prev: ActionResult | null, fd: FormData): Promi
   const quote = await findQuote(fd);
   if (!quote) return fail("Orçamento não encontrado.");
 
-  const internalNotes = str(fd, "internalNotes")?.slice(0, 4000) ?? null;
+  const internalNotes = normalizeText(str(fd, "internalNotes"))?.slice(0, 4000) ?? null;
   if (quote.status !== "rascunho") {
     // Depois de enviado, o que o cliente recebeu não muda: só as notas internas.
     await db.update(quotes).set({ internalNotes }).where(eq(quotes.id, quote.id));
@@ -233,12 +233,12 @@ export async function saveQuote(_prev: ActionResult | null, fd: FormData): Promi
     issueDate: str(fd, "issueDate"),
     validUntil: str(fd, "validUntil"),
     period: str(fd, "period"),
-    scope: str(fd, "scope"),
-    paymentTerms: str(fd, "paymentTerms"),
-    conditions: str(fd, "conditions"),
+    scope: normalizeText(str(fd, "scope")),
+    paymentTerms: normalizeText(str(fd, "paymentTerms")),
+    conditions: normalizeText(str(fd, "conditions")),
     discount: money(fd, "discount"),
     taxRate: decimal(fd, "taxRate"),
-    internalNotes: str(fd, "internalNotes"),
+    internalNotes: normalizeText(str(fd, "internalNotes")),
   });
   if (!parsed.success) return fromZod(parsed.error);
   const data = parsed.data;
@@ -448,7 +448,7 @@ export async function refuseQuote(_prev: ActionResult | null, fd: FormData): Pro
   if (quote.status !== "rascunho" && quote.status !== "enviado" && quote.status !== "expirado") {
     return fail("Este orçamento já foi decidido.");
   }
-  const reason = str(fd, "reason")?.slice(0, 500);
+  const reason = normalizeText(str(fd, "reason"))?.slice(0, 500);
   const today = todayISO();
   const note = `Recusado em ${dateBR(today)}${reason ? `: ${reason}` : "."}`;
 

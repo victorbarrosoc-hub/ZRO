@@ -146,7 +146,7 @@ function Chip({ seg, month, today }: { seg: WeekSegment<AgendaEvent>; month: str
     >
       <span
         className={cn(
-          "flex items-center gap-1.5 truncate font-mono text-[10px] leading-none tracking-[0.12em] uppercase",
+          "flex items-center gap-1.5 truncate font-mono text-[10px] leading-[1.3] tracking-[0.12em] uppercase",
           ev.type === "diaria" ? "text-white/70" : "text-mute",
         )}
       >
@@ -157,7 +157,7 @@ function Chip({ seg, month, today }: { seg: WeekSegment<AgendaEvent>; month: str
           {days > 1 ? ` · ${days} dias` : ""}
         </span>
       </span>
-      <span className="mt-1 truncate text-[12.5px] leading-tight font-medium">{ev.title}</span>
+      <span className="mt-0.5 truncate text-[12.5px] leading-tight font-medium">{ev.title}</span>
     </EventButton>
   );
 }
@@ -209,7 +209,7 @@ export function MobileAgenda({
         <div className="grid grid-cols-7 text-center" aria-hidden>
           {WEEKDAY_HEADERS.map((d) => (
             <span key={d} className="label py-1.5 text-[10px] text-mute">
-              {d.slice(0, 3)}
+              {d}
             </span>
           ))}
         </div>
@@ -284,7 +284,7 @@ export function MobileAgenda({
   );
 }
 
-function MobileEventRow({ ev, day, today }: { ev: AgendaEvent; day: string; today: string }) {
+export function MobileEventRow({ ev, day, today }: { ev: AgendaEvent; day: string; today: string }) {
   const days = eventDays(ev);
   const dayIndex = days > 1 ? eachDay(ev.date, day).length : 0;
   return (

@@ -235,7 +235,7 @@ export function LeadStageControl({
         Etapa do funil
       </p>
       <div
-        role="radiogroup"
+        role="group"
         aria-labelledby={labelId}
         className={cn(
           "grid grid-cols-2 gap-1 rounded-[20px] border border-line bg-white/[0.02] p-1 sm:flex sm:w-max sm:max-w-full sm:flex-wrap sm:rounded-full",
@@ -248,16 +248,15 @@ export function LeadStageControl({
             <button
               key={s.key}
               type="button"
-              role="radio"
-              aria-checked={on}
+              aria-pressed={on}
               onClick={() => choose(s.key)}
               className={cn(
                 "flex h-10 items-center justify-center gap-2 rounded-full px-4 text-[13px] whitespace-nowrap transition-colors sm:h-9",
                 on
                   ? s.key === "ganho"
-                    ? "bg-ok text-void"
+                    ? "bg-ok/15 text-ok ring-1 ring-ok/40 ring-inset"
                     : s.key === "perdido"
-                      ? "bg-danger text-white"
+                      ? "bg-danger/15 text-danger ring-1 ring-danger/45 ring-inset"
                       : "bg-white text-void"
                   : "text-ash hover:bg-white/[0.06] hover:text-light",
               )}

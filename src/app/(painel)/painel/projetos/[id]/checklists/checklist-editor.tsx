@@ -200,7 +200,7 @@ export function ChecklistEditor({
       <Card>
         <CardHeader title="Itens" description={total ? `${total} ${total === 1 ? "item" : "itens"} na lista` : "Monte a lista com um kit pronto ou item por item."} />
         <div className="grid gap-3 px-5 pt-4 sm:px-6 lg:grid-cols-2">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <label htmlFor="ck-kit" className="sr-only">
               Kit de equipamento
             </label>
@@ -225,7 +225,7 @@ export function ChecklistEditor({
             <label htmlFor="ck-name" className="sr-only">
               Nome do item
             </label>
-            <Input ref={nameRef} id="ck-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Item avulso, ex.: Rebatedor" className="min-w-0 flex-1" />
+            <Input ref={nameRef} id="ck-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Item avulso" className="min-w-0 flex-1" />
             <label htmlFor="ck-qty" className="sr-only">
               Quantidade
             </label>

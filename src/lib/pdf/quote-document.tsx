@@ -25,13 +25,14 @@ const MARGIN_X = 56;
 
 function makeStyles(f: PdfFonts) {
   return StyleSheet.create({
+    // Sem lineHeight na página: no react-pdf 4.9, texto dinâmico (número da página)
+    // herdando lineHeight num rodapé ancorado embaixo sai fora da folha.
     page: {
       paddingTop: 48,
-      paddingBottom: 104,
+      paddingBottom: 100,
       paddingHorizontal: MARGIN_X,
       fontFamily: f.sans,
       fontSize: 9.5,
-      lineHeight: 1.5,
       color: INK,
       backgroundColor: "#FFFFFF",
     },
@@ -39,14 +40,14 @@ function makeStyles(f: PdfFonts) {
     top: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
     topMeta: { alignItems: "flex-end" },
     code: { fontFamily: f.mono, fontSize: 8.5, letterSpacing: 0.3, color: INK, marginTop: 4 },
-    hero: { marginTop: 60 },
+    hero: { marginTop: 46 },
     kicker: { flexDirection: "row", alignItems: "center" },
     dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: INK, marginRight: 7 },
     title: { fontSize: 23, fontWeight: 600, letterSpacing: -0.6, lineHeight: 1.15, marginTop: 12, color: INK },
-    period: { fontSize: 10, color: MUTE, marginTop: 8 },
+    period: { fontSize: 10, color: MUTE, marginTop: 8, lineHeight: 1.4 },
     meta: {
       flexDirection: "row",
-      marginTop: 30,
+      marginTop: 26,
       paddingVertical: 12,
       borderTopWidth: 0.75,
       borderTopColor: INK,
@@ -58,11 +59,11 @@ function makeStyles(f: PdfFonts) {
     metaStrong: { marginTop: 5, fontSize: 10, fontWeight: 600, color: INK, lineHeight: 1.35 },
     metaValue: { marginTop: 5, fontSize: 9.5, color: INK, lineHeight: 1.35 },
     metaSub: { fontSize: 8.5, color: MUTE, lineHeight: 1.45 },
-    section: { flexDirection: "row", marginTop: 24 },
+    section: { flexDirection: "row", marginTop: 20 },
     sectionLabel: { width: 96, paddingTop: 2.5, paddingRight: 12 },
     sectionBody: { flex: 1 },
     body: { fontSize: 9.5, lineHeight: 1.55, color: INK },
-    items: { marginTop: 30 },
+    items: { marginTop: 26 },
     itemsLabel: { marginBottom: 10 },
     thead: { flexDirection: "row", paddingBottom: 6, borderBottomWidth: 0.75, borderBottomColor: INK },
     tr: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: HAIR },
@@ -78,8 +79,8 @@ function makeStyles(f: PdfFonts) {
     empty: { fontSize: 9, color: MUTE, paddingVertical: 10 },
     totals: { marginTop: 14, marginLeft: "auto", width: 230 },
     totRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2.5 },
-    totLabel: { fontSize: 9, color: MUTE },
-    totValue: { fontSize: 9, color: INK, fontFeatureSettings: ["tnum"] },
+    totLabel: { fontSize: 9, color: MUTE, lineHeight: 1.4 },
+    totValue: { fontSize: 9, color: INK, fontFeatureSettings: ["tnum"], lineHeight: 1.4 },
     grand: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -109,7 +110,19 @@ function makeStyles(f: PdfFonts) {
     footRight: { alignItems: "flex-end" },
     signRow: { flexDirection: "row", alignItems: "center" },
     sign: { fontSize: 7.5, fontWeight: 500, color: INK, marginLeft: 5 },
+    // Nada de lineHeight aqui (ver a nota em "page").
     pageNum: { fontFamily: f.mono, fontSize: 6.5, color: SOFT, letterSpacing: 0.8, marginTop: 7 },
+    continued: {
+      position: "absolute",
+      top: 26,
+      left: MARGIN_X,
+      right: MARGIN_X,
+      fontFamily: f.mono,
+      fontSize: 6.5,
+      letterSpacing: 1.1,
+      textTransform: "uppercase",
+      color: SOFT,
+    },
   });
 }
 
@@ -211,7 +224,8 @@ export function QuoteDocument({ doc, fonts }: { doc: QuoteDocumentData; fonts: P
           </View>
           {doc.items.length ? (
             doc.items.map((it, i) => (
-              <View key={i} style={s.tr} wrap={false}>
+              // A última linha vai junto com os totais se não couberem na mesma página.
+              <View key={i} style={s.tr} wrap={false} minPresenceAhead={i === doc.items.length - 1 ? (doc.discount > 0 ? 100 : 60) : undefined}>
                 <View style={s.cDesc}>
                   <Text style={s.desc}>{it.description}</Text>
                   {it.detail ? <Text style={s.detail}>{it.detail}</Text> : null}
@@ -266,6 +280,13 @@ export function QuoteDocument({ doc, fonts }: { doc: QuoteDocumentData; fonts: P
         <Section s={s} label="Próximo passo">
           <Text style={s.body}>{QUOTE_CLOSING}</Text>
         </Section>
+
+        {/* Da segunda página em diante: de qual proposta é esta folha */}
+        <Text
+          fixed
+          style={s.continued}
+          render={({ pageNumber }) => (pageNumber > 1 ? `ZRO · Proposta ${code} · ${doc.title}` : "")}
+        />
 
         {/* Rodapé em todas as páginas */}
         <View style={s.footer} fixed>

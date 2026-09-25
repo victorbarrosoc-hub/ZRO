@@ -7,11 +7,14 @@ import { ActionForm, FormModal, SubmitButton, fieldError } from "@/components/pa
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Badge, CardHeader } from "@/components/ui/surface";
-import type { ActionResult } from "@/lib/actions";
 import { STAGES } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { addTask, applyTemplateToProject, deleteTask, setTaskDone } from "../../actions";
 import { Meter } from "./meter";
+import { callAction, toastFirst } from "./run-action";
+
+const addTaskT = toastFirst(addTask);
+const applyTemplateT = toastFirst(applyTemplateToProject);
 
 type Task = { id: string; stage: string; title: string; done: boolean };
 type TaskAction = { type: "toggle"; id: string; done: boolean } | { type: "delete"; id: string };
@@ -19,12 +22,6 @@ type TaskAction = { type: "toggle"; id: string; done: boolean } | { type: "delet
 function reducer(state: Task[], action: TaskAction) {
   if (action.type === "toggle") return state.map((t) => (t.id === action.id ? { ...t, done: action.done } : t));
   return state.filter((t) => t.id !== action.id);
-}
-
-function asForm(fields: Record<string, string>) {
-  const fd = new FormData();
-  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-  return fd;
 }
 
 /** Marca, desmarca e exclui na hora; o servidor confirma por trás. */
@@ -36,7 +33,7 @@ function useTaskList(tasks: Task[]) {
     const done = !t.done;
     startTransition(async () => {
       apply({ type: "toggle", id: t.id, done });
-      const result: ActionResult = await setTaskDone(null, asForm({ id: t.id, done: done ? "1" : "0" }));
+      const result = await callAction(setTaskDone, { id: t.id, done: done ? "1" : "0" });
       if (!result.ok) toast.error(result.error);
     });
   }
@@ -44,7 +41,7 @@ function useTaskList(tasks: Task[]) {
   function remove(t: Task) {
     startTransition(async () => {
       apply({ type: "delete", id: t.id });
-      const result = await deleteTask(null, asForm({ id: t.id }));
+      const result = await callAction(deleteTask, { id: t.id });
       if (!result.ok) toast.error(result.error);
       else toast.success(result.message ?? "Tarefa excluída.");
     });
@@ -190,7 +187,7 @@ function AddTaskForm({ projectId, currentStage }: { projectId: string; currentSt
   const titleRef = useRef<HTMLInputElement>(null);
   return (
     <ActionForm
-      action={addTask}
+      action={addTaskT}
       resetOnSuccess
       onSuccess={() => titleRef.current?.focus()}
       className="flex flex-col gap-2 sm:flex-row sm:items-start"
@@ -240,7 +237,7 @@ function ApplyTemplateButton({
     <FormModal
       title="Aplicar modelo"
       description="Copia as tarefas do modelo para o projeto. As que já existem não se repetem."
-      action={applyTemplateToProject}
+      action={applyTemplateT}
       submitLabel="Aplicar"
       size="sm"
       trigger={

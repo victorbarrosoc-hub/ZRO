@@ -44,10 +44,13 @@ export function FinanceTabs({ active, month }: { active: "lancamentos" | "fluxo"
 
 /* ---------------- Navegação por mês ---------------- */
 
+/** Atalhos do mês. Ativo fica marcado sem virar botão principal (o branco cheio é das ações). */
 const chip = (active: boolean) =>
   cn(
     "inline-flex h-10 shrink-0 items-center rounded-full border px-4 text-[13px] whitespace-nowrap transition-colors",
-    active ? "border-white bg-white text-void" : "border-line-strong text-ash hover:border-white/30 hover:text-light",
+    active
+      ? "border-white/40 bg-white/[0.08] text-white"
+      : "border-line-strong text-ash hover:border-white/30 hover:text-light",
   );
 
 /**

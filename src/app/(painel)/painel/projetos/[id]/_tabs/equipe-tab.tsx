@@ -46,7 +46,7 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
       <Card>
         <CardHeader
           title="Equipe"
-          description="Escolha no banco de freelas: o valor padrão entra preenchido e o custo soma na hora."
+          description="Quem trabalha, em qual função e por quanto."
           action={<AddCrewButton projectId={project.id} options={options} category={project.category} />}
         />
         {rows.length ? (

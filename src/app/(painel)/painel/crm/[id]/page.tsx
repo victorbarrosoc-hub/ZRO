@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/painel/crm/[id]">
 }
 
 function normalize(s: string) {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
 export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">) {

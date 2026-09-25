@@ -14,6 +14,7 @@ import {
   parseConditions,
   quantityLabel,
   quoteCode,
+  unitWithQuantity,
 } from "@/lib/services/quotes";
 
 const CSS = `
@@ -98,7 +99,9 @@ const CSS = `
 
 @media print {
   @page { size: A4; margin: 14mm 0 16mm; }
+  :root { color-scheme: light !important; }
   html, body { background: #fff !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
   body *:not(:has(#zro-letterhead)):not(#zro-letterhead):not(#zro-letterhead *) { display: none !important; }
   body *:has(#zro-letterhead) {
     display: block !important; position: static !important; margin: 0 !important; padding: 0 !important;
@@ -193,7 +196,7 @@ export function Letterhead({ doc }: { doc: QuoteDocumentData }) {
                         {it.detail ? <span className="lh-detail">{it.detail}</span> : null}
                         <span className="lh-calc">
                           {quantityLabel(it.quantity)}
-                          {unit ? ` ${unit}` : ""} × {brl(it.unitPrice)}
+                          {unit ? ` ${unitWithQuantity(unit, it.quantity)}` : ""} × {brl(it.unitPrice)}
                         </span>
                       </td>
                       <td className="lh-c-qty lh-num">{quantityLabel(it.quantity)}</td>

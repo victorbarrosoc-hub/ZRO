@@ -16,7 +16,7 @@ import {
 } from "@/components/painel/bits";
 import { StatTile } from "@/components/painel/stat";
 import { ButtonLink } from "@/components/ui/button";
-import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
+import { Badge, Card, CardHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
 import { brl, dateBR, entryStatus, initials, todayISO } from "@/lib/format";
@@ -163,7 +163,7 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
                 </tbody>
               </Table>
             ) : (
-              <EmptyState title="Nenhum projeto ainda" description="Os projetos deste cliente aparecem aqui." />
+              <p className="px-5 pt-3 pb-6 text-[14px] text-mute sm:px-6">Nenhum projeto ainda.</p>
             )}
           </Card>
 
@@ -201,10 +201,15 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
                 </tbody>
               </Table>
             ) : (
-              <EmptyState
-                title="Nenhum orçamento ainda"
-                description="Orçamentos feitos para este cliente ou para os leads dele."
-              />
+              <p className="px-5 pt-3 pb-6 text-[14px] text-mute sm:px-6">
+                Nenhum orçamento ainda.{" "}
+                <Link
+                  href={`/painel/orcamentos/novo?cliente=${c.id}`}
+                  className="text-light underline decoration-white/20 underline-offset-4 hover:decoration-white/60"
+                >
+                  Criar o primeiro
+                </Link>
+              </p>
             )}
           </Card>
 

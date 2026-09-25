@@ -10,7 +10,7 @@ const { leads, clients, activities, users, quotes, quoteItems, projects, finance
 
 /** Minúsculas e sem acento, para a busca achar "clinica" em "Clínica". */
 function normalize(s: string | null | undefined) {
-  return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 /** Todas as palavras da busca aparecem em algum campo (telefone também só pelos dígitos). */

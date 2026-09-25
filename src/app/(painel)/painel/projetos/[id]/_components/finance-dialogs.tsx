@@ -9,7 +9,7 @@ import { FINANCE_CATEGORIES, FINANCE_KINDS, PAYMENT_METHODS } from "@/lib/domain
 import { brl, centsToInput, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { createProjectEntry, deleteProjectEntry, payProjectEntry } from "../../actions";
-import { toastFirst } from "./toast-first";
+import { toastFirst } from "./run-action";
 
 // Quitar tira o botão da linha; excluir tira a linha; o primeiro lançamento troca a lista vazia.
 const payProjectEntryT = toastFirst(payProjectEntry);

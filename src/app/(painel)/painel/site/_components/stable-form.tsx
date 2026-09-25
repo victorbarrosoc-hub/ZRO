@@ -9,6 +9,7 @@
  * o formulário só é limpo quando dá certo (resetOnSuccess).
  * Sugestão: levar este comportamento para src/components/painel/form.tsx.
  */
+import { unstable_rethrow } from "next/navigation";
 import { createContext, startTransition, useActionState, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,17 @@ export function StableForm({
   successMessage?: string;
   resetOnSuccess?: boolean;
 }) {
-  const [state, dispatch, pending] = useActionState<ActionResult | null, FormData>(action, null);
+  // Erro inesperado no servidor (ex.: banco ocupado) vira aviso, não tela de erro.
+  // Redirecionamento e notFound do Next continuam passando.
+  const safeAction: ServerAction = async (prev, fd) => {
+    try {
+      return await action(prev, fd);
+    } catch (error) {
+      unstable_rethrow(error);
+      return { ok: false, error: "Não foi possível salvar agora. Tente de novo." };
+    }
+  };
+  const [state, dispatch, pending] = useActionState<ActionResult | null, FormData>(safeAction, null);
   const formRef = useRef<HTMLFormElement>(null);
   const handled = useRef<ActionResult | null>(null);
 

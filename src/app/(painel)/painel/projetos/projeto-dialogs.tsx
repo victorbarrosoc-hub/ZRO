@@ -10,8 +10,13 @@ import { Field, Input } from "@/components/ui/field";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger } from "@/components/ui/overlay";
 import { PROJECT_STATUS } from "@/lib/domain";
 import { cn } from "@/lib/utils";
+import { callAction, toastFirst } from "./[id]/_components/run-action";
 import { createProjectAction, deleteProject, setProjectStatus, updateDriveUrl, updateProject } from "./actions";
 import { ProjectFields, type ProjectDefaults, type ProjectOptions } from "./projeto-fields";
+
+// Criar e excluir terminam em redirect(): vão direto. O resto passa pelo toastFirst (aviso e erro de rede).
+const updateProjectT = toastFirst(updateProject);
+const updateDriveUrlT = toastFirst(updateDriveUrl);
 
 export function NewProjectButton({ options, variant = "primary" }: { options: ProjectOptions; variant?: "primary" | "secondary" }) {
   return (
@@ -36,7 +41,7 @@ export function EditProjectButton({ defaults, options }: { defaults: ProjectDefa
   return (
     <FormModal
       title="Editar projeto"
-      action={updateProject}
+      action={updateProjectT}
       size="lg"
       trigger={
         <Button variant="secondary" size="sm">
@@ -78,7 +83,7 @@ export function DriveLinkButton({ id, driveUrl }: { id: string; driveUrl: string
       <FormModal
         title="Link do Drive"
         description="A pasta do projeto: brutos, cortes e entregas."
-        action={updateDriveUrl}
+        action={updateDriveUrlT}
         size="sm"
         trigger={
           driveUrl ? (
@@ -123,10 +128,7 @@ export function ProjectStatusMenu({ id, status }: { id: string; status: string }
     if (next === current) return;
     startTransition(async () => {
       setCurrent(next);
-      const fd = new FormData();
-      fd.set("id", id);
-      fd.set("status", next);
-      const result = await setProjectStatus(null, fd);
+      const result = await callAction(setProjectStatus, { id, status: next });
       if (!result.ok) toast.error(result.error);
       else if (result.message) toast.success(result.message);
     });

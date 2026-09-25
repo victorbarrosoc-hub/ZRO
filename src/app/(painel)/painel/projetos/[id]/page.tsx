@@ -9,6 +9,7 @@ import { brl, dateBR, relativeDay, todayISO } from "@/lib/format";
 import { getProject, getProjectFormOptions, getTaxRate, summarizeProject } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
 import { DeleteProjectButton, DriveLinkButton, EditProjectButton, ProjectStatusMenu } from "../projeto-dialogs";
+import { KeepActiveTabVisible } from "./_components/keep-tab-visible";
 import { StageStepper } from "./_components/stage-stepper";
 import { ProjectAgendaTab } from "./_tabs/agenda-tab";
 import { ProjectDocumentsTab } from "./_tabs/documentos-tab";
@@ -127,6 +128,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
             href: `/painel/projetos/${project.id}${t.key === "visao" ? "" : `?aba=${t.key}`}`,
           }))}
         />
+        <KeepActiveTabVisible active={aba} />
 
         {aba === "visao" ? <ProjectOverviewTab project={project} summary={summary} /> : null}
         {aba === "tarefas" ? <ProjectTasksTab project={project} templates={options.templates} /> : null}

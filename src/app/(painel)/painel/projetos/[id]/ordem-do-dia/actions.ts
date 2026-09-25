@@ -96,7 +96,18 @@ export async function newCallSheet(_prev: ActionResult | null, fd: FormData): Pr
       .where(and(eq(callSheets.projectId, projectId), isNotNull(callSheets.eventId))),
   ]);
   const taken = new Set(withSheet.map((s) => s.eventId));
-  const diaria = upcoming.find((e) => !taken.has(e.id));
+  // Vindo de um evento da agenda, usa esse evento; senão, a próxima diária ainda sem ordem do dia.
+  const eventId = str(fd, "eventId");
+  let diaria = upcoming.find((e) => !taken.has(e.id));
+  if (eventId) {
+    const [chosen] = await db
+      .select({ id: events.id, title: events.title, date: events.date, startTime: events.startTime, location: events.location })
+      .from(events)
+      .where(and(eq(events.id, eventId), eq(events.projectId, projectId)))
+      .limit(1);
+    if (!chosen) return fail("Esse evento não é deste projeto.");
+    diaria = chosen;
+  }
   const crew = diaria ? ((await eventCrewSuggestions([diaria.id]))[diaria.id] ?? []) : [];
 
   const [row] = await db

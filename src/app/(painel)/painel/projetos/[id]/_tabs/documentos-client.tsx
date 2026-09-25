@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import { ChevronDown, Copy, FileText, ListChecks, Plus, Printer, Trash2 } from "lucide-react";
 import { ActionForm, ConfirmAction, SubmitButton } from "@/components/painel/form";
@@ -11,6 +11,37 @@ import { newScript } from "../roteiros/actions";
 import { SCRIPT_KINDS } from "../roteiros/script-kinds";
 
 type ServerAction = (prev: ActionResult | null, fd: FormData) => Promise<ActionResult>;
+
+/**
+ * Protege alteração não salva: pergunta antes de fechar a aba e antes de
+ * seguir um link interno (a navegação do Next não dispara o beforeunload).
+ */
+export function useUnsavedGuard(active: boolean, message = "Tem alteração não salva. Sair mesmo assim?") {
+  useEffect(() => {
+    if (!active) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || (url.pathname === window.location.pathname && url.search === window.location.search)) return;
+      if (!window.confirm(message)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [active, message]);
+}
 
 /** Copia um texto (com plano B para navegadores sem a API de área de transferência). */
 export async function copyText(text: string) {

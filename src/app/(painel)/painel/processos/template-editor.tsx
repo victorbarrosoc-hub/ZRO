@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, Plus, X } from "lucide-react";
-import { ActionForm, SubmitButton, fieldError } from "@/components/painel/form";
+import { fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Card, CardHeader } from "@/components/ui/surface";
@@ -11,6 +11,7 @@ import type { ActionResult } from "@/lib/actions";
 import { CATEGORIES, STAGES } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { IconButton } from "../site/_components/list-controls";
+import { StableForm, StableSubmit } from "../site/_components/stable-form";
 import { saveTemplate } from "./actions";
 
 export type TemplateEditorValues = {
@@ -112,7 +113,7 @@ export function TemplateEditor({
   const status = dirty ? "Alterações não salvas" : isNew ? "Modelo novo" : "Tudo salvo";
 
   return (
-    <ActionForm action={saveTemplate} onSuccess={onSuccess} className="grid gap-6 xl:grid-cols-12 xl:items-start">
+    <StableForm action={saveTemplate} onSuccess={onSuccess} className="grid gap-6 xl:grid-cols-12 xl:items-start">
       {(state) => (
         <>
           {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
@@ -180,7 +181,7 @@ export function TemplateEditor({
                 })}
               </ol>
               <div className="hidden gap-2 border-t border-line p-5 sm:p-6 xl:grid">
-                <SubmitButton className="w-full">{isNew ? "Criar modelo" : "Salvar modelo"}</SubmitButton>
+                <StableSubmit className="w-full">{isNew ? "Criar modelo" : "Salvar modelo"}</StableSubmit>
                 <p className={cn("text-center text-[12px]", dirty ? "text-warn" : "text-mute")}>
                   {status} · {total} tarefa{total === 1 ? "" : "s"}
                 </p>
@@ -290,10 +291,10 @@ export function TemplateEditor({
             <p className={cn("text-[13px]", dirty ? "text-warn" : "text-mute")}>
               {status} · {total} tarefa{total === 1 ? "" : "s"}
             </p>
-            <SubmitButton>{isNew ? "Criar modelo" : "Salvar modelo"}</SubmitButton>
+            <StableSubmit>{isNew ? "Criar modelo" : "Salvar modelo"}</StableSubmit>
           </div>
         </>
       )}
-    </ActionForm>
+    </StableForm>
   );
 }

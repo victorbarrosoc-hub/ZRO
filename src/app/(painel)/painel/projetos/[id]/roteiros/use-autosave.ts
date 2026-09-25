@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/lib/actions";
+import { useUnsavedGuard } from "../_tabs/documentos-client";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
 
@@ -81,16 +82,7 @@ export function useAutosave(payload: string, save: (payload: string) => Promise<
   }, [saveNow]);
 
   // Aviso ao sair com algo sem salvar.
-  const pending = status !== "saved";
-  useEffect(() => {
-    if (!pending) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [pending]);
+  useUnsavedGuard(status !== "saved", "Ainda tem alteração sendo salva. Sair mesmo assim?");
 
   return { status, savedAt, saveNow };
 }

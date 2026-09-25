@@ -14,7 +14,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { ConfirmAction, FormModal } from "@/components/painel/form";
+import { ActionForm, ConfirmAction, FormModal, SubmitButton } from "@/components/painel/form";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Modal, ModalContent } from "@/components/ui/overlay";
 import { Badge } from "@/components/ui/surface";
@@ -22,6 +22,7 @@ import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
 import { addDaysISO, initials, todayISO } from "@/lib/format";
 import type { AgendaEvent, AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
+import { newCallSheet } from "@/app/(painel)/painel/projetos/[id]/ordem-do-dia/actions";
 import { createEvent, deleteEvent, updateEvent } from "./actions";
 import { EventFields, type EventDefaults } from "./agenda-fields";
 import { capitalize, dateRangeLong, dayMonthShort, eventDays, eventEnd, mapsSearchUrl, timeRange } from "./agenda-utils";
@@ -129,8 +130,15 @@ export function AgendaProvider({
             }}
             onDuplicate={() => {
               closeView();
+              // A cópia começa no dia seguinte ao fim, com a mesma duração.
               const next = addDaysISO(eventEnd(viewing), 1);
-              openForm("new", { ...toDefaults(viewing), id: undefined, date: next, endDate: null });
+              const length = eventDays(viewing);
+              openForm("new", {
+                ...toDefaults(viewing),
+                id: undefined,
+                date: next,
+                endDate: length > 1 ? addDaysISO(next, length - 1) : null,
+              });
             }}
           />
         ) : null}
@@ -224,14 +232,24 @@ function EventDetails({
               <span className="text-mute">Sem projeto</span>
             )}
           </InfoRow>
-          {event.callSheetId && event.projectId ? (
+          {event.projectId && (event.callSheetId || event.type === "diaria") ? (
             <InfoRow icon={<FileText />} label="Ordem do dia">
-              <Link
-                href={`/painel/projetos/${event.projectId}/ordem-do-dia/${event.callSheetId}`}
-                className="underline decoration-white/20 underline-offset-4 hover:decoration-white/60"
-              >
-                Abrir a ordem do dia
-              </Link>
+              {event.callSheetId ? (
+                <Link
+                  href={`/painel/projetos/${event.projectId}/ordem-do-dia/${event.callSheetId}`}
+                  className="underline decoration-white/20 underline-offset-4 hover:decoration-white/60"
+                >
+                  Abrir a ordem do dia
+                </Link>
+              ) : (
+                <ActionForm action={newCallSheet}>
+                  <input type="hidden" name="projectId" value={event.projectId} />
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <SubmitButton variant="subtle" size="sm" pendingLabel="Criando…" className="-my-1">
+                    <Plus /> Criar com esta diária
+                  </SubmitButton>
+                </ActionForm>
+              )}
             </InfoRow>
           ) : null}
         </dl>

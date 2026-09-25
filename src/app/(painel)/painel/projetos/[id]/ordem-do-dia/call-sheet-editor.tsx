@@ -15,7 +15,7 @@ import { dateBR } from "@/lib/format";
 import type { CrewSuggestion } from "@/lib/queries/documents";
 import { cn } from "@/lib/utils";
 import { mapsSearchUrl } from "@/app/(painel)/painel/agenda/agenda-utils";
-import { copyText } from "../_tabs/documentos-client";
+import { copyText, useUnsavedGuard } from "../_tabs/documentos-client";
 import { saveCallSheet } from "./actions";
 import { RowsEditor } from "./rows-editor";
 import { callSheetText } from "./sheet-text";
@@ -121,15 +121,7 @@ export function CallSheetEditor({
   const set = <K extends keyof SheetState>(key: K, value: SheetState[K]) => setState((s) => ({ ...s, [key]: value }));
 
   // Aviso ao sair com alteração não salva.
-  useEffect(() => {
-    if (!dirty) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [dirty]);
+  useUnsavedGuard(dirty, "A ordem do dia tem alteração não salva. Sair mesmo assim?");
 
   // Ctrl/Cmd + S salva.
   useEffect(() => {
@@ -198,16 +190,7 @@ export function CallSheetEditor({
   }
 
   async function copyWhatsapp() {
-    const text = callSheetText(
-      {
-        ...state,
-        schedule: state.schedule,
-        crew: state.crew,
-        contacts: state.contacts,
-      },
-      project,
-    );
-    const ok = await copyText(text);
+    const ok = await copyText(callSheetText(state, project));
     if (ok) toast.success("Texto copiado. É só colar no WhatsApp.");
     else toast.error("Não deu para copiar. Tente pela versão para imprimir.");
   }
@@ -289,7 +272,11 @@ export function CallSheetEditor({
       <Card>
         <CardHeader
           title="Cronograma"
-          description="Horário e atividade. Enter numa célula cria a próxima linha."
+          description={
+            <>
+              Horário e atividade de cada momento.<span className="hidden md:inline"> Enter numa célula cria a próxima linha.</span>
+            </>
+          }
           action={
             state.schedule.length > 1 ? (
               <Button variant="ghost" size="sm" onClick={sortSchedule}>

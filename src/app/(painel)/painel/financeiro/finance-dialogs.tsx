@@ -72,7 +72,7 @@ export type DialogEntry = {
 type PayableEntry = Pick<DialogEntry, "id" | "kind" | "description" | "amount" | "paidAmount">;
 
 const isIn = (kind: string) => kind === "entrada";
-export const payVerb = (kind: string) => (isIn(kind) ? "Receber" : "Pagar");
+const payVerb = (kind: string) => (isIn(kind) ? "Receber" : "Pagar");
 const payTitle = (kind: string) => (isIn(kind) ? "Registrar recebimento" : "Registrar pagamento");
 
 /* ---------------- Novo lançamento ---------------- */
@@ -89,7 +89,7 @@ export function NewEntryButton({
   const options = use(OptionsContext);
   return (
     <FormModal
-      title="Novo lançamento"
+      title={label}
       description="Entrada, saída ou imposto. Custo fixo pode repetir por alguns meses."
       action={createEntryAction}
       submitLabel="Lançar"

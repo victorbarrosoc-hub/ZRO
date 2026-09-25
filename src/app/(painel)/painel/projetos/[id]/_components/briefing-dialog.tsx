@@ -5,13 +5,16 @@ import { FormModal, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/field";
 import { saveBriefing } from "../../actions";
+import { toastFirst } from "./run-action";
+
+const saveBriefingT = toastFirst(saveBriefing);
 
 export function EditBriefingButton({ id, briefing, notes }: { id: string; briefing: string | null; notes: string | null }) {
   return (
     <FormModal
       title="Briefing"
       description="A ideia, o pedido do cliente e o que já se sabe."
-      action={saveBriefing}
+      action={saveBriefingT}
       size="lg"
       trigger={
         <Button variant="ghost" size="sm" aria-label={briefing ? "Editar briefing" : "Escrever briefing"}>

@@ -4,7 +4,7 @@ import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 import { getSetting } from "@/lib/settings";
-import { effectiveQuoteStatus, lineTotal, quoteTotals, type QuoteTotals } from "@/lib/services/quotes";
+import { effectiveQuoteStatus, lineTotal, normalizeText, quoteTotals, type QuoteTotals } from "@/lib/services/quotes";
 
 const { quotes, quoteItems, clients, leads, projects, catalogItems, financeEntries } = schema;
 
@@ -188,6 +188,16 @@ export async function otherOpenQuotesForLead(leadId: string, number: string) {
   });
 }
 
+/** Orçamentos já feitos para um lead (para não duplicar sem querer). */
+export async function quotesForLead(leadId: string, today = todayISO()) {
+  const rows = await db
+    .select({ id: quotes.id, number: quotes.number, version: quotes.version, title: quotes.title, status: quotes.status, validUntil: quotes.validUntil })
+    .from(quotes)
+    .where(eq(quotes.leadId, leadId))
+    .orderBy(desc(quotes.number), desc(quotes.version));
+  return rows.map((r) => ({ ...r, effectiveStatus: effectiveQuoteStatus(r, today) }));
+}
+
 /** Opções do editor e do formulário de novo orçamento. */
 export async function getQuoteFormOptions() {
   const [clientRows, catalog, openLeads] = await Promise.all([
@@ -296,14 +306,14 @@ export const getQuoteDocument = cache(async (id: string): Promise<QuoteDocumentD
     status: quote.status,
     issueDate: quote.issueDate,
     validUntil: quote.validUntil,
-    period: quote.period,
-    scope: quote.scope,
-    paymentTerms: quote.paymentTerms,
-    conditions: quote.conditions,
+    period: normalizeText(quote.period),
+    scope: normalizeText(quote.scope),
+    paymentTerms: normalizeText(quote.paymentTerms),
+    conditions: normalizeText(quote.conditions),
     recipient,
     items: items.map((i) => ({
       description: i.description,
-      detail: i.detail,
+      detail: normalizeText(i.detail),
       quantity: i.quantity,
       unit: i.unit,
       unitPrice: i.unitPrice,

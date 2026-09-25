@@ -18,6 +18,8 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
   const today = todayISO();
   const docs = await listProjectDocuments(projectId);
   const base = `/painel/projetos/${projectId}`;
+  // Ordens do dia: as próximas primeiro (da mais perto para a mais longe), depois as que já passaram.
+  const sheets = [...docs.callSheets.filter((s) => s.date >= today), ...docs.callSheets.filter((s) => s.date < today).reverse()];
 
   return (
     <div className="grid gap-4 xl:grid-cols-3">
@@ -27,9 +29,9 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
           description="Horários, local, equipe e contatos de cada diária."
           action={<NewDocButton action={newCallSheet} projectId={projectId} label="Nova" />}
         />
-        {docs.callSheets.length ? (
+        {sheets.length ? (
           <ul className="mt-3 grid grid-cols-1 px-3 pb-3">
-            {docs.callSheets.map((s) => {
+            {sheets.map((s) => {
               const past = s.date < today;
               return (
                 <li key={s.id} className={cn("group flex items-center gap-1 rounded-2xl transition-colors hover:bg-white/[0.04]", past && "opacity-60")}>
@@ -89,7 +91,11 @@ export async function ProjectDocumentsTab({ projectId }: { projectId: string }) 
                       <span className="block truncate text-[15px] font-medium text-light">{c.title}</span>
                       <span className="mt-0.5 block truncate text-[13px] text-mute">
                         {c.date ? `${dateShort(c.date)} · ` : ""}
-                        {c.total ? `${c.out} de ${c.total} saíram · ${c.back} voltaram` : "Sem itens ainda"}
+                        {!c.total
+                          ? "Sem itens ainda"
+                          : c.out
+                            ? `${c.out} de ${c.total} saíram · ${c.back} voltaram`
+                            : `${c.total} ${c.total > 1 ? "itens" : "item"}, nada saiu ainda`}
                       </span>
                       {c.total ? (
                         <span className="mt-2 flex h-1 overflow-hidden rounded-full bg-white/[0.08]" aria-hidden>

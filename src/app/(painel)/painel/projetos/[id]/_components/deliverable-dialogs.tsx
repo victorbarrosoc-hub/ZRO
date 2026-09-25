@@ -11,10 +11,11 @@ import type { ActionResult } from "@/lib/actions";
 import { DELIVERABLE_STATUS } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { addDeliverableRevision, createDeliverable, deleteDeliverable, setDeliverableStatus, updateDeliverable } from "../../actions";
-import { toastFirst } from "./toast-first";
+import { callAction, toastFirst } from "./run-action";
 
 // A lista vazia troca de lugar com a primeira entrega, e excluir tira a linha: o aviso vem antes.
 const createDeliverableT = toastFirst(createDeliverable);
+const updateDeliverableT = toastFirst(updateDeliverable);
 const deleteDeliverableT = toastFirst(deleteDeliverable);
 
 export type DeliverableDefaults = {
@@ -30,12 +31,6 @@ export type DeliverableDefaults = {
 };
 
 const FORMAT_SUGGESTIONS = ["16:9", "9:16", "1:1", "4:5", "foto"];
-
-function asForm(fields: Record<string, string>) {
-  const fd = new FormData();
-  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-  return fd;
-}
 
 function DeliverableFields({ state, defaults = {} }: { state: ActionResult | null; defaults?: DeliverableDefaults }) {
   const p = defaults.id ? "ed" : "nd";
@@ -118,7 +113,7 @@ export function EditDeliverableButton({ defaults }: { defaults: DeliverableDefau
   return (
     <FormModal
       title="Editar entrega"
-      action={updateDeliverable}
+      action={updateDeliverableT}
       trigger={
         <Button variant="ghost" size="icon" className="lg:size-8" aria-label={`Editar ${defaults.title}`}>
           <Pencil />
@@ -168,7 +163,7 @@ export function DeliverableStatusSelect({ id, status, title, className }: { id: 
   function change(next: string) {
     startTransition(async () => {
       setValue(next);
-      const result = await setDeliverableStatus(null, asForm({ id, status: next }));
+      const result = await callAction(setDeliverableStatus, { id, status: next });
       if (!result.ok) toast.error(result.error);
       else if (result.message) toast.success(result.message);
     });
@@ -206,7 +201,7 @@ export function RevisionControl({ id, revision, title }: { id: string; revision:
   function add() {
     startTransition(async () => {
       setValue(value + 1);
-      const result = await addDeliverableRevision(null, asForm({ id }));
+      const result = await callAction(addDeliverableRevision, { id });
       if (!result.ok) toast.error(result.error);
       else if (result.message) toast.success(result.message);
     });

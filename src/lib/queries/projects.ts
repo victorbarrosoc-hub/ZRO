@@ -65,6 +65,10 @@ export async function listProjects(filters: { q?: string; status?: ProjectStatus
     .leftJoin(clients, eq(projects.clientId, clients.id))
     .where(where.length ? and(...where) : undefined)
     .orderBy(
+      // Em "Todos", o que está andando vem antes do que já fechou.
+      status === "todos"
+        ? sql`case ${projects.status} when 'ativo' then 0 when 'pausado' then 1 when 'concluido' then 2 else 3 end`
+        : sql`0`,
       sql`${projects.dueDate} is null`,
       status === "concluidos" ? desc(projects.dueDate) : asc(projects.dueDate),
       desc(projects.code),

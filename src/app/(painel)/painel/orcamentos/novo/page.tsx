@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { InfoList, LeadStageBadge } from "@/components/painel/bits";
+import { InfoList, LeadStageBadge, QuoteStatusBadge } from "@/components/painel/bits";
 import { Card, CardHeader, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import {
@@ -14,8 +14,15 @@ import {
   optionLabel,
 } from "@/lib/domain";
 import { addDaysISO, dateBR, todayISO } from "@/lib/format";
-import { getClientForQuote, getLeadForQuote, getQuoteFormOptions, lastCategoryForClient, nextQuoteNumber } from "@/lib/queries/quotes";
-import { categoryFromProjectType, projectTypeTitle, suggestedTitle } from "@/lib/services/quotes";
+import {
+  getClientForQuote,
+  getLeadForQuote,
+  getQuoteFormOptions,
+  lastCategoryForClient,
+  nextQuoteNumber,
+  quotesForLead,
+} from "@/lib/queries/quotes";
+import { categoryFromProjectType, projectTypeTitle, quoteCode, suggestedTitle } from "@/lib/services/quotes";
 import { getSetting } from "@/lib/settings";
 import { NewQuoteForm } from "./new-quote-form";
 
@@ -36,7 +43,10 @@ export default async function NovoOrcamentoPage({ searchParams }: PageProps<"/pa
     getSetting("taxes"),
     nextQuoteNumber(today.slice(0, 4)),
   ]);
-  const clientCategory = client ? await lastCategoryForClient(client.id) : null;
+  const [clientCategory, leadQuotes] = await Promise.all([
+    client ? lastCategoryForClient(client.id) : null,
+    lead ? quotesForLead(lead.id, today) : [],
+  ]);
 
   const category = lead ? categoryFromProjectType(lead.projectType) : (clientCategory ?? "filme-de-marca");
   const defaults = lead
@@ -111,6 +121,27 @@ export default async function NovoOrcamentoPage({ searchParams }: PageProps<"/pa
                   ]}
                 />
               </div>
+              {leadQuotes.length ? (
+                <div className="border-t border-line px-5 py-4 sm:px-6">
+                  <p className="label mb-2 text-mute">Já tem orçamento</p>
+                  <ul className="grid gap-1">
+                    {leadQuotes.map((q) => (
+                      <li key={q.id}>
+                        <Link
+                          href={`/painel/orcamentos/${q.id}`}
+                          className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-[13px] hover:bg-white/[0.04]"
+                        >
+                          <span className="min-w-0 truncate text-ash">
+                            <span className="font-mono text-[12px] text-light">{quoteCode(q.number, q.version)}</span> · {q.title}
+                          </span>
+                          <QuoteStatusBadge status={q.effectiveStatus} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-[12px] text-mute">Para uma opção diferente, crie outro. Para ajustar, abra o existente.</p>
+                </div>
+              ) : null}
               {lead.idea ? (
                 <div className="border-t border-line px-5 py-4 sm:px-6">
                   <p className="label mb-1.5 text-mute">Ideia</p>

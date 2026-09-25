@@ -128,6 +128,14 @@ export function validityInfo(validUntil: string | null, today: string, status: s
 
 /* ------------------------------ Textos ------------------------------ */
 
+/**
+ * Quebras de linha sempre em "\n". Formulários mandam textarea com "\r\n",
+ * e o "\r" vira um caractere estranho no PDF.
+ */
+export function normalizeText<T extends string | null | undefined>(text: T): T {
+  return (typeof text === "string" ? text.replace(/\r\n?/g, "\n") : text) as T;
+}
+
 /** Condições: uma por linha, sem marcadores repetidos. */
 export function parseConditions(text: string | null | undefined) {
   return (text ?? "")
@@ -139,6 +147,12 @@ export function parseConditions(text: string | null | undefined) {
 /** 1.5 → "1,5" */
 export function quantityLabel(quantity: number) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(quantity);
+}
+
+/** Unidade com plural simples: 1 diária, 2 diárias (todas as unidades do catálogo levam só "s"). */
+export function unitWithQuantity(unitLabel: string | null | undefined, quantity: number) {
+  if (!unitLabel) return "";
+  return quantity === 1 ? unitLabel : `${unitLabel}s`;
 }
 
 /* ------------------------------ Timbrado ------------------------------ */

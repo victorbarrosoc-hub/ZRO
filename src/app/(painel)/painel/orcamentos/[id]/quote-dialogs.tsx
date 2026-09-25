@@ -15,6 +15,12 @@ import { approveQuote, refuseQuote } from "../actions";
 /** Roda antes de qualquer ação de status: salva o que estiver pendente no editor. */
 export type BeforeAction = () => Promise<boolean>;
 
+/** Erros de controle do Next (redirect, notFound) precisam seguir em frente. */
+export function isNextControlError(e: unknown) {
+  const digest = typeof e === "object" && e && "digest" in e ? String((e as { digest: unknown }).digest) : "";
+  return digest.startsWith("NEXT_");
+}
+
 function useRunner(before?: BeforeAction) {
   const [pending, start] = useTransition();
   function run(
@@ -24,7 +30,14 @@ function useRunner(before?: BeforeAction) {
   ) {
     start(async () => {
       if (before && !(await before())) return;
-      const result = await task();
+      let result: ActionResult | undefined | void;
+      try {
+        result = await task();
+      } catch (e) {
+        if (isNextControlError(e)) throw e; // redirect: o Next navega
+        toast.error("Não foi possível concluir agora. Tente de novo em instantes.");
+        return;
+      }
       if (!result) return; // redirecionou
       if (result.ok) {
         if (result.message && !opts.silent) toast.success(result.message);

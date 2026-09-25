@@ -250,6 +250,12 @@ export async function convertLeadToClient(_prev: ActionResult | null, fd: FormDa
   const id = str(fd, "id");
   if (!id) return fail("Lead não encontrado.");
   const existingId = str(fd, "clientId");
+  const lead = await db.query.leads.findFirst({ where: eq(leads.id, id), columns: { clientId: true } });
+  if (!lead) return fail("Lead não encontrado.");
+  if (lead.clientId && !existingId) {
+    revalidateLead(id, lead.clientId);
+    return ok("Este lead já é cliente.", lead.clientId);
+  }
   let clientId: string;
   try {
     if (existingId) {
