@@ -214,24 +214,3 @@ export function weekTitle(monday: string) {
   if (m1 !== m2) return `${dayMonth(monday)} a ${dayMonth(sunday)}`;
   return `${Number(monday.slice(8, 10))} a ${dayMonth(sunday)}`;
 }
-
-/**
- * Resumo de um período: diárias contam por dia (uma diária de 3 dias são 3
- * diárias); entregas, reuniões e outros contam por evento.
- */
-export function summarizeRange(events: { type: string; date: string; endDate: string | null }[], from: string, to: string) {
-  const count: Record<string, number> = { diaria: 0, entrega: 0, reuniao: 0, outro: 0 };
-  for (const ev of events) {
-    const end = eventEnd(ev);
-    if (!rangesOverlap(ev.date, end, from, to)) continue;
-    if (ev.type === "diaria") count.diaria += daysBetween(ev.date < from ? from : ev.date, end > to ? to : end) + 1;
-    else count[ev.type] = (count[ev.type] ?? 0) + 1;
-  }
-  const parts = [
-    count.diaria ? `${count.diaria} ${count.diaria > 1 ? "diárias" : "diária"}` : null,
-    count.entrega ? `${count.entrega} ${count.entrega > 1 ? "entregas" : "entrega"}` : null,
-    count.reuniao ? `${count.reuniao} ${count.reuniao > 1 ? "reuniões" : "reunião"}` : null,
-    count.outro ? `${count.outro} ${count.outro > 1 ? "outros" : "outro"}` : null,
-  ].filter((p): p is string => !!p);
-  return { count, text: parts.length > 1 ? `${parts.slice(0, -1).join(", ")} e ${parts[parts.length - 1]}` : (parts[0] ?? "") };
-}

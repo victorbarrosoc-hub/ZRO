@@ -72,7 +72,6 @@ export default async function ImpostosPage({ searchParams }: PageProps<"/painel/
   const year = mes.slice(0, 4);
 
   const [taxes, overview, options] = await Promise.all([taxesByMonth(mes, 7, today), taxOverview(year, today), financeOptions()]);
-  const oldest = taxes.months[taxes.months.length - 1].month;
 
   return (
     <FinanceOptionsProvider options={options}>
@@ -80,7 +79,6 @@ export default async function ImpostosPage({ searchParams }: PageProps<"/painel/
         <PageHeader
           label="Financeiro"
           title="Impostos"
-          description="Simples Nacional mês a mês: quanto entrou, o DAS estimado e o que já foi lançado e pago."
           actions={<NewEntryButton defaultKind="imposto" label="Novo imposto" />}
         />
 
@@ -135,7 +133,6 @@ export default async function ImpostosPage({ searchParams }: PageProps<"/painel/
         <Card className="overflow-hidden">
           <CardHeader
             title="DAS mês a mês"
-            description={`${cap(monthLong(oldest))} a ${monthLong(mes)}. Receita pelo que entrou de fato no mês (data da baixa).`}
           />
 
           <div className="mt-4 hidden md:block">
@@ -227,7 +224,7 @@ export default async function ImpostosPage({ searchParams }: PageProps<"/painel/
 
         {overview.others.length ? (
           <Card className="overflow-hidden">
-            <CardHeader title="Outros impostos em aberto" description="ISS e demais impostos lançados, de qualquer mês." />
+            <CardHeader title="Outros impostos em aberto" />
             <ul className="mt-3 border-t border-line">
               {overview.others.map((e) => (
                 <li

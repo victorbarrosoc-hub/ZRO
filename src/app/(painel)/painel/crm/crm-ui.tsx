@@ -3,7 +3,7 @@
  * orçamentos, projetos, filtros). Os botões interativos vêm de crm-dialogs.
  */
 import Link from "next/link";
-import { ArrowRightLeft, Mail, MessageCircle, Phone, StickyNote, Users } from "lucide-react";
+import { ArrowRightLeft, CalendarDays, Clapperboard, Mail, MessageCircle, Phone, StickyNote, Users, Wallet } from "lucide-react";
 import { ProjectStatusBadge, QuoteStatusBadge, StageBadge } from "@/components/painel/bits";
 import { brl, dateShort, dateTimeBR } from "@/lib/format";
 import type { ActivityRow, ProjectRow, QuoteRow } from "@/lib/queries/crm";
@@ -38,14 +38,19 @@ const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   reuniao: Users,
   email: Mail,
   [STAGE_ACTIVITY]: ArrowRightLeft,
+  projeto: Clapperboard,
+  agenda: CalendarDays,
+  financeiro: Wallet,
 };
+
+const SYSTEM_TYPES = new Set([STAGE_ACTIVITY, "projeto", "agenda", "financeiro"]);
 
 export function ActivityTimeline({ items, showLead }: { items: ActivityRow[]; showLead?: boolean }) {
   return (
     <ol className="grid grid-cols-1">
       {items.map((a, i) => {
         const Icon = ACTIVITY_ICONS[a.type] ?? StickyNote;
-        const system = a.type === STAGE_ACTIVITY;
+        const system = SYSTEM_TYPES.has(a.type);
         return (
           <li key={a.id} className="relative flex gap-4 pb-6 last:pb-0">
             {i < items.length - 1 ? <span aria-hidden className="absolute top-11 bottom-1 left-[19px] w-px bg-line" /> : null}

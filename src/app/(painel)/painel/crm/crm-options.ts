@@ -17,9 +17,12 @@ export const ACTIVITY_TYPES = [
 /** Registro automático de mudança de etapa (não aparece no formulário). */
 export const STAGE_ACTIVITY = "etapa";
 
+/** Registros automáticos que vêm dos projetos (services/activity). */
+const AUTO_ACTIVITY: Record<string, string> = { projeto: "Projeto", agenda: "Agenda", financeiro: "Financeiro" };
+
 export function activityLabel(type: string) {
   if (type === STAGE_ACTIVITY) return "Etapa";
-  return ACTIVITY_TYPES.find((t) => t.key === type)?.label ?? type;
+  return ACTIVITY_TYPES.find((t) => t.key === type)?.label ?? AUTO_ACTIVITY[type] ?? type;
 }
 
 /** Sugestões rápidas para o motivo de perda. */

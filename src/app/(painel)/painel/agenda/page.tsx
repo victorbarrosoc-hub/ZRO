@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { EVENT_TYPES } from "@/lib/domain";
-import { addDaysISO, monthLong, todayISO } from "@/lib/format";
+import { addDaysISO, todayISO } from "@/lib/format";
 import { getAgendaOptions, getEventDate, listBookings, listEventsInRange } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { AgendaProvider, NewEventButton } from "./agenda-dialogs";
@@ -21,7 +21,6 @@ import {
   monthTitle,
   rangesOverlap,
   shiftMonth,
-  summarizeRange,
   weekTitle,
 } from "./agenda-utils";
 import { MobileWeek, WeekBoard } from "./agenda-week";
@@ -69,14 +68,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
 
   // Resumo do período em foco (o mês inteiro ou a semana).
   const inFocus = events.filter((ev) => rangesOverlap(ev.date, eventEnd(ev), focus.start, focus.end));
-  const { text: counts } = summarizeRange(inFocus, focus.start, focus.end);
   const conflicts = inFocus.filter((ev) => ev.conflicts.length).length;
-  const periodName = week ? "nesta semana" : `em ${monthLong(month).split(" ")[0]}`;
-  const summary = counts
-    ? `${counts} ${periodName}${filtered ? " (com filtro)" : ""}`
-    : filtered
-      ? `Nada ${periodName} com esse filtro.`
-      : `Nada marcado ${periodName} ainda.`;
 
   const currentWeek = mondayOf(today);
   const isCurrent = week ? week === currentWeek : month === today.slice(0, 7);
@@ -94,12 +86,6 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
         <PageHeader
           label={week ? `Agenda de produções · semana · ${week.slice(0, 4)}` : "Agenda de produções"}
           title={week ? weekTitle(week) : monthTitle(month)}
-          description={
-            <>
-              {summary}
-              {conflicts ? <span className="text-warn"> · {conflicts} com conflito de equipe</span> : null}
-            </>
-          }
           actions={
             <NewEventButton
               defaults={{
@@ -204,10 +190,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
             </div>
             {!inFocus.length ? (
               <Card className="md:hidden">
-                <EmptyState
-                  title={filtered ? "Nada com esse filtro" : `Nada marcado ${periodName}`}
-                  description={filtered ? "Tire um filtro ou mude o mês." : "Toque num dia do calendário ou em “Novo evento”."}
-                />
+                <EmptyState title={filtered ? "Nada com esse filtro" : week ? "Nada marcado nesta semana" : "Nada marcado neste mês"} />
               </Card>
             ) : null}
           </>

@@ -30,9 +30,6 @@ export default async function SiteFilmesPage() {
       <PageHeader
         label="Site"
         title="Filmes"
-        description={`${films.length} filme${films.length === 1 ? "" : "s"} · ${published.length} publicado${published.length === 1 ? "" : "s"}${
-          publishedNoVideo.length ? ` · ${publishedNoVideo.length} sem vídeo` : ""
-        }`}
         actions={
           <>
             <ButtonLink href="/filmes" target="_blank" variant="secondary">
@@ -116,7 +113,6 @@ export default async function SiteFilmesPage() {
         <Card>
           <EmptyState
             title="Nenhum filme ainda"
-            description="Cadastre o primeiro filme do portfólio. Ele só aparece no site quando você publicar."
             action={
               <ButtonLink href="/painel/site/filmes/novo" variant="primary">
                 <Plus /> Novo filme

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Mail, MessageCircle } from "lucide-react";
-import { EntryStatusBadge, InfoList, Table, Td, Th, whatsappHref } from "@/components/painel/bits";
+import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref } from "@/components/painel/bits";
+import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { brl, dateBR, entryStatus, initials, todayISO } from "@/lib/format";
+import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
+import { listEventsInRange } from "@/lib/queries/agenda";
 import { getFreelancer } from "@/lib/queries/freelas";
 import {
   AddRateButton,
@@ -23,13 +25,25 @@ export async function generateMetadata({ params }: PageProps<"/painel/freelas/[i
   return { title: f?.name ?? "Freela" };
 }
 
-export default async function FreelaPage({ params }: PageProps<"/painel/freelas/[id]">) {
+const TABS = [
+  { key: "resumo", label: "Resumo" },
+  { key: "pagamentos", label: "Pagamentos" },
+  { key: "jobs", label: "Jobs" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+export default async function FreelaPage({ params, searchParams }: PageProps<"/painel/freelas/[id]">) {
   await requireUser();
   const { id } = await params;
+  const sp = await searchParams;
+  const aba: TabKey = TABS.find((t) => t.key === sp.aba)?.key ?? "resumo";
   const f = await getFreelancer(id);
   if (!f) notFound();
 
   const today = todayISO();
+  const agenda = await listEventsInRange({ start: today, end: addDaysISO(today, 120), freelancerId: f.id });
+  const late = f.entries.filter((e) => e.dueDate < today).reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0);
+  const counts: Partial<Record<TabKey, number>> = { pagamentos: f.entries.length, jobs: f.crew.length };
   const totalPaid = f.entries.reduce((s, e) => s + e.paidAmount, 0);
   const totalOpen = f.entries.reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0);
   const wa = whatsappHref(f.phone, `Oi, ${f.name.split(" ")[0]}! Tudo bem? Aqui é da ZRO.`);
@@ -60,12 +74,20 @@ export default async function FreelaPage({ params }: PageProps<"/painel/freelas/
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {wa ? (
-            <a href={wa} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-2 rounded-full bg-white px-3.5 text-[13px] font-medium text-void hover:bg-light">
+            <a
+              href={wa}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-8 items-center gap-2 rounded-full bg-white px-3.5 text-[13px] font-medium text-void hover:bg-light"
+            >
               <MessageCircle className="size-4" /> WhatsApp
             </a>
           ) : null}
           {f.email ? (
-            <a href={`mailto:${f.email}`} className="inline-flex h-8 items-center gap-2 rounded-full border border-line-strong px-3.5 text-[13px] text-light hover:border-white/30">
+            <a
+              href={`mailto:${f.email}`}
+              className="inline-flex h-8 items-center gap-2 rounded-full border border-line-strong px-3.5 text-[13px] text-light hover:border-white/30"
+            >
               <Mail className="size-4" /> E-mail
             </a>
           ) : null}
@@ -88,87 +110,124 @@ export default async function FreelaPage({ params }: PageProps<"/painel/freelas/
         </div>
       </header>
 
-      <div className="grid gap-4 xl:grid-cols-12">
-        <div className="grid content-start gap-4 xl:col-span-4">
-          <Card>
-            <CardHeader title="Contato e dados" />
-            <div className="px-5 pb-2 sm:px-6">
-              <InfoList
-                items={[
-                  { label: "WhatsApp", value: f.phone },
-                  { label: "E-mail", value: f.email },
-                  { label: "Instagram", value: f.instagram ? `@${f.instagram}` : null },
-                  { label: "Chave Pix", value: f.pixKey ? <span className="font-mono text-[13px] break-all">{f.pixKey}</span> : null },
-                ]}
+      <div className="grid grid-cols-1 gap-6">
+        <TabLinks
+          active={aba}
+          tabs={TABS.map((t) => ({
+            key: t.key,
+            label: t.label,
+            count: counts[t.key],
+            href: `/painel/freelas/${f.id}${t.key === "resumo" ? "" : `?aba=${t.key}`}`,
+          }))}
+        />
+
+        {aba === "resumo" ? (
+          <div className="grid grid-cols-1 gap-4">
+            <section className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-label="Resumo">
+              <StatTile label="Jobs" value={f.crew.length} />
+              <StatTile label="Pago" value={brlCompact(totalPaid)} />
+              <StatTile
+                className="col-span-2 sm:col-span-1"
+                label="A pagar"
+                value={brlCompact(totalOpen)}
+                sub={late ? `${brlCompact(late)} vencido` : undefined}
+                tone={late ? "danger" : "default"}
               />
-            </div>
-            {f.equipment || f.notes ? (
-              <div className="grid gap-4 border-t border-line px-5 py-5 text-[14px] sm:px-6">
-                {f.equipment ? (
-                  <div>
-                    <p className="label mb-1.5 text-mute">Equipamento</p>
-                    <p className="text-ash">{f.equipment}</p>
-                  </div>
-                ) : null}
-                {f.notes ? (
-                  <div>
-                    <p className="label mb-1.5 text-mute">Observações</p>
-                    <p className="whitespace-pre-line text-ash">{f.notes}</p>
-                  </div>
-                ) : null}
+            </section>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
+              <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-7">
+                <Card>
+                  <CardHeader title="Próximas diárias" />
+                  {agenda.length ? (
+                    <ul className="mt-3 px-3 pb-3">
+                      {agenda.map((ev) => (
+                        <li key={ev.id}>
+                          <Link
+                            href={ev.projectId ? `/painel/projetos/${ev.projectId}?aba=agenda` : "/painel/agenda"}
+                            className="flex items-center gap-4 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
+                          >
+                            <span className="w-14 shrink-0 text-[13px] font-medium text-white tabular-nums">{dateShort(ev.date)}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14px] text-light">{ev.title}</span>
+                              <span className="block truncate text-[12px] text-mute">
+                                {[ev.projectTitle, ev.startTime, ev.location].filter(Boolean).join(" · ")}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nada marcado.</p>
+                  )}
+                </Card>
+                <Card>
+                  <CardHeader title="Valores padrão" action={<AddRateButton freelancerId={f.id} functions={f.functions} />} />
+                  {f.rates.length ? (
+                    <ul className="mt-3 px-3 pb-3">
+                      {f.rates.map((r) => (
+                        <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 hover:bg-white/[0.03]">
+                          <span className="min-w-0">
+                            <span className="block text-[14px] text-light">{optionLabel(FUNCTIONS, r.function)}</span>
+                            <span className="text-[12px] text-mute">
+                              {r.category ? CATEGORIES.find((c) => c.key === r.category)?.short : "Qualquer job"}
+                            </span>
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <span className="text-[14px] text-white">
+                              {brl(r.amount)} <span className="text-[12px] text-mute">{optionLabel(RATE_UNITS, r.unit)}</span>
+                            </span>
+                            <DeleteRateButton id={r.id} freelancerId={f.id} />
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nenhum valor padrão ainda.</p>
+                  )}
+                </Card>
               </div>
-            ) : null}
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Valores padrão"
-              description="Usados nos projetos e orçamentos."
-              action={<AddRateButton freelancerId={f.id} functions={f.functions} />}
-            />
-            {f.rates.length ? (
-              <ul className="mt-3 px-3 pb-3">
-                {f.rates.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 hover:bg-white/[0.03]">
-                    <span className="min-w-0">
-                      <span className="block text-[14px] text-light">{optionLabel(FUNCTIONS, r.function)}</span>
-                      <span className="text-[12px] text-mute">
-                        {r.category ? CATEGORIES.find((c) => c.key === r.category)?.short : "Qualquer job"}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-[14px] text-white">
-                        {brl(r.amount)} <span className="text-[12px] text-mute">{optionLabel(RATE_UNITS, r.unit)}</span>
-                      </span>
-                      <DeleteRateButton id={r.id} freelancerId={f.id} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nenhum valor padrão ainda.</p>
-            )}
-          </Card>
-        </div>
-
-        <div className="grid content-start gap-4 xl:col-span-8">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Card className="p-5">
-              <p className="text-[13px] text-ash">Jobs</p>
-              <p className="mt-4 text-[28px] leading-none font-semibold text-white">{f.crew.length}</p>
-            </Card>
-            <Card className="p-5">
-              <p className="text-[13px] text-ash">Já pago</p>
-              <p className="mt-4 text-[28px] leading-none font-semibold text-white">{brl(totalPaid)}</p>
-            </Card>
-            <Card className={totalOpen ? "border-warn/25 p-5" : "p-5"}>
-              <p className="text-[13px] text-ash">A pagar</p>
-              <p className="mt-4 text-[28px] leading-none font-semibold text-white">{brl(totalOpen)}</p>
-            </Card>
+              <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-5">
+                <Card>
+                  <CardHeader title="Contato e dados" />
+                  <div className="px-5 pb-2 sm:px-6">
+                    <InfoList
+                      items={[
+                        { label: "WhatsApp", value: f.phone },
+                        { label: "E-mail", value: f.email },
+                        { label: "Instagram", value: f.instagram ? `@${f.instagram}` : null },
+                        {
+                          label: "Chave Pix",
+                          value: f.pixKey ? <span className="font-mono text-[13px] break-all">{f.pixKey}</span> : null,
+                        },
+                      ]}
+                    />
+                  </div>
+                  {f.equipment || f.notes ? (
+                    <div className="grid gap-4 border-t border-line px-5 py-5 text-[14px] sm:px-6">
+                      {f.equipment ? (
+                        <div>
+                          <p className="label mb-1.5 text-mute">Equipamento</p>
+                          <p className="text-ash">{f.equipment}</p>
+                        </div>
+                      ) : null}
+                      {f.notes ? (
+                        <div>
+                          <p className="label mb-1.5 text-mute">Observações</p>
+                          <p className="whitespace-pre-line text-ash">{f.notes}</p>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </Card>
+              </div>
+            </div>
           </div>
+        ) : null}
 
+        {aba === "pagamentos" ? (
           <Card>
-            <CardHeader title="Pagamentos" description="Lançamentos do financeiro ligados a este freela." />
+            <CardHeader title="Pagamentos" />
             {f.entries.length ? (
               <Table className="mt-4" minWidth={620}>
                 <thead>
@@ -203,21 +262,21 @@ export default async function FreelaPage({ params }: PageProps<"/painel/freelas/
                         <Td>
                           <EntryStatusBadge status={status} />
                         </Td>
-                        <Td align="right">
-                          {status !== "pago" ? <PayEntryButton entry={e} freelancerId={f.id} /> : null}
-                        </Td>
+                        <Td align="right">{status !== "pago" ? <PayEntryButton entry={e} freelancerId={f.id} /> : null}</Td>
                       </tr>
                     );
                   })}
                 </tbody>
               </Table>
             ) : (
-              <EmptyState title="Nenhum pagamento registrado" description="Ao escalar este freela num projeto, o pagamento aparece aqui." />
+              <EmptyState title="Nenhum pagamento ainda" />
             )}
           </Card>
+        ) : null}
 
+        {aba === "jobs" ? (
           <Card>
-            <CardHeader title="Histórico de jobs" />
+            <CardHeader title="Jobs" />
             {f.crew.length ? (
               <Table className="mt-4" minWidth={560}>
                 <thead>
@@ -247,10 +306,10 @@ export default async function FreelaPage({ params }: PageProps<"/painel/freelas/
                 </tbody>
               </Table>
             ) : (
-              <EmptyState title="Ainda sem jobs" description="Os projetos em que este freela entrar aparecem aqui." />
+              <EmptyState title="Ainda sem jobs" />
             )}
           </Card>
-        </div>
+        ) : null}
       </div>
     </div>
   );

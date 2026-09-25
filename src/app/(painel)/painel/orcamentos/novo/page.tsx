@@ -76,7 +76,6 @@ export default async function NovoOrcamentoPage({ searchParams }: PageProps<"/pa
       <PageHeader
         label="Novo orçamento"
         title={lead ? `Orçamento para ${lead.company || lead.name}` : "Comece pelo básico"}
-        description="Três campos e pronto. Itens, escopo e condições você ajusta na tela seguinte."
       />
 
       {leadId && !lead ? (
@@ -161,7 +160,7 @@ export default async function NovoOrcamentoPage({ searchParams }: PageProps<"/pa
           ) : null}
 
           <Card>
-            <CardHeader title="Já vem preenchido" description="Tudo editável depois, no orçamento." />
+            <CardHeader title="Já vem preenchido" />
             <div className="px-5 pb-2 sm:px-6">
               <InfoList
                 items={[

@@ -24,7 +24,6 @@ export default async function NewTemplatePage({ searchParams }: PageProps<"/pain
       <PageHeader
         label="Processos"
         title="Novo modelo"
-        description="Monte as tarefas padrão de cada etapa. Dá para ajustar depois, projeto a projeto."
       />
       <TemplateEditor
         otherCategories={all

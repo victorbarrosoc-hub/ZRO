@@ -7,23 +7,35 @@ import { EventButton } from "@/app/(painel)/painel/agenda/agenda-dialogs";
 import { eventAriaLabel } from "@/app/(painel)/painel/agenda/agenda-month";
 import { dayMonthShort, eventDays, eventEnd, timeRange } from "@/app/(painel)/painel/agenda/agenda-utils";
 import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
-import { initials, monthShort, relativeDay, weekdayShort } from "@/lib/format";
+import { brl, initials, monthShort, relativeDay, weekdayShort } from "@/lib/format";
 import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 
-export function ProjectEventList({ events, today, past = false }: { events: AgendaEvent[]; today: string; past?: boolean }) {
+export type DiariaCost = { crew: number; extra: number; total: number };
+
+export function ProjectEventList({
+  events,
+  today,
+  costs = {},
+  past = false,
+}: {
+  events: AgendaEvent[];
+  today: string;
+  costs?: Record<string, DiariaCost>;
+  past?: boolean;
+}) {
   return (
     <ul className={cn("grid grid-cols-1 px-3 pb-3", past && "opacity-60")}>
       {events.map((ev) => (
         <li key={ev.id}>
-          <ProjectEventRow ev={ev} today={today} />
+          <ProjectEventRow ev={ev} today={today} cost={costs[ev.id]} />
         </li>
       ))}
     </ul>
   );
 }
 
-function ProjectEventRow({ ev, today }: { ev: AgendaEvent; today: string }) {
+function ProjectEventRow({ ev, today, cost }: { ev: AgendaEvent; today: string; cost?: DiariaCost }) {
   const days = eventDays(ev);
   const time = timeRange(ev);
   const running = ev.date <= today && eventEnd(ev) >= today;
@@ -90,8 +102,12 @@ function ProjectEventRow({ ev, today }: { ev: AgendaEvent; today: string }) {
         ) : null}
       </span>
 
-      <span className="label hidden shrink-0 pt-1.5 text-mute sm:block">
-        {running && days > 1 ? "em andamento" : relativeDay(ev.date, today)}
+      <span className="grid shrink-0 justify-items-end gap-1 pt-1">
+        {cost && cost.total > 0 ? (
+          <span className="text-[14px] font-medium text-white tabular-nums">{brl(cost.total)}</span>
+        ) : null}
+        {cost && cost.extra > 0 ? <span className="text-[11px] text-mute tabular-nums">+ {brl(cost.extra)} custos</span> : null}
+        <span className="label hidden text-mute sm:block">{running && days > 1 ? "em andamento" : relativeDay(ev.date, today)}</span>
       </span>
     </EventButton>
   );

@@ -18,7 +18,6 @@ export default async function SiteClientesPage() {
       <PageHeader
         label="Site"
         title="Clientes no site"
-        description={`Os nomes de “Quem confia na ZRO”, na página inicial. ${published.length} de ${clients.length} no site.`}
         actions={<NewShowcaseClientButton />}
       />
       <SiteTabs active="clientes" />
@@ -81,7 +80,6 @@ export default async function SiteClientesPage() {
         <Card>
           <EmptyState
             title="Nenhum cliente no site"
-            description="Sem nomes publicados, a seção “Quem confia na ZRO” some da página inicial."
             action={<NewShowcaseClientButton />}
           />
         </Card>

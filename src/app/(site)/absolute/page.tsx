@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { AbsoluteLogo, AbsoluteSymbol } from "@/components/brand/absolute-logo";
+import { Logo } from "@/components/brand/logo";
 import { CompareSlider } from "@/components/site/compare-slider";
 import { LitLines, Reveal } from "@/components/site/reveal";
 
@@ -29,14 +31,17 @@ export default function AbsolutePage() {
   return (
     <div className="relative isolate overflow-hidden">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1200px] bg-[radial-gradient(60%_50%_at_70%_10%,rgb(76_141_255/0.22),transparent_70%),radial-gradient(50%_40%_at_10%_0%,rgb(169_200_255/0.08),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1200px] bg-[radial-gradient(60%_50%_at_70%_10%,color-mix(in_srgb,var(--color-abs-blue)_16%,transparent),transparent_70%),radial-gradient(50%_40%_at_10%_0%,color-mix(in_srgb,var(--color-abs-ice)_6%,transparent),transparent_70%)]"
         aria-hidden
       />
 
       <section className="container-zro pt-36 pb-20 sm:pt-44">
-        <p className="label mb-6 text-abs-ice/80">Absolute ZRO · Finalização</p>
+        <Reveal className="mb-12 flex flex-wrap items-center gap-x-8 gap-y-5 sm:mb-16">
+          <AbsoluteLogo className="h-10 text-logo sm:h-12" />
+          <span className="label text-abs-ice/70">Finalização e color grading</span>
+        </Reveal>
         <h1 className="text-display text-white">
-          <LitLines lines={["Do bruto", <span key="b" className="text-abs-ice">ao absoluto.</span>]} delay={0.1} />
+          <LitLines lines={["Do bruto", <span key="b" className="text-abs-blue">ao absoluto.</span>]} delay={0.1} />
         </h1>
         <Reveal delay={0.4} className="mt-10 grid gap-8 lg:grid-cols-2">
           <p className="max-w-xl text-body-lg text-abs-ice/75">
@@ -83,7 +88,7 @@ export default function AbsolutePage() {
         </ul>
       </section>
 
-      <section className="border-y border-abs-blue/15 bg-abs-deep/60">
+      <section className="border-y border-abs-blue/15 bg-abs-deep/25">
         <div className="container-zro section-y">
           <Reveal className="mb-14 max-w-3xl">
             <p className="label mb-5 text-abs-ice/70">Dois lados da mesma imagem</p>
@@ -92,12 +97,16 @@ export default function AbsolutePage() {
             </h2>
           </Reveal>
           <div className="grid grid-cols-2 border-t border-abs-blue/20">
-            <p className="label border-b border-abs-blue/20 py-4 text-mute">ZRO</p>
-            <p className="label border-b border-abs-blue/20 py-4 text-abs-ice/80">Absolute ZRO</p>
+            <p className="flex h-14 items-center border-b border-abs-blue/20">
+              <Logo className="h-[22px] text-white/45" />
+            </p>
+            <p className="flex h-14 items-center border-b border-abs-blue/20">
+              <AbsoluteLogo className="h-7 text-logo" />
+            </p>
             {VERBS.map(([a, b], i) => (
               <Reveal key={a} delay={i * 0.05} className="col-span-2 grid grid-cols-2 border-b border-abs-blue/20">
                 <span className="py-5 text-h2 text-white/40">{a}</span>
-                <span className="py-5 text-h2 text-abs-ice">{b}</span>
+                <span className="py-5 text-h2 text-abs-blue">{b}</span>
               </Reveal>
             ))}
           </div>
@@ -106,8 +115,9 @@ export default function AbsolutePage() {
 
       <section className="container-zro section-y text-center">
         <Reveal>
+          <AbsoluteSymbol className="mx-auto mb-10 h-9 text-logo" />
           <p className="mx-auto max-w-4xl text-h1 text-white">
-            Color como <span className="accent text-abs-ice">decisão</span>.
+            Color como <span className="accent text-abs-blue">decisão</span>.
           </p>
           <Link
             href="/orcamento?tipo=finalizacao"

@@ -47,21 +47,9 @@ export default async function ProjetosPage({ searchParams }: PageProps<"/painel/
     return `/painel/projetos${s ? `?${s}` : ""}`;
   };
 
-  const total = items.reduce((s, p) => s + p.value, 0);
-  const late = items.filter((p) => isLate(p, today)).length;
-  const noun =
-    status === "ativos"
-      ? `${items.length} em andamento`
-      : status === "concluidos"
-        ? `${items.length} concluído${items.length === 1 ? "" : "s"}`
-        : `${items.length} projeto${items.length === 1 ? "" : "s"}`;
-  const description = [noun, total > 0 ? `${brl(total)} contratados` : null, late ? `${late} com prazo vencido` : null]
-    .filter(Boolean)
-    .join(" · ");
-
   return (
     <div className="grid grid-cols-1 gap-8">
-      <PageHeader label="Processo criativo" title="Projetos" description={description} actions={<NewProjectButton options={options} />} />
+      <PageHeader label="Processo criativo" title="Projetos" actions={<NewProjectButton options={options} />} />
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -88,7 +76,6 @@ export default async function ProjetosPage({ searchParams }: PageProps<"/painel/
           {counts.todos === 0 ? (
             <EmptyState
               title="Nenhum projeto ainda"
-              description="Todo projeto começa do zero: crie o primeiro e ele entra em 01 Origem."
               action={<NewProjectButton options={options} />}
             />
           ) : (

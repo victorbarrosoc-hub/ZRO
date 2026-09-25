@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, CalendarDays } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { EntryStatusBadge, Table, Td, Th } from "@/components/painel/bits";
 import { SearchField } from "@/components/painel/search-field";
 import { StatTile } from "@/components/painel/stat";
@@ -103,7 +103,6 @@ export default async function LancamentosPage({ searchParams }: PageProps<"/pain
         <PageHeader
           label="Financeiro"
           title="Lançamentos"
-          description="O que entra, o que sai e os impostos, pelo vencimento."
           actions={<NewEntryButton defaultKind={tipo} defaultProjectId={projeto && projeto !== "sem" ? projeto : undefined} />}
         />
 
@@ -305,16 +304,6 @@ export default async function LancamentosPage({ searchParams }: PageProps<"/pain
           )}
         </Card>
 
-        <p className="flex items-start gap-2 text-[12px] text-mute">
-          <CalendarDays className="mt-px size-3.5 shrink-0" aria-hidden />
-          <span>
-            Valores pelo vencimento; baixado é o que já foi pago ou recebido desses lançamentos. O que entrou e saiu de fato no mês está em{" "}
-            <Link href={`/painel/financeiro/fluxo${month ? `?mes=${month}` : ""}`} className="text-ash underline decoration-white/20 underline-offset-4 hover:text-light">
-              Fluxo e resultado
-            </Link>
-            .
-          </span>
-        </p>
       </div>
     </FinanceOptionsProvider>
   );
@@ -427,7 +416,6 @@ function EmptyList({
   return (
     <EmptyState
       title={month ? `Nenhum lançamento em ${monthLong(month)}` : "Nenhum lançamento ainda"}
-      description="Entradas de clientes, pagamentos de freelas, custos fixos e impostos aparecem aqui."
       action={<NewEntryButton defaultKind={tipo} defaultProjectId={projeto && projeto !== "sem" ? projeto : undefined} />}
     />
   );

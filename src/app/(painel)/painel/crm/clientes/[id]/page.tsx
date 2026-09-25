@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clapperboard, FileText, Mail, MessageCircle } from "lucide-react";
 import {
+  TabLinks,
   EntryStatusBadge,
   InfoList,
   LeadStageBadge,
@@ -16,10 +17,10 @@ import {
 } from "@/components/painel/bits";
 import { StatTile } from "@/components/painel/stat";
 import { ButtonLink } from "@/components/ui/button";
-import { Badge, Card, CardHeader } from "@/components/ui/surface";
+import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
-import { brl, dateBR, entryStatus, initials, todayISO } from "@/lib/format";
+import { EVENT_TYPES, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
+import { brl, dateBR, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
 import { getClient } from "@/lib/queries/crm";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
@@ -31,11 +32,28 @@ export async function generateMetadata({ params }: PageProps<"/painel/crm/client
   return { title: client?.name ?? "Cliente" };
 }
 
-export default async function ClientePage({ params }: PageProps<"/painel/crm/clientes/[id]">) {
+const TABS = [
+  { key: "resumo", label: "Resumo" },
+  { key: "projetos", label: "Projetos" },
+  { key: "orcamentos", label: "Orçamentos" },
+  { key: "financeiro", label: "Financeiro" },
+  { key: "historico", label: "Histórico" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
+export default async function ClientePage({ params, searchParams }: PageProps<"/painel/crm/clientes/[id]">) {
   const user = await requireUser();
   const { id } = await params;
+  const sp = await searchParams;
+  const aba: TabKey = TABS.find((t) => t.key === sp.aba)?.key ?? "resumo";
   const c = await getClient(id);
   if (!c) notFound();
+  const counts: Partial<Record<TabKey, number>> = {
+    projetos: c.projects.length,
+    orcamentos: c.quotes.length,
+    financeiro: c.entries.length,
+    historico: c.activities.length,
+  };
 
   const today = todayISO();
   const me = user.name.split(/\s+/)[0];
@@ -106,28 +124,136 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
         </div>
       </header>
 
-      <div className="grid gap-4 xl:grid-cols-12 xl:grid-rows-[auto_1fr] xl:items-start">
-        <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-8">
-          <section className="grid gap-4 sm:grid-cols-3" aria-label="Resumo financeiro">
-            <StatTile
-              label="Recebido"
-              value={brl(c.received)}
-              sub={c.entries.length ? "Entradas pagas do cliente" : "Nenhuma entrada ainda"}
-            />
-            <StatTile
-              label="A receber"
-              value={brl(c.toReceive)}
-              sub={c.late ? `${brl(c.late)} atrasado` : c.toReceive ? "Tudo em dia" : "Nada em aberto"}
-              tone={c.late ? "danger" : "default"}
-            />
-            <StatTile
-              label="Projetos"
-              value={c.projects.length}
-              sub={activeProjects ? `${activeProjects} ativo${activeProjects === 1 ? "" : "s"}` : "Nenhum ativo"}
-              icon={<Clapperboard />}
-            />
-          </section>
+      <div className="grid grid-cols-1 gap-6">
+        <TabLinks
+          active={aba}
+          tabs={TABS.map((t) => ({
+            key: t.key,
+            label: t.label,
+            count: counts[t.key],
+            href: `/painel/crm/clientes/${c.id}${t.key === "resumo" ? "" : `?aba=${t.key}`}`,
+          }))}
+        />
 
+        {aba === "resumo" ? (
+          <div className="grid grid-cols-1 gap-4">
+            <section className="grid gap-4 sm:grid-cols-3" aria-label="Resumo financeiro">
+              <StatTile
+                label="Recebido"
+                value={brl(c.received)}
+                sub={c.entries.length ? undefined : "Nada lançado"}
+              />
+              <StatTile
+                label="A receber"
+                value={brl(c.toReceive)}
+                sub={c.late ? `${brl(c.late)} atrasado` : c.toReceive ? "Tudo em dia" : "Nada em aberto"}
+                tone={c.late ? "danger" : "default"}
+              />
+              <StatTile
+                label="Projetos"
+                value={c.projects.length}
+                sub={activeProjects ? `${activeProjects} ativo${activeProjects === 1 ? "" : "s"}` : "Nenhum ativo"}
+                icon={<Clapperboard />}
+              />
+            </section>
+
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
+              <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-7">
+                <Card className="min-w-0">
+                  <CardHeader title="Próximas datas" />
+                  {c.upcoming.length ? (
+                    <ul className="mt-3 px-3 pb-3">
+                      {c.upcoming.map((ev) => (
+                        <li key={ev.id}>
+                          <Link
+                            href={ev.projectId ? `/painel/projetos/${ev.projectId}?aba=agenda` : "/painel/agenda"}
+                            className="flex items-center gap-4 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
+                          >
+                            <span className="w-14 shrink-0 text-[13px] font-medium text-white tabular-nums">{dateShort(ev.date)}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14px] text-light">{ev.title}</span>
+                              <span className="block truncate text-[12px] text-mute">
+                                {optionLabel(EVENT_TYPES, ev.type)}
+                                {ev.startTime ? ` · ${ev.startTime}` : ""}
+                                {ev.location ? ` · ${ev.location}` : ""}
+                              </span>
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nada marcado.</p>
+                  )}
+                </Card>
+                <Card>
+                  <CardHeader title="Leads" />
+                  {c.leads.length ? (
+                    <ul className="grid gap-0.5 px-2 pt-3 pb-3 sm:px-3">
+                      {c.leads.map((l) => (
+                        <li key={l.id}>
+                          <Link
+                            href={`/painel/crm/${l.id}`}
+                            className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[14px] text-light">{l.company || l.name}</span>
+                              <span className="block truncate text-[12px] text-mute">
+                                {[l.projectType ? optionLabel(FUNNEL_PROJECT_TYPES, l.projectType) : null, sinceLabel(l.createdAt, today)]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
+                            </span>
+                            <LeadStageBadge stage={l.stage} />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nenhum lead.</p>
+                  )}
+                </Card>
+              </div>
+              <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-5">
+                <Card>
+                  <CardHeader title="Dados do cliente" />
+                  <div className="px-5 pb-2 sm:px-6">
+                    <InfoList
+                      items={[
+                        { label: "Contato", value: c.contactName },
+                        { label: "WhatsApp", value: c.phone },
+                        {
+                          label: "E-mail",
+                          value: c.email ? <span className="break-all">{c.email}</span> : null,
+                        },
+                        {
+                          label: "Instagram",
+                          value: c.instagram ? (
+                            <a href={`https://instagram.com/${c.instagram}`} target="_blank" rel="noreferrer" className="hover:underline">
+                              @{c.instagram}
+                            </a>
+                          ) : null,
+                        },
+                        {
+                          label: "CNPJ ou CPF",
+                          value: c.document ? <span className="font-mono text-[13px]">{formatDocument(c.document)}</span> : null,
+                        },
+                      ]}
+                    />
+                  </div>
+                  {c.notes ? (
+                    <div className="border-t border-line px-5 py-5 sm:px-6">
+                      <p className="label mb-1.5 text-mute">Observações</p>
+                      <p className="text-[14px] whitespace-pre-line wrap-anywhere text-ash">{c.notes}</p>
+                    </div>
+                  ) : null}
+                </Card>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {aba === "projetos" ? (
           <Card className="min-w-0">
             <CardHeader title="Projetos" />
             {c.projects.length ? (
@@ -166,7 +292,9 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
               <p className="px-5 pt-3 pb-6 text-[14px] text-mute sm:px-6">Nenhum projeto ainda.</p>
             )}
           </Card>
+        ) : null}
 
+        {aba === "orcamentos" ? (
           <Card className="min-w-0">
             <CardHeader title="Orçamentos" />
             {c.quotes.length ? (
@@ -212,10 +340,12 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
               </p>
             )}
           </Card>
+        ) : null}
 
-          {c.entries.length ? (
+        {aba === "financeiro" ? (
+          c.entries.length ? (
             <Card className="min-w-0">
-              <CardHeader title="Recebimentos" description="Entradas do financeiro ligadas a este cliente." />
+              <CardHeader title="Recebimentos" />
               <Table className="mt-4" minWidth={640}>
                 <thead>
                   <tr>
@@ -252,94 +382,28 @@ export default async function ClientePage({ params }: PageProps<"/painel/crm/cli
                 </tbody>
               </Table>
             </Card>
-          ) : null}
-        </div>
+          ) : (
+            <Card>
+              <EmptyState title="Nenhum recebimento ainda" />
+            </Card>
+          )
+        ) : null}
 
-        <aside className="grid min-w-0 grid-cols-1 content-start gap-4 xl:col-span-4 xl:row-span-2">
-          <Card>
-            <CardHeader title="Dados do cliente" />
-            <div className="px-5 pb-2 sm:px-6">
-              <InfoList
-                items={[
-                  { label: "Contato", value: c.contactName },
-                  { label: "WhatsApp", value: c.phone },
-                  { label: "E-mail", value: c.email ? <span className="break-all">{c.email}</span> : null },
-                  {
-                    label: "Instagram",
-                    value: c.instagram ? (
-                      <a
-                        href={`https://instagram.com/${c.instagram}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="hover:underline"
-                      >
-                        @{c.instagram}
-                      </a>
-                    ) : null,
-                  },
-                  {
-                    label: "CNPJ ou CPF",
-                    value: c.document ? <span className="font-mono text-[13px]">{formatDocument(c.document)}</span> : null,
-                  },
-                ]}
-              />
+        {aba === "historico" ? (
+          <Card className="min-w-0">
+            <CardHeader title="Histórico" />
+            <div className="px-5 pt-5 pb-6 sm:px-6">
+              <ActivityForm clientId={c.id} />
+              {c.activities.length ? (
+                <div className="mt-8 border-t border-line pt-6">
+                  <ActivityTimeline items={c.activities} showLead />
+                </div>
+              ) : (
+                <p className="mt-6 border-t border-line pt-6 text-[14px] text-mute">Nada registrado ainda.</p>
+              )}
             </div>
-            {c.notes ? (
-              <div className="border-t border-line px-5 py-5 sm:px-6">
-                <p className="label mb-1.5 text-mute">Observações</p>
-                <p className="text-[14px] whitespace-pre-line wrap-anywhere text-ash">{c.notes}</p>
-              </div>
-            ) : null}
           </Card>
-
-          <Card>
-            <CardHeader
-              title="Leads"
-              description={c.leads.length ? "Pedidos ligados a este cliente." : "Nenhum lead ligado a este cliente."}
-            />
-            {c.leads.length ? (
-              <ul className="grid gap-0.5 px-2 pt-3 pb-3 sm:px-3">
-                {c.leads.map((l) => (
-                  <li key={l.id}>
-                    <Link
-                      href={`/painel/crm/${l.id}`}
-                      className="flex items-center justify-between gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[14px] text-light">{l.company || l.name}</span>
-                        <span className="block truncate text-[12px] text-mute">
-                          {[
-                            l.projectType ? optionLabel(FUNNEL_PROJECT_TYPES, l.projectType) : null,
-                            sinceLabel(l.createdAt, today),
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
-                      </span>
-                      <LeadStageBadge stage={l.stage} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="pb-5" />
-            )}
-          </Card>
-        </aside>
-
-        <Card className="min-w-0 xl:col-span-8">
-          <CardHeader title="Histórico" description="Conversas e combinados com o cliente, inclusive os da época de lead." />
-          <div className="px-5 pt-5 pb-6 sm:px-6">
-            <ActivityForm clientId={c.id} />
-            {c.activities.length ? (
-              <div className="mt-8 border-t border-line pt-6">
-                <ActivityTimeline items={c.activities} showLead />
-              </div>
-            ) : (
-              <p className="mt-6 border-t border-line pt-6 text-[14px] text-mute">Nada registrado ainda.</p>
-            )}
-          </div>
-        </Card>
+        ) : null}
       </div>
     </div>
   );

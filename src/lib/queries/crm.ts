@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 
@@ -158,8 +158,35 @@ export const getClient = cache(async (id: string) => {
 
   const today = todayISO();
   const open = (e: { amount: number; paidAmount: number }) => Math.max(0, e.amount - e.paidAmount);
+
+  // Agenda dos projetos do cliente, daqui pra frente.
+  const projectIds = clientProjects.map((p) => p.id);
+  const upcoming = projectIds.length
+    ? await db
+        .select({
+          id: schema.events.id,
+          type: schema.events.type,
+          title: schema.events.title,
+          date: schema.events.date,
+          endDate: schema.events.endDate,
+          startTime: schema.events.startTime,
+          location: schema.events.location,
+          projectId: schema.events.projectId,
+        })
+        .from(schema.events)
+        .where(
+          and(
+            inArray(schema.events.projectId, projectIds),
+            gte(sql`coalesce(${schema.events.endDate}, ${schema.events.date})`, today),
+          ),
+        )
+        .orderBy(asc(schema.events.date))
+        .limit(8)
+    : [];
+
   return {
     ...client,
+    upcoming,
     leads: clientLeads,
     projects: clientProjects,
     quotes: clientQuotes,

@@ -8,7 +8,6 @@ import { db } from "@/lib/db";
 import { databaseConfig, databaseLabel } from "@/lib/db/config";
 import { databaseSummary } from "@/lib/db/summary";
 import { dateTimeBR } from "@/lib/format";
-import { SITE_URL } from "@/lib/site-url";
 import { AjustesTabs } from "../ajustes-tabs";
 
 export const metadata: Metadata = { title: "Dados e backup" };
@@ -30,7 +29,6 @@ export default async function DadosPage() {
       <PageHeader
         label="Ajustes"
         title="Dados e backup"
-        description="Qual banco guarda o CRM, os orçamentos e o financeiro, e uma cópia de tudo para guardar."
       />
       <AjustesTabs active="dados" />
 
@@ -39,7 +37,6 @@ export default async function DadosPage() {
           <Card>
             <CardHeader
               title="Onde os dados estão"
-              description={`A área interna só funciona em ${SITE_URL.replace(/^https?:\/\//, "")}. Prévias da Vercel mandam para lá.`}
               action={<Database className="size-4 text-mute" aria-hidden />}
             />
             <div className="px-5 pb-2 sm:px-6">
@@ -65,10 +62,6 @@ export default async function DadosPage() {
                 ]}
               />
             </div>
-            <p className="border-t border-line px-5 py-4 text-[13px] text-mute sm:px-6">
-              A identidade não muda de um dia para o outro. Se um dia ela mudar, ou os números de &ldquo;O que tem no
-              banco&rdquo; zerarem, o site passou a ler outro banco: os dados não foram apagados. Avise quem cuida do sistema.
-            </p>
           </Card>
         </div>
 
@@ -88,11 +81,10 @@ export default async function DadosPage() {
           <Card>
             <CardHeader
               title="Backup"
-              description="Um arquivo com tudo: leads, clientes, orçamentos, projetos, agenda, freelas e financeiro. Senhas não entram."
               action={<ShieldCheck className="size-4 text-mute" aria-hidden />}
             />
             <div className="px-5 pt-4 pb-5 sm:px-6 sm:pb-6">
-              <a href="/painel/ajustes/dados/backup" className={buttonClasses({ variant: "primary" })}>
+              <a href="/painel/ajustes/dados/backup" download className={buttonClasses({ variant: "primary" })}>
                 <Download aria-hidden /> Baixar backup (.json)
               </a>
               <p className="mt-3 text-[13px] text-mute">Vale baixar um por semana e guardar no Google Drive.</p>

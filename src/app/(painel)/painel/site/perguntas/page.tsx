@@ -10,14 +10,12 @@ export const metadata: Metadata = { title: "Perguntas frequentes" };
 export default async function SitePerguntasPage() {
   await requireUser();
   const faqs = await listFaqsAdmin();
-  const published = faqs.filter((f) => f.published).length;
 
   return (
     <div className="grid gap-8">
       <PageHeader
         label="Site"
         title="Perguntas frequentes"
-        description={`${published} de ${faqs.length} no site, no fim da página inicial.`}
         actions={<NewFaqButton />}
       />
       <SiteTabs active="perguntas" />
@@ -54,7 +52,6 @@ export default async function SitePerguntasPage() {
         <Card>
           <EmptyState
             title="Nenhuma pergunta"
-            description="Sem perguntas publicadas, a seção some da página inicial."
             action={<NewFaqButton />}
           />
         </Card>

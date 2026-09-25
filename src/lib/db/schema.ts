@@ -296,6 +296,10 @@ export const projectCrew = sqliteTable(
     dueDate: text(),
     deliveredAt: text(),
     amount: integer().notNull().default(0),
+    /** Valor por diária. Com ele, o valor total é a diária × os dias em que a pessoa está escalada na agenda do projeto. */
+    dailyRate: integer(),
+    /** "manual" (montado na aba Equipe) ou "agenda" (entrou ao ser escalado numa diária). */
+    source: text().notNull().default("manual"),
     notes: text(),
     createdAt: createdAt(),
   },
@@ -417,6 +421,8 @@ export const financeEntries = sqliteTable(
     clientId: text().references(() => clients.id, { onDelete: "set null" }),
     freelancerId: text().references(() => freelancers.id, { onDelete: "set null" }),
     crewId: text().references(() => projectCrew.id, { onDelete: "set null" }),
+    /** Custo de uma diária específica (alimentação, deslocamento, locação...). */
+    eventId: text().references(() => events.id, { onDelete: "set null" }),
     quoteId: text(),
     amount: integer().notNull(),
     paidAmount: integer().notNull().default(0),
@@ -626,6 +632,7 @@ export const financeEntriesRelations = relations(financeEntries, ({ one, many })
   client: one(clients, { fields: [financeEntries.clientId], references: [clients.id] }),
   freelancer: one(freelancers, { fields: [financeEntries.freelancerId], references: [freelancers.id] }),
   crew: one(projectCrew, { fields: [financeEntries.crewId], references: [projectCrew.id] }),
+  event: one(events, { fields: [financeEntries.eventId], references: [events.id] }),
   payments: many(financePayments),
 }));
 

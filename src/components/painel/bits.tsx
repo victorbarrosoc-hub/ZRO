@@ -68,7 +68,8 @@ export function DeliverableStatusBadge({ status }: { status: string }) {
 
 export function Table({ children, className, minWidth = 640 }: { children: React.ReactNode; className?: string; minWidth?: number }) {
   return (
-    <div className={cn("overflow-x-auto", className)}>
+    // relative: o texto só para leitor de tela (sr-only) é absoluto e, sem isso, alarga a página no celular.
+    <div className={cn("relative overflow-x-auto", className)}>
       <table className="w-full border-collapse text-[14px]" style={{ minWidth }}>
         {children}
       </table>
@@ -119,8 +120,15 @@ export function TabLinks({
   className?: string;
 }) {
   return (
-    <nav className={cn("-mx-4 min-w-0 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0", className)} aria-label="Seções">
-      <ul className="flex w-max gap-1 rounded-full border border-line bg-white/[0.02] p-1">
+    // Abas de plataforma: linha de base de ponta a ponta e o traço branco na aba ativa.
+    <nav
+      className={cn(
+        "-mx-4 min-w-0 overflow-x-auto px-4 shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none] sm:mx-0 sm:px-0",
+        className,
+      )}
+      aria-label="Seções"
+    >
+      <ul className="flex w-max gap-1 sm:gap-2 [&>li:first-child>a]:pl-0 [&>li:first-child>a]:after:left-0">
         {tabs.map((t) => {
           const on = t.key === active;
           return (
@@ -130,13 +138,21 @@ export function TabLinks({
                 scroll={false}
                 aria-current={on ? "page" : undefined}
                 className={cn(
-                  "flex h-9 items-center gap-2 rounded-full px-4 text-[13px] whitespace-nowrap transition-colors",
-                  on ? "bg-white text-void" : "text-ash hover:bg-white/[0.06] hover:text-light",
+                  "relative flex h-12 items-center gap-2 px-3 text-[14px] whitespace-nowrap transition-colors sm:px-3.5",
+                  "after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:transition-colors sm:after:inset-x-3.5",
+                  on ? "font-medium text-white after:bg-white" : "text-mute after:bg-transparent hover:text-light",
                 )}
               >
                 {t.label}
                 {t.count != null ? (
-                  <span className={cn("text-[11px] tabular-nums", on ? "text-void/60" : "text-mute")}>{t.count}</span>
+                  <span
+                    className={cn(
+                      "grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] tabular-nums",
+                      on ? "bg-white text-void" : "bg-white/[0.07] text-ash",
+                    )}
+                  >
+                    {t.count}
+                  </span>
                 ) : null}
               </Link>
             </li>

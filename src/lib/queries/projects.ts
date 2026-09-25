@@ -15,6 +15,8 @@ const {
   freelancerRates,
   financeEntries,
   projectTemplates,
+  events,
+  eventCrew,
 } = schema;
 
 export type ProjectStatusFilter = "ativos" | "concluidos" | "todos";
@@ -176,6 +178,8 @@ export const getProject = cache(async (id: string) => {
         dueDate: projectCrew.dueDate,
         deliveredAt: projectCrew.deliveredAt,
         amount: projectCrew.amount,
+        dailyRate: projectCrew.dailyRate,
+        source: projectCrew.source,
         notes: projectCrew.notes,
         freelancerName: freelancers.name,
         freelancerPhone: freelancers.phone,
@@ -200,11 +204,43 @@ export const getProject = cache(async (id: string) => {
 
   tasks.sort((a, b) => stageIndex(a.stage) - stageIndex(b.stage));
 
+  // Diárias do projeto com quem está escalado: é daí que sai o custo da equipe por diária.
+  const diariaRows = await db
+    .select({ id: events.id, date: events.date, endDate: events.endDate, title: events.title, location: events.location })
+    .from(events)
+    .where(and(eq(events.projectId, id), eq(events.type, "diaria")))
+    .orderBy(asc(events.date), asc(events.startTime));
+  const booked = diariaRows.length
+    ? await db
+        .select({ eventId: eventCrew.eventId, freelancerId: eventCrew.freelancerId, function: eventCrew.function })
+        .from(eventCrew)
+        .where(inArray(eventCrew.eventId, diariaRows.map((d) => d.id)))
+    : [];
+  const diarias = diariaRows.map((d) => ({
+    ...d,
+    days: d.endDate && d.endDate > d.date ? Math.round((Date.parse(d.endDate) - Date.parse(d.date)) / 86_400_000) + 1 : 1,
+    crew: booked.filter((b) => b.eventId === d.id),
+  }));
+
+  const crewRows = crew.map((c) => {
+    // Diárias desta linha: mesma pessoa, mesma função (ou escalação sem função).
+    const mine = diarias.filter((d) =>
+      d.crew.some((b) => b.freelancerId === c.freelancerId && (b.function === c.function || b.function == null)),
+    );
+    return {
+      ...c,
+      displayName: c.freelancerName ?? c.name ?? "Sem nome",
+      diariaIds: c.freelancerId ? mine.map((d) => d.id) : [],
+      days: c.freelancerId ? mine.reduce((n, d) => n + d.days, 0) : 0,
+    };
+  });
+
   return {
     ...project,
     tasks,
     deliverables,
-    crew: crew.map((c) => ({ ...c, displayName: c.freelancerName ?? c.name ?? "Sem nome" })),
+    crew: crewRows,
+    diarias,
     entries,
   };
 });
@@ -255,6 +291,33 @@ export function summarizeProject(p: ProjectDetail, taxRate: number) {
   const taxEstimated = Math.round((p.value * taxRate) / 100);
   const margin = p.value - costs - taxEstimated;
 
+  // De onde vêm os custos: equipe, custos das diárias (alimentação, deslocamento...) e o resto.
+  const crewEntries = saidas.filter((e) => e.crewId || e.category === "freela");
+  const diariaEntries = saidas.filter((e) => !e.crewId && e.category !== "freela" && e.eventId);
+  const otherEntries = saidas.filter((e) => !e.crewId && e.category !== "freela" && !e.eventId);
+  const breakdown = {
+    crew: {
+      total: sum(crewEntries, (e) => e.amount) + crewPending,
+      paid: sum(crewEntries, (e) => e.paidAmount),
+      open: sum(crewEntries, (e) => Math.max(0, e.amount - e.paidAmount)) + crewPending,
+    },
+    diarias: { total: sum(diariaEntries, (e) => e.amount), paid: sum(diariaEntries, (e) => e.paidAmount) },
+    other: { total: sum(otherEntries, (e) => e.amount), paid: sum(otherEntries, (e) => e.paidAmount) },
+  };
+
+  // Custo de cada diária: equipe por diária escalada nela + custos lançados nela.
+  const perDiaria = p.diarias.map((d) => {
+    const crewCost = d.crew.reduce((total, b) => {
+      const line = p.crew.find((c) => c.freelancerId === b.freelancerId && (b.function === c.function || b.function == null));
+      return total + (line?.dailyRate != null ? line.dailyRate * d.days : 0);
+    }, 0);
+    const extra = sum(
+      saidas.filter((e) => e.eventId === d.id),
+      (e) => e.amount,
+    );
+    return { id: d.id, crew: crewCost, extra, total: crewCost + extra, people: d.crew.length };
+  });
+
   return {
     tasks: { total: p.tasks.length, done: tasksDone, pct: p.tasks.length ? Math.round((tasksDone / p.tasks.length) * 100) : 0 },
     deliverables: { total: p.deliverables.length, delivered, withClient },
@@ -280,7 +343,9 @@ export function summarizeProject(p: ProjectDetail, taxRate: number) {
       taxLaunched: sum(impostos, (e) => e.amount),
       margin,
       marginPct: p.value > 0 ? margin / p.value : null,
+      breakdown,
     },
+    diarias: perDiaria,
   };
 }
 

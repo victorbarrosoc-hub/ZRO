@@ -18,7 +18,6 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
   const funcao = typeof sp.funcao === "string" ? sp.funcao : undefined;
   const arquivados = sp.arquivados === "1";
   const freelas = await listFreelancers({ q, funcao, ativos: !arquivados });
-  const totalOpen = freelas.reduce((s, f) => s + f.openAmount, 0);
 
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -33,11 +32,6 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
       <PageHeader
         label="Banco de freelas"
         title="Freelas"
-        description={
-          totalOpen > 0
-            ? `${freelas.length} na lista · ${brl(totalOpen)} a pagar`
-            : `${freelas.length} na lista · nada a pagar agora`
-        }
         actions={<NewFreelaButton />}
       />
 
@@ -104,7 +98,6 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
         <Card>
           <EmptyState
             title={q || funcao ? "Ninguém encontrado com esse filtro" : "Nenhum freela cadastrado"}
-            description="Cadastre quem trabalha com a ZRO, com funções e valores padrão."
             action={<NewFreelaButton />}
           />
         </Card>

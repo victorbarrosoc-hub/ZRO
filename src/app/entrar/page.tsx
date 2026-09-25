@@ -9,6 +9,9 @@ import { LoginForm } from "./login-form";
 export const metadata: Metadata = {
   title: "Área interna",
   robots: { index: false, follow: false },
+  // O login faz parte da plataforma: o atalho criado aqui também abre o painel.
+  manifest: "/interno.webmanifest",
+  appleWebApp: { capable: true, title: "ZRO Interno", statusBarStyle: "black" },
 };
 
 export default async function EntrarPage({ searchParams }: PageProps<"/entrar">) {

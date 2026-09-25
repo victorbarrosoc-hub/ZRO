@@ -175,7 +175,7 @@ export function FilmForm({
           <div className="grid min-w-0 gap-6 xl:col-span-8">
             {/* ---------------- O filme ---------------- */}
             <Card>
-              <CardHeader title="O filme" description="Título, cliente e onde ele entra no portfólio." />
+              <CardHeader title="O filme" />
               <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
                 <Field label="Título" htmlFor="film-title" error={fieldError(state, "title")} className="sm:col-span-2">
                   <Input id="film-title" name="title" value={title} onChange={(e) => onTitle(e.target.value)} required autoFocus={isNew} />
@@ -272,7 +272,6 @@ export function FilmForm({
             <Card>
               <CardHeader
                 title="Vídeo"
-                description="Cole o link do Vimeo ou do YouTube. Arquivo próprio: caminho em /media (ex.: /media/filme.mp4)."
               />
               <div className="grid gap-5 p-5 sm:p-6">
                 <Field
@@ -352,7 +351,6 @@ export function FilmForm({
             <Card>
               <CardHeader
                 title="Imagens"
-                description="Pôster (a capa do filme) e stills da página do case."
               />
               <div className="grid gap-6 p-5 sm:p-6">
                 <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-start">
@@ -469,7 +467,7 @@ export function FilmForm({
 
             {/* ---------------- Texto ---------------- */}
             <Card>
-              <CardHeader title="Texto" description="O que aparece no cartão e na página do filme." />
+              <CardHeader title="Texto" />
               <div className="grid gap-4 p-5 sm:p-6">
                 <Field
                   label="Resumo"
@@ -507,7 +505,6 @@ export function FilmForm({
             <Card>
               <CardHeader
                 title="Ficha técnica"
-                description="Função e nome, na ordem em que aparecem."
                 action={
                   <Button variant="secondary" size="sm" onClick={() => setCredits((l) => [...l, { key: newKey(), role: "", name: "" }])}>
                     <Plus /> Linha

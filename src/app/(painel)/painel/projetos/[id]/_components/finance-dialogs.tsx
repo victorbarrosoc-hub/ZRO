@@ -19,7 +19,17 @@ const deleteProjectEntryT = toastFirst(deleteProjectEntry);
 type EntryLike = { id: string; kind: string; description: string; amount: number; paidAmount: number };
 
 /** Baixa total ou parcial de um lançamento: "Receber" para entradas, "Pagar" para o resto. */
-export function PayEntryButton({ entry, projectId, className }: { entry: EntryLike; projectId: string; className?: string }) {
+export function PayEntryButton({
+  entry,
+  projectId,
+  className,
+  label,
+}: {
+  entry: EntryLike;
+  projectId: string;
+  className?: string;
+  label?: string;
+}) {
   const open = Math.max(0, entry.amount - entry.paidAmount);
   const incoming = entry.kind === "entrada";
   return (
@@ -31,7 +41,7 @@ export function PayEntryButton({ entry, projectId, className }: { entry: EntryLi
       size="sm"
       trigger={
         <Button variant="subtle" size="sm" className={cn("h-10 lg:h-8", className)}>
-          {incoming ? "Registrar recebimento" : "Registrar pagamento"}
+          {label ?? (incoming ? "Registrar recebimento" : "Registrar pagamento")}
         </Button>
       }
     >
@@ -62,8 +72,22 @@ export function PayEntryButton({ entry, projectId, className }: { entry: EntryLi
   );
 }
 
-function EntryFields({ state, defaultDue }: { state: Parameters<typeof fieldError>[0]; defaultDue: string }) {
+export type EntryDiaria = { id: string; label: string; date: string };
+
+function EntryFields({
+  state,
+  defaultDue,
+  diarias,
+  defaultEventId,
+}: {
+  state: Parameters<typeof fieldError>[0];
+  defaultDue: string;
+  diarias: EntryDiaria[];
+  defaultEventId?: string;
+}) {
   const [kind, setKind] = useState<string>("saida");
+  const [eventId, setEventId] = useState(defaultEventId ?? "");
+  const due = diarias.find((d) => d.id === eventId)?.date ?? defaultDue;
   const categories = FINANCE_CATEGORIES.filter((c) => c.kind === kind);
   const [category, setCategory] = useState<string>(categories[0]?.key ?? "");
 
@@ -113,8 +137,20 @@ function EntryFields({ state, defaultDue }: { state: Parameters<typeof fieldErro
             placeholder={kind === "entrada" ? "Ex.: Cliente · entrada" : kind === "imposto" ? "Ex.: ISS da nota" : "Ex.: Locação de luz"}
           />
         </Field>
+        {kind === "saida" && diarias.length ? (
+          <Field label="Diária" htmlFor="ne-event" className="sm:col-span-2">
+            <Select id="ne-event" name="eventId" value={eventId} onChange={(e) => setEventId(e.target.value)}>
+              <option value="">Custo geral do projeto</option>
+              {diarias.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
         <Field label="Vencimento" htmlFor="ne-due" error={fieldError(state, "dueDate")}>
-          <Input id="ne-due" name="dueDate" type="date" defaultValue={defaultDue} />
+          <Input key={due} id="ne-due" name="dueDate" type="date" defaultValue={due} />
         </Field>
         <Field label="Parcela" htmlFor="ne-installment" error={fieldError(state, "installment")} hint="Opcional. Ex.: 1/2">
           <Input id="ne-installment" name="installment" placeholder="1/2" />
@@ -124,23 +160,43 @@ function EntryFields({ state, defaultDue }: { state: Parameters<typeof fieldErro
   );
 }
 
-export function NewEntryButton({ projectId, defaultDue = todayISO() }: { projectId: string; defaultDue?: string }) {
+export function NewEntryButton({
+  projectId,
+  defaultDue = todayISO(),
+  diarias = [],
+  eventId,
+  label = "Novo lançamento",
+  compact = false,
+}: {
+  projectId: string;
+  defaultDue?: string;
+  diarias?: EntryDiaria[];
+  /** Já abre com esta diária escolhida (botão "custo" na linha da diária). */
+  eventId?: string;
+  label?: string;
+  compact?: boolean;
+}) {
   return (
     <FormModal
-      title="Novo lançamento"
-      description="Entra no financeiro já ligado a este projeto."
+      title={eventId ? "Custo da diária" : "Novo lançamento"}
       action={createProjectEntryT}
       submitLabel="Lançar"
       trigger={
-        <Button variant="secondary" size="sm">
-          <Plus /> Novo lançamento
-        </Button>
+        compact ? (
+          <Button variant="ghost" size="sm" className="h-10 text-ash lg:h-8">
+            <Plus /> {label}
+          </Button>
+        ) : (
+          <Button variant="secondary" size="sm">
+            <Plus /> {label}
+          </Button>
+        )
       }
     >
       {(state) => (
         <>
           <input type="hidden" name="projectId" value={projectId} />
-          <EntryFields state={state} defaultDue={defaultDue} />
+          <EntryFields state={state} defaultDue={defaultDue} diarias={diarias} defaultEventId={eventId} />
         </>
       )}
     </FormModal>

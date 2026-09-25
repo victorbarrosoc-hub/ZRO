@@ -218,6 +218,7 @@ export function QuoteEditor(props: Props) {
             </ButtonLink>
             <a
               href={pdfHref}
+              download
               className={buttonClasses({ variant: "secondary", size: "sm" })}
               onClick={(e) => saveThen(e, () => downloadFile(pdfHref))}
             >

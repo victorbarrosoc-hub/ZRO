@@ -166,7 +166,6 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
         <Card className="min-w-0 xl:col-span-8">
           <CardHeader
             title="O que o cliente contou"
-            description={fromSite ? "Respostas do formulário do site." : "Anotado pela equipe."}
           />
           {hasBrief ? (
             <div className="px-5 pt-5 pb-6 sm:px-6">
@@ -263,7 +262,7 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
           </Card>
 
           <Card>
-            <CardHeader title="Orçamentos" description={lead.quotes.length ? undefined : "Nenhum orçamento para este lead."} />
+            <CardHeader title="Orçamentos" />
             {lead.quotes.length ? (
               <div className="px-2 pt-3 pb-3 sm:px-3">
                 <QuoteList quotes={lead.quotes} />
@@ -307,7 +306,7 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
         </aside>
 
         <Card className="min-w-0 xl:col-span-8">
-          <CardHeader title="Histórico" description="Conversas, ligações e combinados. O mais recente primeiro." />
+          <CardHeader title="Histórico" />
           <div className="px-5 pt-5 pb-6 sm:px-6">
             <ActivityForm leadId={lead.id} />
             {lead.activities.length ? (

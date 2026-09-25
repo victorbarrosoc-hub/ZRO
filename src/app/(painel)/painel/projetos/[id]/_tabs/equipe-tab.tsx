@@ -6,10 +6,10 @@ import { FUNCTIONS, optionLabel } from "@/lib/domain";
 import { brl, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
 import { crewPayment, listCrewOptions, type ProjectDetail, type ProjectSummary } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
-import { AddCrewButton, DeleteCrewButton, EditCrewButton, GeneratePaymentButton } from "../_components/crew-dialogs";
+import { AddCrewButton, DeleteCrewButton, EditCrewButton, GeneratePaymentButton, type CrewDiaria } from "../_components/crew-dialogs";
 import { PayEntryButton } from "../_components/finance-dialogs";
 
-const COLS = "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_120px_112px_minmax(0,1.45fr)_80px]";
+const COLS = "lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_120px_minmax(0,1.45fr)_80px]";
 
 function period(start: string | null, due: string | null) {
   if (start && due) return start === due ? dateShort(start) : `${dateShort(start)} → ${dateShort(due)}`;
@@ -18,52 +18,55 @@ function period(start: string | null, due: string | null) {
   return null;
 }
 
-/** Aba "Equipe": quem trabalha, em qual função, por quanto, e como está o pagamento de cada um. */
+/** Aba "Equipe": quem trabalha, quanto custa (por diária, pela agenda, ou valor fechado) e o pagamento de cada um. */
 export async function ProjectCrewTab({ project, summary }: { project: ProjectDetail; summary: ProjectSummary }) {
   const options = await listCrewOptions(project.crew.map((c) => c.freelancerId));
   const today = todayISO();
   const rows = project.crew.map((c) => ({ c, pay: crewPayment(c, project.entries) }));
-  const paid = rows.reduce((s, r) => s + (r.pay?.paid ?? 0), 0);
-  const launchedOpen = rows.reduce((s, r) => s + (r.pay ? Math.max(0, r.pay.amount - r.pay.paid) : 0), 0);
-  const { total, people, pending, pendingCount } = summary.crew;
+  const { crew } = summary.finance.breakdown;
+  const late = rows.reduce(
+    (s, r) => s + (r.pay ? r.pay.open.filter((e) => e.dueDate < today).reduce((x, e) => x + e.amount - e.paidAmount, 0) : 0),
+    0,
+  );
+  const diarias: CrewDiaria[] = project.diarias.map((d) => ({ id: d.id, date: d.date, endDate: d.endDate, title: d.title, days: d.days }));
+  const add = <AddCrewButton projectId={project.id} options={options} category={project.category} diarias={diarias} />;
 
   return (
     <div className="grid grid-cols-1 gap-4">
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Custos da equipe">
-        <StatTile label="Custo da equipe" value={brl(total)} sub={people ? `${people} pessoa${people > 1 ? "s" : ""}` : "Equipe ainda vazia"} />
-        <StatTile label="Já pago" value={brl(paid)} sub={paid ? "Baixas registradas no financeiro" : "Nenhum pagamento feito ainda"} />
         <StatTile
-          label="A pagar"
-          value={brl(launchedOpen + pending)}
-          sub={
-            pendingCount
-              ? `${brl(pending)} de ${pendingCount} pessoa${pendingCount > 1 ? "s" : ""} sem pagamento gerado`
-              : "Tudo lançado no financeiro"
-          }
+          label="Equipe"
+          value={brl(crew.total)}
+          sub={summary.crew.people ? `${summary.crew.people} pessoa${summary.crew.people > 1 ? "s" : ""}` : "Ninguém ainda"}
+        />
+        <StatTile label="Pago" value={brl(crew.paid)} />
+        <StatTile
+          label="Falta pagar"
+          value={brl(crew.open)}
+          sub={late ? `${brl(late)} vencido` : undefined}
+          tone={late ? "danger" : "default"}
         />
       </section>
 
       <Card>
-        <CardHeader
-          title="Equipe"
-          description="Quem trabalha, em qual função e por quanto."
-          action={<AddCrewButton projectId={project.id} options={options} category={project.category} />}
-        />
+        <CardHeader title="Equipe" action={add} />
         {rows.length ? (
           <div className="mt-4">
             <div className={cn("hidden gap-x-4 border-b border-line px-6 pb-3 text-[12px] text-mute lg:grid", COLS)} aria-hidden>
               <span>Pessoa</span>
-              <span>Trabalho</span>
-              <span>Período</span>
+              <span>Cobrança</span>
               <span className="text-right">Valor</span>
               <span>Pagamento</span>
               <span />
             </div>
             <ul>
               {rows.map(({ c, pay }) => {
-                const when = period(c.startDate, c.dueDate);
                 const status = pay ? entryStatus({ amount: pay.amount, paidAmount: pay.paid, dueDate: pay.dueDate }, today) : null;
                 const mismatch = pay && pay.amount !== c.amount;
+                const charge =
+                  c.dailyRate != null
+                    ? `${brl(c.dailyRate)} × ${c.days} ${c.days === 1 ? "diária" : "diárias"}`
+                    : [c.work, period(c.startDate, c.dueDate)].filter(Boolean).join(" · ") || "Valor fechado";
                 return (
                   <li
                     key={c.id}
@@ -94,6 +97,7 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
                         label={c.displayName}
                         options={options}
                         category={project.category}
+                        diarias={diarias}
                         defaults={{
                           id: c.id,
                           freelancerId: c.freelancerId,
@@ -103,15 +107,13 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
                           startDate: c.startDate,
                           dueDate: c.dueDate,
                           amount: c.amount,
+                          dailyRate: c.dailyRate,
+                          escalated: c.diariaIds,
                         }}
                       />
                       <DeleteCrewButton id={c.id} label={c.displayName} />
                     </div>
-                    {c.work || when ? (
-                      <p className="col-span-2 -mt-1 text-[12px] text-mute lg:hidden">{[c.work, when].filter(Boolean).join(" · ")}</p>
-                    ) : null}
-                    <span className="hidden text-[13px] text-ash lg:block">{c.work ?? "—"}</span>
-                    <span className="hidden text-[13px] text-ash lg:block">{when ?? "—"}</span>
+                    <p className="col-span-2 -mt-1 text-[12px] text-mute lg:col-span-1 lg:mt-0 lg:text-[13px] lg:text-ash">{charge}</p>
                     <div className="col-span-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 lg:contents">
                       <span className="text-[15px] font-medium text-white tabular-nums lg:text-right lg:text-[14px]">{brl(c.amount)}</span>
                       <div className="flex flex-wrap items-center justify-end gap-2 lg:justify-start">
@@ -125,9 +127,7 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
                                   ? `${brl(pay.paid)} de ${brl(pay.amount)}`
                                   : `${status === "atrasado" ? "venceu" : "vence"} ${dateShort(pay.dueDate)}`}
                             </span>
-                            {mismatch ? (
-                              <span className="text-[12px] text-warn tabular-nums">Lançado: {brl(pay.amount)}</span>
-                            ) : null}
+                            {mismatch ? <span className="text-[12px] text-warn tabular-nums">Lançado: {brl(pay.amount)}</span> : null}
                             {pay.open[0] ? (
                               <PayEntryButton
                                 projectId={project.id}
@@ -142,12 +142,9 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
                             ) : null}
                           </>
                         ) : c.amount > 0 ? (
-                          <>
-                            <span className="text-[12px] text-mute">Sem lançamento</span>
-                            <GeneratePaymentButton id={c.id} label={c.displayName} amount={c.amount} dueDate={c.dueDate ?? today} />
-                          </>
+                          <GeneratePaymentButton id={c.id} label={c.displayName} amount={c.amount} dueDate={c.dueDate ?? today} />
                         ) : (
-                          <span className="text-[12px] text-mute">Sem valor definido</span>
+                          <span className="text-[12px] text-mute">{c.dailyRate != null ? "Sem diária escalada" : "Sem valor"}</span>
                         )}
                       </div>
                     </div>
@@ -157,11 +154,7 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
             </ul>
           </div>
         ) : (
-          <EmptyState
-            title="Ninguém na equipe ainda"
-            description="Monte a equipe a partir do banco de freelas. O valor padrão de cada um entra preenchido."
-            action={<AddCrewButton projectId={project.id} options={options} category={project.category} />}
-          />
+          <EmptyState title="Ninguém na equipe ainda" action={add} />
         )}
       </Card>
     </div>

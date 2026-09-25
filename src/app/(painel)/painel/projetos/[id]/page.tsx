@@ -4,13 +4,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { TabLinks } from "@/components/painel/bits";
 import { requireUser } from "@/lib/auth/dal";
-import { categoryLabel } from "@/lib/domain";
+import { categoryLabel, stageInfo } from "@/lib/domain";
 import { brl, dateBR, relativeDay, todayISO } from "@/lib/format";
 import { getProject, getProjectFormOptions, getTaxRate, summarizeProject } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
 import { DeleteProjectButton, DriveLinkButton, EditProjectButton, ProjectStatusMenu } from "../projeto-dialogs";
 import { KeepActiveTabVisible } from "./_components/keep-tab-visible";
-import { StageStepper } from "./_components/stage-stepper";
 import { ProjectAgendaTab } from "./_tabs/agenda-tab";
 import { ProjectDocumentsTab } from "./_tabs/documentos-tab";
 import { ProjectDeliverablesTab } from "./_tabs/entregas-tab";
@@ -46,6 +45,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
   if (!project) notFound();
 
   const summary = summarizeProject(project, taxRate);
+  const stage = stageInfo(project.stage);
   const today = todayISO();
   const closed = project.status === "concluido" || project.status === "cancelado";
   const late = Boolean(project.dueDate && project.dueDate < today && !closed);
@@ -53,6 +53,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
     tarefas: project.tasks.length,
     entregas: project.deliverables.length,
     equipe: project.crew.length,
+    agenda: project.diarias.length,
     financeiro: project.entries.length,
   };
 
@@ -78,6 +79,9 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
               ) : (
                 <span className="text-mute">Sem cliente</span>
               )}
+            </Meta>
+            <Meta label="Etapa">
+              {stage.n} {stage.label}
             </Meta>
             <Meta label="Categoria">{categoryLabel(project.category)}</Meta>
             <Meta label="Início">{dateBR(project.startDate)}</Meta>
@@ -116,9 +120,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
         </div>
       </header>
 
-      <StageStepper projectId={project.id} stage={project.stage} answers={project.creativeRule ?? null} />
-
-      <div className="grid grid-cols-1 gap-5">
+      <div className="grid grid-cols-1 gap-6">
         <TabLinks
           active={aba}
           tabs={TABS.map((t) => ({
@@ -134,7 +136,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
         {aba === "tarefas" ? <ProjectTasksTab project={project} templates={options.templates} /> : null}
         {aba === "entregas" ? <ProjectDeliverablesTab project={project} /> : null}
         {aba === "equipe" ? <ProjectCrewTab project={project} summary={summary} /> : null}
-        {aba === "agenda" ? <ProjectAgendaTab projectId={project.id} /> : null}
+        {aba === "agenda" ? <ProjectAgendaTab project={project} summary={summary} /> : null}
         {aba === "financeiro" ? <ProjectFinanceTab project={project} summary={summary} /> : null}
         {aba === "documentos" ? <ProjectDocumentsTab projectId={project.id} /> : null}
       </div>

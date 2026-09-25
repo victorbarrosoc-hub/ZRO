@@ -17,18 +17,12 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
   const q = typeof sp.q === "string" ? sp.q : undefined;
   const all = await listClients();
   const clients = filterClients(all, q);
-  const totalReceived = all.reduce((s, c) => s + c.received, 0);
 
   return (
     <div className="grid grid-cols-1 gap-8">
       <PageHeader
         label="CRM"
         title="Clientes"
-        description={
-          all.length
-            ? `${all.length} cliente${all.length === 1 ? "" : "s"} · ${brl(totalReceived)} recebido${totalReceived ? "s" : ""} no total`
-            : "Quem contrata a ZRO, com contatos, projetos e valores."
-        }
         actions={<NewClientButton />}
       />
 
@@ -115,11 +109,6 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
         <Card>
           <EmptyState
             title={q ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
-            description={
-              q
-                ? "Confira a busca. Dá para procurar por nome, segmento, cidade, contato ou CNPJ."
-                : "Cadastre aqui ou converta um lead do CRM em cliente."
-            }
             action={q ? undefined : <NewClientButton />}
           />
         </Card>

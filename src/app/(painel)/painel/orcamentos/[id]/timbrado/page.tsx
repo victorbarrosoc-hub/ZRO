@@ -32,7 +32,7 @@ export default async function TimbradoPage({ params }: PageProps<"/painel/orcame
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <PrintButton />
-          <a href={`/painel/orcamentos/${id}/pdf`} className={buttonClasses({ variant: "primary", size: "sm" })}>
+          <a href={`/painel/orcamentos/${id}/pdf`} download className={buttonClasses({ variant: "primary", size: "sm" })}>
             <Download /> Baixar PDF
           </a>
         </div>
