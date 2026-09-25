@@ -16,6 +16,9 @@ export const FRAMES: Frame[] = [
   { src: "/media/frames/vinho.jpg", width: 2400, height: 1350, alt: "Mulher bebe vinho tinto sob a luz âmbar de um bar", wide: true },
   { src: "/media/frames/coca-cola.jpg", width: 1687, height: 1284, alt: "Retrato com o neon da garrafa de Coca-Cola ao fundo" },
   { src: "/media/frames/maquiagem.jpg", width: 2400, height: 1021, alt: "Modelo com pincel de maquiagem no camarim, noivas ao fundo" },
-  { src: "/media/frames/cavalo.jpg", width: 2400, height: 1350, alt: "Silhueta de mulher e cavalo contra o sol da tarde" },
+  { src: "/media/frames/guitarra.jpg", width: 2400, height: 990, alt: "Cantora toca guitarra num estúdio de música, nichos iluminados ao fundo", wide: true },
+  { src: "/media/frames/vestido.jpg", width: 1708, height: 1284, alt: "Mão sobre o vestido de noiva, luz suave" },
+  { src: "/media/frames/chapeu.jpg", width: 2400, height: 1350, alt: "Mulher de chapéu de caubói olha para baixo, campo ao fundo" },
+  { src: "/media/frames/cavalo.jpg", width: 2400, height: 1350, alt: "Silhueta de mulher e cavalo contra o sol da tarde", wide: true },
   { src: "/media/frames/show.jpg", width: 2400, height: 1021, alt: "Cantora no palco, em preto e branco, apontando para o público", wide: true },
 ];

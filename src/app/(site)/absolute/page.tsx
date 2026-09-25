@@ -152,6 +152,27 @@ export default function AbsolutePage() {
             </div>
           </Panel>
 
+          {/* Por dentro da cor: a tela real de um grading da ZRO no DaVinci Resolve */}
+          <div className="grid gap-px bg-white/10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)]">
+            <Panel className="grid content-center px-6 py-10 sm:px-9">
+              <Tag>Por dentro da cor</Tag>
+              <p className="mt-6 max-w-sm text-[clamp(24px,2.6vw,36px)] leading-[1.15] font-light text-abs-ice">
+                Cada frame passa por <span className="text-abs-blue">pele, look, grão</span> e balanço, nó a nó.
+              </p>
+              <Tag className="mt-8 text-[10px] text-abs-ice/55">DaVinci Resolve Studio</Tag>
+            </Panel>
+            <Panel>
+              <Image
+                src="/media/absolute/davinci.jpg"
+                width={2400}
+                height={1383}
+                alt="Tela do DaVinci Resolve num grading da ZRO: árvore de nós, rodas de cor e waveform"
+                sizes="(min-width: 1024px) 66vw, 100vw"
+                className="h-auto w-full"
+              />
+            </Panel>
+          </div>
+
           {/* Frames finalizados: trabalho real da ZRO */}
           <Panel className="px-6 pt-10 pb-6 sm:px-9">
             <Tag>A imagem em seu estado absoluto</Tag>
