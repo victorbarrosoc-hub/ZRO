@@ -1,114 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, PackagePlus, PencilLine, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, MoneyInput, Select } from "@/components/ui/field";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/overlay";
-import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
+import { CATALOG_UNITS } from "@/lib/domain";
 import { brl, centsToInput, parseBRL } from "@/lib/format";
 import type { CatalogOption } from "@/lib/queries/quotes";
 import { lineTotal, quantityLabel } from "@/lib/services/quotes";
 import { cn } from "@/lib/utils";
-
-/** Linha do editor: textos como o usuário digitou (a conta usa os números lidos). */
-export type DraftItem = {
-  key: string;
-  catalogItemId: string | null;
-  description: string;
-  detail: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  unitCost: string;
-};
-
-export function toDraft(it: {
-  id: string;
-  catalogItemId: string | null;
-  description: string;
-  detail: string | null;
-  quantity: number;
-  unit: string | null;
-  unitPrice: number;
-  unitCost: number;
-}): DraftItem {
-  return {
-    key: it.id,
-    catalogItemId: it.catalogItemId,
-    description: it.description,
-    detail: it.detail ?? "",
-    quantity: quantityLabel(it.quantity),
-    unit: it.unit ?? "",
-    unitPrice: centsToInput(it.unitPrice),
-    unitCost: it.unitCost ? centsToInput(it.unitCost) : "",
-  };
-}
-
-/** "1", "1,5" ou "1.5" → número. */
-function parseQuantity(text: string) {
-  const raw = text.trim();
-  const n = Number(raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw);
-  return Number.isFinite(n) ? n : 0;
-}
-
-export function draftNumbers(d: DraftItem) {
-  return { quantity: parseQuantity(d.quantity), unitPrice: parseBRL(d.unitPrice) ?? 0, unitCost: parseBRL(d.unitCost) ?? 0 };
-}
-
-function isBlank(d: DraftItem) {
-  return !d.description.trim() && !d.detail.trim() && !parseBRL(d.unitPrice) && !parseBRL(d.unitCost);
-}
-
-/** Itens prontos para o servidor (linhas totalmente vazias ficam de fora). */
-export function serializeItems(items: DraftItem[]) {
-  return items
-    .filter((d) => !isBlank(d))
-    .map((d) => {
-      const n = draftNumbers(d);
-      return {
-        catalogItemId: d.catalogItemId,
-        description: d.description,
-        detail: d.detail || null,
-        quantity: n.quantity,
-        unit: d.unit || null,
-        unitPrice: n.unitPrice,
-        unitCost: n.unitCost,
-      };
-    });
-}
-
-function newKey() {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `k${Date.now()}${Math.random()}`;
-}
-
-export function blankItem(): DraftItem {
-  return { key: newKey(), catalogItemId: null, description: "", detail: "", quantity: "1", unit: "unidade", unitPrice: "", unitCost: "" };
-}
-
-export function itemFromCatalog(ci: CatalogOption): DraftItem {
-  return {
-    key: newKey(),
-    catalogItemId: ci.id,
-    description: ci.name,
-    detail: ci.description ?? "",
-    quantity: "1",
-    unit: ci.unit,
-    unitPrice: centsToInput(ci.price),
-    unitCost: ci.cost ? centsToInput(ci.cost) : "",
-  };
-}
-
-function groupCatalog(catalog: CatalogOption[]) {
-  const known = new Set<string>(CATALOG_GROUPS.map((g) => g.key));
-  const groups: { key: string; label: string; items: CatalogOption[] }[] = CATALOG_GROUPS.map((g) => ({
-    key: g.key,
-    label: g.label,
-    items: catalog.filter((c) => c.group === g.key),
-  }));
-  groups.push({ key: "outros", label: "Outros", items: catalog.filter((c) => !known.has(c.group)) });
-  return groups.filter((g) => g.items.length);
-}
+import { CustomItemDialog, type CustomMode } from "./custom-item";
+import { blankItem, groupCatalog, itemFromCatalog, parseQuantity, type DraftItem } from "./draft";
 
 /* Colunas da linha no modo tabela (cartão com 860px ou mais). */
 const ROW_GRID = "@min-[860px]:grid-cols-[20px_minmax(0,1fr)_60px_112px_120px_120px_108px_84px]";
@@ -128,7 +32,9 @@ export function ItemsEditor({
   error?: string;
 }) {
   const [focusKey, setFocusKey] = useState<string | null>(null);
+  const [custom, setCustom] = useState<{ open: boolean; mode: CustomMode }>({ open: false, mode: "item" });
   const groups = groupCatalog(catalog);
+  const openCustom = (mode: CustomMode) => setCustom({ open: true, mode });
 
   const update = (key: string, patch: Partial<DraftItem>) => onChange(items.map((it) => (it.key === key ? { ...it, ...patch } : it)));
   const add = (item: DraftItem, focus = false) => {
@@ -308,7 +214,20 @@ export function ItemsEditor({
         <p className="rounded-2xl border border-dashed border-white/15 px-5 py-6 text-center text-[14px] text-mute">Nenhum item.</p>
       ) : (
         <div className="grid gap-5 rounded-2xl border border-dashed border-white/15 p-5">
-          <p className="text-[14px] text-ash">Nenhum item ainda. Um clique traz do catálogo, com descrição e valor:</p>
+          <p className="text-[14px] text-ash">Nenhum item ainda. Crie sob medida ou traga do catálogo com um clique:</p>
+          <div>
+            <p className="label mb-2 text-mute">Sob medida</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => openCustom("item")} className={CUSTOM_CHIP}>
+                <PencilLine className="size-3.5 shrink-0" aria-hidden />
+                Item avulso
+              </button>
+              <button type="button" onClick={() => openCustom("pacote")} className={CUSTOM_CHIP}>
+                <PackagePlus className="size-3.5 shrink-0" aria-hidden />
+                Pacote personalizado
+              </button>
+            </div>
+          </div>
           {groups.map((g) => (
             <div key={g.key}>
               <p className="label mb-2 text-mute">{g.label}</p>
@@ -356,14 +275,41 @@ export function ItemsEditor({
               </MenuContent>
             </Menu>
           ) : null}
+          {items.length ? (
+            <>
+              <Button variant="secondary" size="sm" onClick={() => openCustom("item")}>
+                <PencilLine /> Item avulso
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => openCustom("pacote")}>
+                <PackagePlus /> Pacote personalizado
+              </Button>
+            </>
+          ) : null}
           <Button variant="ghost" size="sm" onClick={() => add(blankItem(), true)}>
             <Plus /> Item em branco
           </Button>
         </div>
       ) : null}
+
+      {!disabled ? (
+        <CustomItemDialog
+          open={custom.open}
+          mode={custom.mode}
+          onOpenChange={(open) => setCustom((c) => ({ ...c, open }))}
+          groups={groups}
+          onAdd={(item, message) => {
+            add(item);
+            setCustom((c) => ({ ...c, open: false }));
+            toast.success(message);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
+
+const CUSTOM_CHIP =
+  "inline-flex min-h-10 items-center gap-2 rounded-full border border-white/35 bg-white/[0.05] px-3.5 py-2 text-left text-[13px] text-white transition-colors hover:border-white/60 hover:bg-white/[0.09]";
 
 function IconButton({
   label,

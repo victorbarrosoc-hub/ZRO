@@ -1,13 +1,13 @@
 "use server";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { bool, fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
-import { CATALOG_UNITS, CATEGORY_KEYS, FUNNEL_BUDGETS, optionLabel } from "@/lib/domain";
+import { CATALOG_GROUPS, CATALOG_UNITS, CATEGORY_KEYS, FUNNEL_BUDGETS, optionLabel } from "@/lib/domain";
 import { addDaysISO, brl, dateBR, todayISO } from "@/lib/format";
 import { nextQuoteNumber, otherOpenQuotesForLead } from "@/lib/queries/quotes";
 import { ensureClientForLead } from "@/lib/services/clients";
@@ -138,6 +138,47 @@ export async function createQuote(_prev: ActionResult | null, fd: FormData): Pro
 
   revalidateQuote(id, { leadId: lead?.id, clientId });
   redirect(`/painel/orcamentos/${id}`);
+}
+
+/* ============================== Item sob medida → catálogo ============================== */
+
+const CatalogFromQuote = z.object({
+  name: z
+    .string({ message: "Pra salvar no catálogo, dê um nome ao item." })
+    .min(2, "Pra salvar no catálogo, o nome precisa de pelo menos 2 letras.")
+    .max(100, "Pra salvar no catálogo, o nome precisa ter até 100 caracteres."),
+  description: z.string().max(300, "Pra salvar no catálogo, o detalhe precisa ter até 300 caracteres.").optional(),
+  group: z.enum(CATALOG_GROUPS.map((g) => g.key) as [string, ...string[]], { message: "Escolha o grupo do catálogo." }),
+  unit: z.enum(CATALOG_UNITS.map((u) => u.key) as [string, ...string[]], { message: "Escolha a unidade." }),
+  price: z.number().int().min(0, "Valor inválido.").max(100_000_000, "Valor alto demais para o catálogo."),
+  cost: z.number().int().min(0, "Custo inválido.").max(100_000_000, "Custo alto demais para o catálogo."),
+});
+
+/** Guarda no catálogo um item criado sob medida no orçamento, para usar de novo. Devolve o id. */
+export async function saveCustomToCatalog(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  await requireUser();
+  const parsed = CatalogFromQuote.safeParse({
+    name: str(fd, "name"),
+    description: str(fd, "description"),
+    group: str(fd, "group"),
+    unit: str(fd, "unit"),
+    price: money(fd, "price") ?? 0,
+    cost: money(fd, "cost") ?? 0,
+  });
+  if (!parsed.success) return fromZod(parsed.error);
+  const [row] = await db.select({ max: sql<number | null>`max(${catalogItems.sortOrder})` }).from(catalogItems);
+  const [created] = await db
+    .insert(catalogItems)
+    .values({
+      ...parsed.data,
+      description: parsed.data.description ?? null,
+      active: true,
+      sortOrder: row?.max == null ? 0 : Number(row.max) + 1,
+    })
+    .returning({ id: catalogItems.id });
+  revalidatePath("/painel/ajustes/catalogo");
+  revalidatePath("/painel/orcamentos", "layout");
+  return ok("Salvo no catálogo.", created.id);
 }
 
 /* ============================== Salvar (editor) ============================== */

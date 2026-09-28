@@ -23,7 +23,8 @@ import {
 } from "@/lib/services/quotes";
 import { cn } from "@/lib/utils";
 import { deleteQuote, markQuoteSent, newQuoteVersion, revertQuoteToDraft, saveQuote } from "../actions";
-import { ItemsEditor, draftNumbers, serializeItems, toDraft, type DraftItem } from "./items-editor";
+import { draftNumbers, serializeItems, toDraft, type DraftItem } from "./draft";
+import { ItemsEditor } from "./items-editor";
 import { ApproveDialog, ConfirmDialog, RefuseDialog } from "./quote-dialogs";
 
 export type EditorQuote = {
