@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useOptimistic, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
-import { ArrowRight, Check, Ellipsis } from "lucide-react";
+import { ArrowRight, Check, Ellipsis, Trash2 } from "lucide-react";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "@/components/ui/overlay";
 import { Badge } from "@/components/ui/surface";
 import { LEAD_STAGES } from "@/lib/domain";
 import { brlCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { moveLeadStage } from "./actions";
-import { LostReasonModal } from "./crm-dialogs";
+import { ConfirmDeleteLead, LostReasonModal } from "./crm-dialogs";
 import { isOpenStage } from "./crm-options";
 
 /** Dados já prontos para o cartão (calculados no servidor). */
@@ -277,34 +277,41 @@ function LeadCard({
 }
 
 function StageMenu({ lead, onMove }: { lead: BoardLead; onMove: (stage: string) => void }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
-    <Menu modal={false}>
-      <MenuTrigger asChild>
-        <button
-          type="button"
-          className="relative z-10 -mt-1.5 -mr-2 grid size-10 shrink-0 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.08] hover:text-light focus-visible:outline-2 focus-visible:outline-white data-[state=open]:bg-white/[0.08] data-[state=open]:text-light"
-          aria-label={`Mover ${lead.title} de etapa`}
-        >
-          <Ellipsis className="size-4" />
-        </button>
-      </MenuTrigger>
-      <MenuContent align="end">
-        <MenuLabel>Mover para</MenuLabel>
-        {LEAD_STAGES.map((s) => {
-          const current = s.key === lead.stage;
-          return (
-            <MenuItem key={s.key} disabled={current} onSelect={() => onMove(s.key)} destructive={s.key === "perdido"}>
-              {current ? <Check /> : <ArrowRight />}
-              {s.label}
-              {current ? <span className="ml-auto text-[12px] text-mute">atual</span> : null}
-            </MenuItem>
-          );
-        })}
-        <MenuSeparator />
-        <MenuItem asChild>
-          <Link href={`/painel/crm/${lead.id}`}>Abrir ficha do lead</Link>
-        </MenuItem>
-      </MenuContent>
-    </Menu>
+    <>
+      <Menu modal={false}>
+        <MenuTrigger asChild>
+          <button
+            type="button"
+            className="relative z-10 -mt-1.5 -mr-2 grid size-10 shrink-0 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.08] hover:text-light focus-visible:outline-2 focus-visible:outline-white data-[state=open]:bg-white/[0.08] data-[state=open]:text-light"
+            aria-label={`Ações: ${lead.title}`}
+          >
+            <Ellipsis className="size-4" />
+          </button>
+        </MenuTrigger>
+        <MenuContent align="end">
+          <MenuLabel>Mover para</MenuLabel>
+          {LEAD_STAGES.map((s) => {
+            const current = s.key === lead.stage;
+            return (
+              <MenuItem key={s.key} disabled={current} onSelect={() => onMove(s.key)} destructive={s.key === "perdido"}>
+                {current ? <Check /> : <ArrowRight />}
+                {s.label}
+                {current ? <span className="ml-auto text-[12px] text-mute">atual</span> : null}
+              </MenuItem>
+            );
+          })}
+          <MenuSeparator />
+          <MenuItem asChild>
+            <Link href={`/painel/crm/${lead.id}`}>Abrir ficha do lead</Link>
+          </MenuItem>
+          <MenuItem destructive onSelect={() => setConfirmDelete(true)}>
+            <Trash2 /> Excluir lead
+          </MenuItem>
+        </MenuContent>
+      </Menu>
+      <ConfirmDeleteLead id={lead.id} name={lead.title} open={confirmDelete} onOpenChange={setConfirmDelete} />
+    </>
   );
 }

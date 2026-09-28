@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useId, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowUpRight, Ellipsis, Pencil, Plus, Trash2, UserPlus, X } from "lucide-react";
 import { ActionForm, ConfirmAction, FormModal, SubmitButton, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Select, Textarea } from "@/components/ui/field";
+import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "@/components/ui/overlay";
 import { LEAD_STAGES } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import {
@@ -31,6 +33,10 @@ import {
   type LeadDefaults,
 } from "./crm-fields";
 import { ACTIVITY_TYPES } from "./crm-options";
+
+const LEAD_DELETE_TEXT = "O lead e o histórico de conversas são apagados de vez. Orçamentos e projetos continuam, sem o vínculo.";
+const CLIENT_DELETE_TEXT =
+  "O cadastro e o histórico de atividades do cliente são apagados. Leads, projetos, orçamentos e lançamentos continuam, sem o vínculo.";
 
 /* ---------------- Leads ---------------- */
 
@@ -91,7 +97,7 @@ export function DeleteLeadButton({ id, name }: { id: string; name: string }) {
   return (
     <ConfirmAction
       title={`Excluir ${name}?`}
-      description="O lead e o histórico de conversas são apagados de vez. Orçamentos e projetos continuam, sem o vínculo."
+      description={LEAD_DELETE_TEXT}
       confirmLabel="Excluir"
       action={deleteLead}
       fields={{ id }}
@@ -383,7 +389,7 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
   return (
     <ConfirmAction
       title={`Excluir ${name}?`}
-      description="O cadastro e o histórico de atividades do cliente são apagados. Leads, projetos, orçamentos e lançamentos continuam, sem o vínculo."
+      description={CLIENT_DELETE_TEXT}
       confirmLabel="Excluir"
       action={deleteClient}
       fields={{ id }}
@@ -393,5 +399,98 @@ export function DeleteClientButton({ id, name }: { id: string; name: string }) {
         </Button>
       }
     />
+  );
+}
+
+/* ---------------- Excluir a partir das listas ---------------- */
+
+/** Confirmação de excluir lead aberta por um menu (quadro ou lista): continua na mesma página. */
+export function ConfirmDeleteLead({
+  id,
+  name,
+  open,
+  onOpenChange,
+}: {
+  id: string;
+  name: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <ConfirmAction
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Excluir ${name}?`}
+      description={LEAD_DELETE_TEXT}
+      confirmLabel="Excluir"
+      action={deleteLead}
+      fields={{ id, ficar: "1" }}
+    />
+  );
+}
+
+/** "⋯" da linha: abrir a ficha ou excluir (com confirmação). */
+function RowMenu({
+  name,
+  href,
+  deleteLabel,
+  onDelete,
+}: {
+  name: string;
+  href: string;
+  deleteLabel: string;
+  onDelete: () => void;
+}) {
+  return (
+    <Menu modal={false}>
+      <MenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Ações: ${name}`}
+          className="grid size-10 shrink-0 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.08] hover:text-light focus-visible:outline-2 focus-visible:outline-white data-[state=open]:bg-white/[0.08] data-[state=open]:text-light sm:size-8"
+        >
+          <Ellipsis className="size-4" />
+        </button>
+      </MenuTrigger>
+      <MenuContent align="end">
+        <MenuItem asChild>
+          <Link href={href}>
+            <ArrowUpRight /> Abrir ficha
+          </Link>
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem destructive onSelect={onDelete}>
+          <Trash2 /> {deleteLabel}
+        </MenuItem>
+      </MenuContent>
+    </Menu>
+  );
+}
+
+export function LeadRowMenu({ id, name }: { id: string; name: string }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <>
+      <RowMenu name={name} href={`/painel/crm/${id}`} deleteLabel="Excluir lead" onDelete={() => setConfirm(true)} />
+      <ConfirmDeleteLead id={id} name={name} open={confirm} onOpenChange={setConfirm} />
+    </>
+  );
+}
+
+export function ClientRowMenu({ id, name }: { id: string; name: string }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <>
+      <RowMenu name={name} href={`/painel/crm/clientes/${id}`} deleteLabel="Excluir cliente" onDelete={() => setConfirm(true)} />
+      <ConfirmAction
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={`Excluir ${name}?`}
+        description={CLIENT_DELETE_TEXT}
+        confirmLabel="Excluir"
+        action={deleteClient}
+        fields={{ id, ficar: "1" }}
+      />
+    </>
   );
 }

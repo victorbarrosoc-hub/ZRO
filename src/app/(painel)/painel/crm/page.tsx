@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { FUNNEL_BUDGETS, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
 import { brl, dateBR, relativeDay, todayISO } from "@/lib/format";
 import { filterLeads, listLeads, type LeadRow } from "@/lib/queries/crm";
-import { NewLeadButton } from "./crm-dialogs";
+import { LeadRowMenu, NewLeadButton } from "./crm-dialogs";
 import { followUpDue, sinceLabel } from "./crm-options";
 import { FilterChip } from "./crm-ui";
 import { LeadBoard, type BoardLead } from "./lead-board";
@@ -209,6 +209,9 @@ function LeadTable({
                   Entrada {oldestFirst ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
                 </Link>
               </Th>
+              <Th>
+                <span className="sr-only">Ações</span>
+              </Th>
             </tr>
           </thead>
           <tbody>
@@ -259,6 +262,9 @@ function LeadTable({
                   <Td align="right" className="text-ash">
                     {dateBR(created)}
                     <span className="block text-[12px] text-mute">{sinceLabel(l.createdAt, today)}</span>
+                  </Td>
+                  <Td align="right" className="w-12 py-2">
+                    <LeadRowMenu id={l.id} name={title} />
                   </Td>
                 </tr>
               );

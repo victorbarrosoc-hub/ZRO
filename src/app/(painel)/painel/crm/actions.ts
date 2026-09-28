@@ -285,6 +285,8 @@ export async function deleteLead(_prev: ActionResult | null, fd: FormData): Prom
   revalidatePath("/painel");
   revalidatePath("/painel/orcamentos");
   if (row?.clientId) revalidatePath(`/painel/crm/clientes/${row.clientId}`);
+  // Do quadro ou da lista, continua onde estava; da ficha, volta para o CRM.
+  if (str(fd, "ficar") === "1") return ok("Lead excluído.");
   redirect("/painel/crm");
 }
 
@@ -436,5 +438,6 @@ export async function deleteClient(_prev: ActionResult | null, fd: FormData): Pr
   const [row] = await db.delete(clients).where(eq(clients.id, id)).returning({ logoId: clients.logoId });
   await deleteImages([row?.logoId]);
   revalidateClient();
+  if (str(fd, "ficar") === "1") return ok("Cliente excluído.");
   redirect("/painel/crm/clientes");
 }
