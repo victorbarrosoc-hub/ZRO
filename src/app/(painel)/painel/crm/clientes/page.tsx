@@ -7,7 +7,7 @@ import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { brl } from "@/lib/format";
 import { filterClients, listClients } from "@/lib/queries/crm";
-import { NewClientButton } from "../crm-dialogs";
+import { ClientRowMenu, NewClientButton } from "../crm-dialogs";
 import { formatDocument } from "../crm-options";
 
 export const metadata: Metadata = { title: "Clientes" };
@@ -32,10 +32,13 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
       {clients.length ? (
         <ul className="grid min-w-0 grid-cols-1 gap-2 sm:hidden" aria-label="Clientes">
           {clients.map((c) => (
-            <li key={c.id}>
+            <li
+              key={c.id}
+              className="flex items-center gap-1 rounded-[18px] border border-line bg-[linear-gradient(180deg,rgb(255_255_255/0.05),rgb(255_255_255/0.018))] py-2 pr-1.5 pl-4"
+            >
               <Link
                 href={`/painel/crm/clientes/${c.id}`}
-                className="flex items-center justify-between gap-4 rounded-[18px] border border-line bg-[linear-gradient(180deg,rgb(255_255_255/0.05),rgb(255_255_255/0.018))] p-4 transition-colors active:bg-white/[0.04]"
+                className="flex min-w-0 flex-1 items-center justify-between gap-4 rounded-[14px] py-2 transition-colors active:bg-white/[0.04]"
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar name={c.name} imageId={c.logoId} logo size="md" />
@@ -55,6 +58,7 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                   </span>
                 </span>
               </Link>
+              <ClientRowMenu id={c.id} name={c.name} />
             </li>
           ))}
         </ul>
@@ -71,6 +75,9 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                 <Th>Contato</Th>
                 <Th align="right">Projetos</Th>
                 <Th align="right">Recebido</Th>
+                <Th>
+                  <span className="sr-only">Ações</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -108,6 +115,9 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                   </Td>
                   <Td align="right" className={c.received ? "" : "text-mute"}>
                     {brl(c.received)}
+                  </Td>
+                  <Td align="right" className="w-12 py-2">
+                    <ClientRowMenu id={c.id} name={c.name} />
                   </Td>
                 </tr>
               ))}
