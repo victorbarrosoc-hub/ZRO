@@ -6,7 +6,7 @@ import { ConfirmAction, FormModal, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, MoneyInput, Select } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
-import { FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
+import { FUNCTIONS, RATE_UNITS, functionOptions, optionLabel } from "@/lib/domain";
 import { brl, centsToInput, dateBR, dateShort, parseBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { addCrewMember, deleteCrewMember, generateCrewPayment, updateCrewMember } from "../../actions";
@@ -162,7 +162,7 @@ function CrewFields({
               autofill(choice, e.target.value, qty);
             }}
           >
-            {FUNCTIONS.map((f) => (
+            {functionOptions([...options.flatMap((o) => o.functions), func]).map((f) => (
               <option key={f.key} value={f.key}>
                 {f.label}
                 {freela?.functions.includes(f.key) ? " •" : ""}

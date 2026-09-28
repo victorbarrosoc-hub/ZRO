@@ -65,6 +65,8 @@ export async function criarAlgo(_prev: ActionResult | null, fd: FormData): Promi
 - `src/components/painel/stat.tsx`: `StatTile`, `HeroFigure` (um por tela).
 - `src/components/painel/cashflow-chart.tsx`: gráfico de fluxo de caixa (regras da skill dataviz).
 - `src/components/painel/search-field.tsx`: busca que atualiza `?q=`.
+- `src/components/painel/avatar.tsx`: `Avatar` (foto do freela redonda, logo do cliente com `logo`; sem imagem, iniciais).
+- `src/components/painel/image-field.tsx`: `ImageField` para formulário (reduz a imagem no navegador para 384 px e manda num campo escondido). No servidor: `readImageField` + `resolveImageField` + `deleteImages` (`src/lib/services/images.ts`). As imagens ficam na tabela `images` (base64, entram no backup) e abrem só logado em `/painel/imagem/[id]`.
 
 **Páginas de servidor não passam funções para componentes cliente.** Formulários em janela ficam num arquivo `*-dialogs.tsx` ("use client") que importa as actions.
 
@@ -73,6 +75,7 @@ export async function criarAlgo(_prev: ActionResult | null, fd: FormData): Promi
 - Escalar freela numa diária do projeto → entra na equipe com a diária do cadastro dele → pagamento a pagar no financeiro.
 - Equipe "por diária": valor = diária × dias escalados. "Valor fechado": o valor digitado.
 - Lançamento com baixa nunca é apagado nem reduzido abaixo do que já foi pago.
+- Funções de freela: as padrão (`FUNCTIONS`) + as criadas no cadastro, cuja chave é o próprio nome. Liste com `functionOptions(...)` e normalize com `normalizeFunction`; `optionLabel(FUNCTIONS, chave)` já mostra o nome de uma função criada.
 - Páginas sem texto explicativo: título, números e ações. Nada de `description` em `PageHeader`.
 
 ## Visual

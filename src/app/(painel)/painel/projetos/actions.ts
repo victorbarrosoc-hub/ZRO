@@ -13,7 +13,7 @@ import {
   DELIVERABLE_STATUS,
   FINANCE_CATEGORIES,
   FINANCE_KINDS,
-  FUNCTIONS,
+  FUNCTION_MAX,
   PAYMENT_METHODS,
   PROJECT_STATUS,
   STAGES,
@@ -55,7 +55,6 @@ function touch(projectId: string | null | undefined, opts: { finance?: boolean; 
 }
 
 const stageIdx = (key: string) => STAGES.findIndex((s) => s.key === key);
-const FUNCTION_KEYS = FUNCTIONS.map((f) => f.key) as [string, ...string[]];
 const STATUS_KEYS = PROJECT_STATUS.map((s) => s.key) as [string, ...string[]];
 const DELIVERABLE_KEYS = DELIVERABLE_STATUS.map((s) => s.key) as [string, ...string[]];
 const KIND_KEYS = FINANCE_KINDS.map((k) => k.key) as [string, ...string[]];
@@ -454,7 +453,7 @@ const CrewSchema = z
   .object({
     freelancerId: z.string().optional(),
     name: z.string().max(120, "Nome longo demais.").optional(),
-    function: z.enum(FUNCTION_KEYS, { message: "Escolha a função." }),
+    function: z.string({ message: "Escolha a função." }).min(1, "Escolha a função.").max(FUNCTION_MAX, "Função longa demais."),
     work: z.string().max(200, "Descrição longa demais.").optional(),
     startDate: optionalDate,
     dueDate: optionalDate,

@@ -3,8 +3,9 @@
  * mostra (horário, local, equipe). No celular, a semana vira uma lista.
  */
 import { AlertTriangle, Plus } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { EVENT_TYPES, optionLabel } from "@/lib/domain";
-import { dateLong, initials, monthShort, relativeDay } from "@/lib/format";
+import { dateLong, monthShort, relativeDay } from "@/lib/format";
 import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { DayButton, EventButton } from "./agenda-dialogs";
@@ -95,15 +96,16 @@ function WeekCard({ ev, day, today }: { ev: AgendaEvent; day: string; today: str
       {ev.crew.length ? (
         <span className="flex items-center pt-1">
           {ev.crew.slice(0, 4).map((c) => (
-            <span
-              key={c.freelancerId}
-              title={c.name}
-              className={cn(
-                "-ml-1.5 grid size-6 place-items-center rounded-full border bg-smoke text-[9px] font-medium text-light first:ml-0",
-                ev.conflicts.some((x) => x.freelancerId === c.freelancerId) ? "border-warn/70" : "border-void",
-              )}
-            >
-              {initials(c.name)}
+            <span key={c.freelancerId} title={c.name} className="-ml-1.5 first:ml-0">
+              <Avatar
+                name={c.name}
+                imageId={c.photoId}
+                size="xs"
+                className={cn(
+                  "bg-smoke",
+                  ev.conflicts.some((x) => x.freelancerId === c.freelancerId) ? "border-warn/70" : "border-void",
+                )}
+              />
             </span>
           ))}
           {ev.crew.length > 4 ? <span className="ml-1.5 text-[11px] text-mute">+{ev.crew.length - 4}</span> : null}

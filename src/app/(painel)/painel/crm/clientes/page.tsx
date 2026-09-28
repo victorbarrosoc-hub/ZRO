@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Avatar } from "@/components/painel/avatar";
 import { Table, Td, Th } from "@/components/painel/bits";
 import { SearchField } from "@/components/painel/search-field";
 import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
@@ -36,10 +37,13 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                 href={`/painel/crm/clientes/${c.id}`}
                 className="flex items-center justify-between gap-4 rounded-[18px] border border-line bg-[linear-gradient(180deg,rgb(255_255_255/0.05),rgb(255_255_255/0.018))] p-4 transition-colors active:bg-white/[0.04]"
               >
-                <span className="min-w-0">
-                  <span className="block truncate text-[15px] font-medium text-white">{c.name}</span>
-                  <span className="block truncate text-[13px] text-mute">
-                    {[c.segment, c.city].filter(Boolean).join(" · ") || "Sem segmento"}
+                <span className="flex min-w-0 items-center gap-3">
+                  <Avatar name={c.name} imageId={c.logoId} logo size="md" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15px] font-medium text-white">{c.name}</span>
+                    <span className="block truncate text-[13px] text-mute">
+                      {[c.segment, c.city].filter(Boolean).join(" · ") || "Sem segmento"}
+                    </span>
                   </span>
                 </span>
                 <span className="shrink-0 text-right">
@@ -72,13 +76,18 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
             <tbody>
               {clients.map((c) => (
                 <tr key={c.id} className="transition-colors hover:bg-white/[0.02]">
-                  <Td className="max-w-72">
-                    <Link href={`/painel/crm/clientes/${c.id}`} className="block truncate font-medium text-white hover:underline">
-                      {c.name}
-                    </Link>
-                    {c.document ? (
-                      <span className="block font-mono text-[11px] text-mute">{formatDocument(c.document)}</span>
-                    ) : null}
+                  <Td className="max-w-80">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={c.name} imageId={c.logoId} logo size="md" />
+                      <div className="min-w-0">
+                        <Link href={`/painel/crm/clientes/${c.id}`} className="block truncate font-medium text-white hover:underline">
+                          {c.name}
+                        </Link>
+                        {c.document ? (
+                          <span className="block font-mono text-[11px] text-mute">{formatDocument(c.document)}</span>
+                        ) : null}
+                      </div>
+                    </div>
                   </Td>
                   <Td className="text-ash">{c.segment ?? "—"}</Td>
                   <Td className="text-ash">{c.city ?? "—"}</Td>

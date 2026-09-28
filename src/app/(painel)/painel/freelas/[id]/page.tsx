@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Mail, MessageCircle } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref } from "@/components/painel/bits";
 import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
+import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
-import { getFreelancer } from "@/lib/queries/freelas";
+import { getFreelancer, listCustomFunctions } from "@/lib/queries/freelas";
 import {
   AddRateButton,
   ArchiveFreelaButton,
@@ -41,7 +42,10 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
   if (!f) notFound();
 
   const today = todayISO();
-  const agenda = await listEventsInRange({ start: today, end: addDaysISO(today, 120), freelancerId: f.id });
+  const [agenda, customFunctions] = await Promise.all([
+    listEventsInRange({ start: today, end: addDaysISO(today, 120), freelancerId: f.id }),
+    listCustomFunctions(),
+  ]);
   const late = f.entries.filter((e) => e.dueDate < today).reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0);
   const counts: Partial<Record<TabKey, number>> = { pagamentos: f.entries.length, jobs: f.crew.length };
   const totalPaid = f.entries.reduce((s, e) => s + e.paidAmount, 0);
@@ -56,9 +60,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
 
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="flex items-center gap-5">
-          <span className="grid size-16 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[18px] font-medium text-light">
-            {initials(f.name)}
-          </span>
+          <Avatar name={f.name} imageId={f.photoId} size="xl" />
           <div>
             <h1 className="text-[clamp(28px,3vw,40px)] leading-none font-semibold tracking-[-0.035em] text-white">{f.name}</h1>
             <p className="mt-2 text-[14px] text-ash">
@@ -103,7 +105,9 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
               functions: f.functions,
               equipment: f.equipment,
               notes: f.notes,
+              photoId: f.photoId,
             }}
+            customFunctions={customFunctions}
           />
           <ArchiveFreelaButton id={f.id} active={f.active} />
           <DeleteFreelaButton id={f.id} name={f.name} />

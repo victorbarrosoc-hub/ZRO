@@ -5,7 +5,7 @@ import { db, schema } from "@/lib/db";
 
 const { events, eventCrew, freelancers, projects, callSheets } = schema;
 
-export type EventCrewMember = { freelancerId: string; name: string; function: string | null };
+export type EventCrewMember = { freelancerId: string; name: string; photoId: string | null; function: string | null };
 
 /** Outro evento, nas mesmas datas, em que alguém da equipe já está escalado. */
 export type EventConflict = {
@@ -105,6 +105,7 @@ async function hydrate(rows: BaseRow[]): Promise<AgendaEvent[]> {
         freelancerId: eventCrew.freelancerId,
         function: eventCrew.function,
         name: freelancers.name,
+        photoId: freelancers.photoId,
       })
       .from(eventCrew)
       .innerJoin(freelancers, eq(eventCrew.freelancerId, freelancers.id))
@@ -122,7 +123,7 @@ async function hydrate(rows: BaseRow[]): Promise<AgendaEvent[]> {
     ...r,
     crew: crew
       .filter((c) => c.eventId === r.id)
-      .map((c) => ({ freelancerId: c.freelancerId, name: c.name, function: c.function })),
+      .map((c) => ({ freelancerId: c.freelancerId, name: c.name, photoId: c.photoId, function: c.function })),
     conflicts: conflicts
       .filter((c) => c.eventId === r.id)
       .map((c) => ({

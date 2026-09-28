@@ -283,6 +283,7 @@ export async function getFreelaPayables(today = todayISO()) {
       freelancerId: financeEntries.freelancerId,
       freelancerName: schema.freelancers.name,
       pixKey: schema.freelancers.pixKey,
+      photoId: schema.freelancers.photoId,
     })
     .from(financeEntries)
     .innerJoin(schema.freelancers, eq(financeEntries.freelancerId, schema.freelancers.id))
@@ -292,11 +293,29 @@ export async function getFreelaPayables(today = todayISO()) {
 
   const people = new Map<
     string,
-    { freelancerId: string; name: string; pixKey: string | null; open: number; late: number; nextDue: string; entries: typeof rows }
+    {
+      freelancerId: string;
+      name: string;
+      pixKey: string | null;
+      photoId: string | null;
+      open: number;
+      late: number;
+      nextDue: string;
+      entries: typeof rows;
+    }
   >();
   for (const r of rows) {
     const id = r.freelancerId!;
-    const p = people.get(id) ?? { freelancerId: id, name: r.freelancerName, pixKey: r.pixKey, open: 0, late: 0, nextDue: r.dueDate, entries: [] };
+    const p = people.get(id) ?? {
+      freelancerId: id,
+      name: r.freelancerName,
+      pixKey: r.pixKey,
+      photoId: r.photoId,
+      open: 0,
+      late: 0,
+      nextDue: r.dueDate,
+      entries: [],
+    };
     const open = r.amount - r.paidAmount;
     p.open += open;
     if (r.dueDate < today) p.late += open;

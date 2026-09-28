@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, FUNCTIONS } from "@/lib/domain";
+import { EVENT_TYPES, FUNCTION_MAX } from "@/lib/domain";
 import { dateBR } from "@/lib/format";
 import { logProjectActivity } from "@/lib/services/activity";
 import { syncProjectTeam, teamSyncNote, type TeamSyncReport } from "@/lib/services/team";
@@ -15,7 +15,6 @@ import { joinNames } from "./agenda-utils";
 const { events, eventCrew, freelancers, projects } = schema;
 
 const EVENT_TYPE_KEYS = EVENT_TYPES.map((t) => t.key) as [string, ...string[]];
-const FUNCTION_KEYS = new Set<string>(FUNCTIONS.map((f) => f.key));
 
 const time = z.iso.time({ precision: -1, message: "Use o formato 00:00." });
 
@@ -53,7 +52,7 @@ function readEvent(fd: FormData) {
     notes: str(fd, "notes"),
     crew: crewIds.map((freelancerId) => {
       const fn = str(fd, `fn:${freelancerId}`);
-      return { freelancerId, function: fn && FUNCTION_KEYS.has(fn) ? fn : undefined };
+      return { freelancerId, function: fn && fn.length <= FUNCTION_MAX ? fn : undefined };
     }),
   });
 }

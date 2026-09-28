@@ -188,6 +188,30 @@ export const FUNCTIONS = [
 ] as const;
 export type FunctionKey = (typeof FUNCTIONS)[number]["key"];
 
+/** Função criada no cadastro do freela (fora da lista padrão): a chave é o próprio nome. */
+export const FUNCTION_MAX = 40;
+
+/** Lista padrão + funções criadas nos cadastros, sem repetir. */
+export function functionOptions(extra: Iterable<string> = []): { key: string; label: string }[] {
+  const known = new Set<string>(FUNCTIONS.map((f) => f.key));
+  const custom = [...new Set(extra)].filter((k) => k && !known.has(k)).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [...FUNCTIONS, ...custom.map((k) => ({ key: k, label: k }))];
+}
+
+/**
+ * Função digitada → chave. "drone" ou "Drone" viram a padrão; o resto vira um nome
+ * limpo ("maquiagem " → "Maquiagem"), igual a um já usado se só mudar a maiúscula.
+ */
+export function normalizeFunction(input: string, existing: Iterable<string> = []) {
+  const text = input.replace(/\s+/g, " ").trim().slice(0, FUNCTION_MAX);
+  if (!text) return null;
+  const lower = text.toLocaleLowerCase("pt-BR");
+  const standard = FUNCTIONS.find((f) => f.key === text || f.label.toLocaleLowerCase("pt-BR") === lower);
+  if (standard) return standard.key;
+  for (const e of existing) if (e.toLocaleLowerCase("pt-BR") === lower) return e;
+  return text.charAt(0).toLocaleUpperCase("pt-BR") + text.slice(1);
+}
+
 export const RATE_UNITS = [
   { key: "diaria", label: "por diária" },
   { key: "projeto", label: "por projeto" },

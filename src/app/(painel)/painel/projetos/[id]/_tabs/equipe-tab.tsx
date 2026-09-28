@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Avatar } from "@/components/painel/avatar";
 import { EntryStatusBadge } from "@/components/painel/bits";
 import { StatTile } from "@/components/painel/stat";
 import { Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { FUNCTIONS, optionLabel } from "@/lib/domain";
-import { brl, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
+import { brl, dateShort, entryStatus, todayISO } from "@/lib/format";
 import { crewPayment, listCrewOptions, type ProjectDetail, type ProjectSummary } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
 import { AddCrewButton, DeleteCrewButton, EditCrewButton, GeneratePaymentButton, type CrewDiaria } from "../_components/crew-dialogs";
@@ -76,9 +77,7 @@ export async function ProjectCrewTab({ project, summary }: { project: ProjectDet
                     )}
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[12px] font-medium text-light">
-                        {initials(c.displayName)}
-                      </span>
+                      <Avatar name={c.displayName} imageId={c.photoId} size="md" />
                       <div className="min-w-0">
                         <p className="truncate text-[14px] font-medium text-light">
                           {c.freelancerId ? (

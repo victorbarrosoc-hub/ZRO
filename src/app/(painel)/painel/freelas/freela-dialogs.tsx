@@ -4,7 +4,7 @@ import { Archive, Pencil, Plus, Trash2, X } from "lucide-react";
 import { ConfirmAction, FormModal, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, MoneyInput, Select } from "@/components/ui/field";
-import { CATEGORIES, FUNCTIONS, PAYMENT_METHODS, RATE_UNITS } from "@/lib/domain";
+import { CATEGORIES, PAYMENT_METHODS, RATE_UNITS, functionOptions } from "@/lib/domain";
 import { brl, centsToInput, todayISO } from "@/lib/format";
 import {
   addRate,
@@ -17,7 +17,7 @@ import {
 } from "./actions";
 import { FreelaFields, type FreelaDefaults } from "./freela-fields";
 
-export function NewFreelaButton() {
+export function NewFreelaButton({ customFunctions = [] }: { customFunctions?: string[] }) {
   return (
     <FormModal
       title="Novo freela"
@@ -31,12 +31,12 @@ export function NewFreelaButton() {
         </Button>
       }
     >
-      {(state) => <FreelaFields state={state} />}
+      {(state) => <FreelaFields state={state} customFunctions={customFunctions} />}
     </FormModal>
   );
 }
 
-export function EditFreelaButton({ defaults }: { defaults: FreelaDefaults }) {
+export function EditFreelaButton({ defaults, customFunctions = [] }: { defaults: FreelaDefaults; customFunctions?: string[] }) {
   return (
     <FormModal
       title="Editar freela"
@@ -48,7 +48,7 @@ export function EditFreelaButton({ defaults }: { defaults: FreelaDefaults }) {
         </Button>
       }
     >
-      {(state) => <FreelaFields state={state} defaults={defaults} />}
+      {(state) => <FreelaFields state={state} defaults={defaults} customFunctions={customFunctions} />}
     </FormModal>
   );
 }
@@ -89,7 +89,7 @@ export function DeleteFreelaButton({ id, name }: { id: string; name: string }) {
 }
 
 export function AddRateButton({ freelancerId, functions }: { freelancerId: string; functions: string[] }) {
-  const options = FUNCTIONS.filter((f) => functions.length === 0 || functions.includes(f.key));
+  const options = functionOptions(functions).filter((f) => functions.length === 0 || functions.includes(f.key));
   return (
     <FormModal
       title="Valor padrão"

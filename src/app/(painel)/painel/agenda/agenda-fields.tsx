@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { fieldError } from "@/components/painel/form";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
+import { EVENT_TYPES, FUNCTIONS, functionOptions, optionLabel } from "@/lib/domain";
 import { todayISO } from "@/lib/format";
 import type { AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
@@ -189,10 +189,8 @@ export function EventFields({
               const checked = f.id in crew;
               const clash = busy.get(f.id);
               // As funções do freela primeiro, depois as outras.
-              const fnOptions = [
-                ...FUNCTIONS.filter((x) => f.functions.includes(x.key)),
-                ...FUNCTIONS.filter((x) => !f.functions.includes(x.key)),
-              ];
+              const all = functionOptions([...f.functions, ...(crew[f.id] ? [crew[f.id]] : [])]);
+              const fnOptions = [...all.filter((x) => f.functions.includes(x.key)), ...all.filter((x) => !f.functions.includes(x.key))];
               return (
                 <li
                   key={f.id}
