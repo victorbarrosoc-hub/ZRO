@@ -14,12 +14,13 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { ActionForm, ConfirmAction, FormModal, SubmitButton } from "@/components/painel/form";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Modal, ModalContent } from "@/components/ui/overlay";
 import { Badge } from "@/components/ui/surface";
 import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
-import { addDaysISO, initials, todayISO } from "@/lib/format";
+import { addDaysISO, todayISO } from "@/lib/format";
 import type { AgendaEvent, AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { newCallSheet } from "@/app/(painel)/painel/projetos/[id]/ordem-do-dia/actions";
@@ -269,14 +270,7 @@ function EventDetails({
                 const clash = conflictsOf(c.freelancerId);
                 return (
                   <li key={c.freelancerId} className="flex items-start gap-3 rounded-xl py-1.5">
-                    <span
-                      className={cn(
-                        "grid size-9 shrink-0 place-items-center rounded-full border bg-white/[0.04] text-[12px] font-medium text-light",
-                        clash.length ? "border-warn/50" : "border-line-strong",
-                      )}
-                    >
-                      {initials(c.name)}
-                    </span>
+                    <Avatar name={c.name} imageId={c.photoId} size="md" className={cn("size-9", clash.length && "border-warn/50")} />
                     <span className="min-w-0 flex-1">
                       <Link href={`/painel/freelas/${c.freelancerId}`} className="block text-[14px] text-light hover:underline">
                         {c.name}

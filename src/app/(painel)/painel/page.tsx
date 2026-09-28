@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, Clapperboard } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { TabLinks } from "@/components/painel/bits";
 import { PayEntryButton } from "./projetos/[id]/_components/finance-dialogs";
 import { CashflowChart } from "@/components/painel/cashflow-chart";
@@ -8,7 +9,7 @@ import { HeroFigure, StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { EVENT_TYPES, LEAD_STAGES, STAGES, optionLabel, FUNNEL_PROJECT_TYPES, FUNNEL_BUDGETS } from "@/lib/domain";
-import { TIMEZONE, brl, brlCompact, dateShort, initials, relativeDay, weekdayShort } from "@/lib/format";
+import { TIMEZONE, brl, brlCompact, dateShort, relativeDay, weekdayShort } from "@/lib/format";
 import { getCashFlow, getDashboard, getFreelaPayables, getProjectsOverview, type FreelaPayables, type ProjectOverviewRow } from "@/lib/queries/dashboard";
 import { getTaxRate } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
@@ -318,9 +319,7 @@ function FreelaPayablesList({ payables, today }: { payables: FreelaPayables; tod
         <Card key={p.freelancerId} className={cn("min-w-0", p.late && "border-danger/25")}>
           <div className="flex items-start justify-between gap-4 px-5 pt-5 sm:px-6">
             <Link href={`/painel/freelas/${p.freelancerId}`} className="flex min-w-0 items-center gap-3 hover:underline">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[12px] font-medium text-light">
-                {initials(p.name)}
-              </span>
+              <Avatar name={p.name} imageId={p.photoId} size="md" />
               <span className="min-w-0">
                 <span className="block truncate text-[15px] font-medium text-light">{p.name}</span>
                 {p.pixKey ? <span className="block truncate text-[12px] text-mute">Pix {p.pixKey}</span> : null}

@@ -18,6 +18,7 @@ import {
   LEAD_STAGE_KEYS,
 } from "@/lib/domain";
 import { ensureClientForLead } from "@/lib/services/clients";
+import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { ACTIVITY_TYPES, STAGE_ACTIVITY, keysOf, stageLabel } from "./crm-options";
 
 const { leads, clients, activities } = schema;
@@ -394,7 +395,13 @@ export async function createClient(_prev: ActionResult | null, fd: FormData): Pr
   await requireUser();
   const parsed = readClient(fd);
   if (!parsed.success) return fromZod(parsed.error);
-  const [row] = await db.insert(clients).values(parsed.data).returning({ id: clients.id });
+  const logo = readImageField(fd, "logo");
+  if ("error" in logo) return fail(logo.error, { logo: [logo.error] });
+  const logoId = await resolveImageField(logo, null);
+  const [row] = await db
+    .insert(clients)
+    .values({ ...parsed.data, logoId })
+    .returning({ id: clients.id });
   revalidatePath("/painel/crm/clientes");
   return ok("Cliente cadastrado.", row.id);
 }
@@ -405,13 +412,19 @@ export async function updateClient(_prev: ActionResult | null, fd: FormData): Pr
   if (!id) return fail("Cliente não encontrado.");
   const parsed = readClient(fd);
   if (!parsed.success) return fromZod(parsed.error);
+  const logo = readImageField(fd, "logo");
+  if ("error" in logo) return fail(logo.error, { logo: [logo.error] });
+  const current = await db.query.clients.findFirst({ where: eq(clients.id, id), columns: { logoId: true } });
+  if (!current) return fail("Cliente não encontrado.");
+  const logoId = await resolveImageField(logo, current.logoId);
   const { name, source: src, ...rest } = parsed.data;
   const [row] = await db
     .update(clients)
-    .set({ name, source: src, ...orNull(rest) })
+    .set({ name, source: src, ...orNull(rest), logoId })
     .where(eq(clients.id, id))
     .returning({ id: clients.id });
   if (!row) return fail("Cliente não encontrado.");
+  if (current.logoId !== logoId) await deleteImages([current.logoId]);
   revalidateClient(id);
   return ok("Cliente atualizado.");
 }
@@ -420,7 +433,8 @@ export async function deleteClient(_prev: ActionResult | null, fd: FormData): Pr
   await requireUser();
   const id = str(fd, "id");
   if (!id) return fail("Cliente não encontrado.");
-  await db.delete(clients).where(eq(clients.id, id));
+  const [row] = await db.delete(clients).where(eq(clients.id, id)).returning({ logoId: clients.logoId });
+  await deleteImages([row?.logoId]);
   revalidateClient();
   redirect("/painel/crm/clientes");
 }

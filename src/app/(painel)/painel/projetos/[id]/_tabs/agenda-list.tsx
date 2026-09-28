@@ -3,11 +3,12 @@
  * detalhes pela janela da agenda.
  */
 import { AlertTriangle } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { EventButton } from "@/app/(painel)/painel/agenda/agenda-dialogs";
 import { eventAriaLabel } from "@/app/(painel)/painel/agenda/agenda-month";
 import { dayMonthShort, eventDays, eventEnd, timeRange } from "@/app/(painel)/painel/agenda/agenda-utils";
 import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
-import { brl, initials, monthShort, relativeDay, weekdayShort } from "@/lib/format";
+import { brl, monthShort, relativeDay, weekdayShort } from "@/lib/format";
 import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 
@@ -79,9 +80,7 @@ function ProjectEventRow({ ev, today, cost }: { ev: AgendaEvent; today: string; 
                     clash ? "border-warn/45 text-warn" : "border-line-strong text-ash",
                   )}
                 >
-                  <span className="grid size-6 place-items-center rounded-full bg-white/[0.07] text-[10px] font-medium text-light">
-                    {initials(c.name)}
-                  </span>
+                  <Avatar name={c.name} imageId={c.photoId} size="xs" className="border-0 bg-white/[0.07] text-[10px]" />
                   <span>
                     {c.name.split(" ")[0]}
                     {c.function ? <span className="text-mute"> · {optionLabel(FUNCTIONS, c.function)}</span> : null}

@@ -15,12 +15,13 @@ import {
   Th,
   whatsappHref,
 } from "@/components/painel/bits";
+import { Avatar } from "@/components/painel/avatar";
 import { StatTile } from "@/components/painel/stat";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { EVENT_TYPES, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
-import { brl, dateBR, dateShort, entryStatus, initials, todayISO } from "@/lib/format";
+import { brl, dateBR, dateShort, entryStatus, todayISO } from "@/lib/format";
 import { getClient } from "@/lib/queries/crm";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
@@ -69,9 +70,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
 
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="flex min-w-0 items-center gap-5">
-          <span className="grid size-16 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[18px] font-medium text-light">
-            {initials(c.name)}
-          </span>
+          <Avatar name={c.name} imageId={c.logoId} logo size="xl" />
           <div className="min-w-0">
             <h1 className="text-[clamp(28px,3vw,40px)] leading-[1.05] font-semibold tracking-[-0.035em] text-white">{c.name}</h1>
             <p className="mt-2 text-[14px] text-ash">
@@ -118,6 +117,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
               instagram: c.instagram,
               source: c.source,
               notes: c.notes,
+              logoId: c.logoId,
             }}
           />
           <DeleteClientButton id={c.id} name={c.name} />

@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { FUNCTIONS } from "@/lib/domain";
 
 const { freelancers, freelancerRates, projectCrew, projects, financeEntries } = schema;
 
@@ -42,6 +43,13 @@ export async function listFreelancers(filters: { q?: string; funcao?: string; at
     openAmount: Number(open.find((o) => o.freelancerId === f.id)?.open ?? 0),
     jobs: Number(jobs.find((j) => j.freelancerId === f.id)?.n ?? 0),
   }));
+}
+
+/** Funções criadas nos cadastros dos freelas (fora da lista padrão), em ordem alfabética. */
+export async function listCustomFunctions() {
+  const rows = await db.select({ functions: freelancers.functions }).from(freelancers);
+  const known = new Set<string>(FUNCTIONS.map((f) => f.key));
+  return [...new Set(rows.flatMap((r) => r.functions).filter((k) => !known.has(k)))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
 export async function getFreelancer(id: string) {

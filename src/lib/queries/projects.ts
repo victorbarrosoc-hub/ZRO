@@ -183,6 +183,7 @@ export const getProject = cache(async (id: string) => {
         notes: projectCrew.notes,
         freelancerName: freelancers.name,
         freelancerPhone: freelancers.phone,
+        photoId: freelancers.photoId,
       })
       .from(projectCrew)
       .leftJoin(freelancers, eq(projectCrew.freelancerId, freelancers.id))

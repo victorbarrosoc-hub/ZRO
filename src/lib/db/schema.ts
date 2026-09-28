@@ -108,6 +108,22 @@ export const faqs = sqliteTable("faqs", {
   createdAt: createdAt(),
 });
 
+/* ============================== Imagens ============================== */
+
+/**
+ * Foto de freela e logo de cliente. Chegam já reduzidas pelo navegador e ficam
+ * aqui em base64 (assim entram no backup). Só abrem para quem está logado.
+ */
+export const images = sqliteTable("images", {
+  id: id(),
+  mime: text().notNull(),
+  data: text().notNull(),
+  width: integer().notNull(),
+  height: integer().notNull(),
+  bytes: integer().notNull(),
+  createdAt: createdAt(),
+});
+
 /* ============================== CRM ============================== */
 
 export const clients = sqliteTable(
@@ -124,6 +140,7 @@ export const clients = sqliteTable(
     instagram: text(),
     source: text().notNull().default("outro"),
     notes: text(),
+    logoId: text().references(() => images.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -194,6 +211,7 @@ export const freelancers = sqliteTable(
     equipment: text(),
     notes: text(),
     active: integer({ mode: "boolean" }).notNull().default(true),
+    photoId: text().references(() => images.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

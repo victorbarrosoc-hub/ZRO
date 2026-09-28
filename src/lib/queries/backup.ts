@@ -19,6 +19,7 @@ const TABLES = {
   catalogItems: s.catalogItems,
   projectTemplates: s.projectTemplates,
   equipmentKits: s.equipmentKits,
+  images: s.images,
   clients: s.clients,
   leads: s.leads,
   freelancers: s.freelancers,

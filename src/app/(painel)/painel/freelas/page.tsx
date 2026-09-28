@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Avatar } from "@/components/painel/avatar";
 import { SearchField } from "@/components/painel/search-field";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { brl, initials } from "@/lib/format";
-import { listFreelancers } from "@/lib/queries/freelas";
+import { RATE_UNITS, functionOptions, optionLabel } from "@/lib/domain";
+import { brl } from "@/lib/format";
+import { listCustomFunctions, listFreelancers } from "@/lib/queries/freelas";
 import { cn } from "@/lib/utils";
 import { NewFreelaButton } from "./freela-dialogs";
 
@@ -17,7 +18,8 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
   const q = typeof sp.q === "string" ? sp.q : undefined;
   const funcao = typeof sp.funcao === "string" ? sp.funcao : undefined;
   const arquivados = sp.arquivados === "1";
-  const freelas = await listFreelancers({ q, funcao, ativos: !arquivados });
+  const [freelas, customFunctions] = await Promise.all([listFreelancers({ q, funcao, ativos: !arquivados }), listCustomFunctions()]);
+  const functions = functionOptions(customFunctions);
 
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -32,7 +34,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
       <PageHeader
         label="Banco de freelas"
         title="Freelas"
-        actions={<NewFreelaButton />}
+        actions={<NewFreelaButton customFunctions={customFunctions} />}
       />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr] lg:items-center">
@@ -41,7 +43,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
           <FilterChip href={qs({ funcao: undefined })} active={!funcao}>
             Todas as funções
           </FilterChip>
-          {FUNCTIONS.map((f) => (
+          {functions.map((f) => (
             <FilterChip key={f.key} href={qs({ funcao: f.key })} active={funcao === f.key}>
               {f.label}
             </FilterChip>
@@ -58,9 +60,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
                 <Link href={`/painel/freelas/${f.id}`} className="group block h-full">
                   <Card className="flex h-full flex-col gap-5 p-5 transition-colors duration-300 group-hover:border-white/20">
                     <div className="flex items-start gap-4">
-                      <span className="grid size-12 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[14px] font-medium text-light">
-                        {initials(f.name)}
-                      </span>
+                      <Avatar name={f.name} imageId={f.photoId} size="lg" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[16px] font-medium text-white">{f.name}</p>
                         <p className="text-[13px] text-mute">{f.city ?? "—"}</p>
@@ -71,7 +71,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {f.functions.map((fn) => (
-                        <Badge key={fn}>{optionLabel(FUNCTIONS, fn)}</Badge>
+                        <Badge key={fn}>{optionLabel(functions, fn)}</Badge>
                       ))}
                     </div>
                     <div className="mt-auto flex items-end justify-between gap-4 border-t border-line pt-4 text-[13px]">
@@ -98,7 +98,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
         <Card>
           <EmptyState
             title={q || funcao ? "Ninguém encontrado com esse filtro" : "Nenhum freela cadastrado"}
-            action={<NewFreelaButton />}
+            action={<NewFreelaButton customFunctions={customFunctions} />}
           />
         </Card>
       )}

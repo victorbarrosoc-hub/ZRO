@@ -358,6 +358,7 @@ export async function freelasToPay(today = todayISO()) {
       dueDate: financeEntries.dueDate,
       freelancerId: financeEntries.freelancerId,
       freelancerName: freelancers.name,
+      photoId: freelancers.photoId,
       projectId: financeEntries.projectId,
       projectCode: projects.code,
     })
@@ -377,6 +378,7 @@ export async function freelasToPay(today = todayISO()) {
     key: string;
     freelancerId: string | null;
     name: string;
+    photoId: string | null;
     open: number;
     nextDue: string;
     overdue: boolean;
@@ -390,6 +392,7 @@ export async function freelasToPay(today = todayISO()) {
       key,
       freelancerId: r.freelancerId,
       name: r.freelancerName ?? "Sem cadastro no banco",
+      photoId: r.photoId,
       open: 0,
       nextDue: r.dueDate,
       overdue: false,

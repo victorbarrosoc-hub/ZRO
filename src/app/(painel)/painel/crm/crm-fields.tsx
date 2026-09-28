@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FormSection, fieldError } from "@/components/painel/form";
+import { ImageField } from "@/components/painel/image-field";
 import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import {
@@ -342,6 +343,7 @@ export type ClientDefaults = {
   instagram?: string | null;
   source?: string | null;
   notes?: string | null;
+  logoId?: string | null;
 };
 
 export function ClientFields({ state, defaults = {} }: { state: ActionResult | null; defaults?: ClientDefaults }) {
@@ -350,6 +352,7 @@ export function ClientFields({ state, defaults = {} }: { state: ActionResult | n
   return (
     <>
       {d.id ? <input type="hidden" name="id" value={d.id} /> : null}
+      <ImageField name="logo" kind="logo" currentId={d.logoId} displayName={d.name} error={err("logo")} />
       <FormSection title="Empresa">
         <div className="grid items-start gap-4 sm:grid-cols-2">
           <Field label="Nome" htmlFor="c-name" error={err("name")} className="sm:col-span-2">

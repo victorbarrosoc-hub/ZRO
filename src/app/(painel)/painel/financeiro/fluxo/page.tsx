@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, CalendarDays } from "lucide-react";
+import { Avatar } from "@/components/painel/avatar";
 import { CashflowChart } from "@/components/painel/cashflow-chart";
 import { EntryStatusBadge, Table, Td, Th } from "@/components/painel/bits";
 import { HeroFigure, StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { PAYMENT_METHODS, PROJECT_STATUS, optionLabel } from "@/lib/domain";
-import { brl, dateBR, dateShort, initials, monthLong, todayISO } from "@/lib/format";
+import { brl, dateBR, dateShort, monthLong, todayISO } from "@/lib/format";
 import { getCashFlow } from "@/lib/queries/dashboard";
 import { freelasToPay, isMonthKey, monthOf, paidToFreelas, projectResults, type ProjectResult } from "@/lib/queries/finance";
 import { FLOW_COLORS, FinanceTabs, MonthNav } from "../finance-bits";
@@ -141,9 +142,7 @@ export default async function FluxoPage({ searchParams }: PageProps<"/painel/fin
                 <li key={g.key} className="border-b border-line px-5 py-4 last:border-b-0 sm:px-6">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[13px] font-medium text-light">
-                        {initials(g.name)}
-                      </span>
+                      <Avatar name={g.name} imageId={g.photoId} size="md" className="text-[13px]" />
                       <div className="min-w-0">
                         {g.freelancerId ? (
                           <Link href={`/painel/freelas/${g.freelancerId}`} className="block truncate text-[15px] text-light hover:underline">
