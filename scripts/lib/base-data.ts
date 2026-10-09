@@ -2,7 +2,7 @@
  * Dados base: usuários, configurações, catálogo, modelos, kits, FAQ e equipe.
  * Só cria o que ainda não existe, então pode rodar várias vezes.
  */
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { eq, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
@@ -18,17 +18,19 @@ import {
   DEFAULT_TEMPLATES,
 } from "../../src/lib/db/defaults";
 
-type SeedUser = { name: string; envPrefix: string; email: string; password?: string };
+type SeedUser = { key: string; name: string; envPrefix: string; email: string; password?: string };
 
 function seedUsersFromEnv(): SeedUser[] {
   return [
     {
+      key: "victor",
       name: "Victor Barroso",
       envPrefix: "ZRO_VICTOR",
       email: process.env.ZRO_VICTOR_EMAIL ?? "victor@zro.local",
       password: process.env.ZRO_VICTOR_PASSWORD,
     },
     {
+      key: "edu",
       name: "Edu Cardoso",
       envPrefix: "ZRO_EDU",
       email: process.env.ZRO_EDU_EMAIL ?? "edu@zro.local",
@@ -37,10 +39,43 @@ function seedUsersFromEnv(): SeedUser[] {
   ];
 }
 
+/**
+ * Esqueceu a senha: ZRO_REDEFINIR_SENHA=victor (ou edu) + a senha nova em
+ * ZRO_VICTOR_PASSWORD (ou ZRO_EDU_PASSWORD) e Redeploy. Cada senha nova vale
+ * uma vez só: se as variáveis ficarem esquecidas na Vercel, os próximos deploys
+ * não desfazem uma troca de senha feita depois no painel.
+ */
+async function resetPassword(db: DB, u: SeedUser) {
+  const wanted = (process.env.ZRO_REDEFINIR_SENHA ?? "").toLowerCase().split(/[\s,;]+/);
+  if (!wanted.includes(u.key)) return;
+  if (!u.password || u.password.length < 10) {
+    console.warn(`⚠ Senha de ${u.name} não redefinida: ${u.envPrefix}_PASSWORD precisa ter pelo menos 10 caracteres.`);
+    return;
+  }
+  const user =
+    (await db.query.users.findFirst({ where: eq(s.users.email, u.email.toLowerCase()) })) ??
+    (await db.query.users.findFirst({ where: eq(s.users.name, u.name) }));
+  if (!user) {
+    console.warn(`⚠ Senha de ${u.name} não redefinida: conta não encontrada.`);
+    return;
+  }
+  const marker = `senha-redefinida:${u.key}`;
+  const fingerprint = createHash("sha256").update(`${user.id}:${u.password}`).digest("hex");
+  const done = await db.query.settings.findFirst({ where: eq(s.settings.key, marker) });
+  if (done?.value === fingerprint) return;
+  await db.update(s.users).set({ passwordHash: await hashPassword(u.password) }).where(eq(s.users.id, user.id));
+  await db
+    .insert(s.settings)
+    .values({ key: marker, value: fingerprint })
+    .onConflictDoUpdate({ target: s.settings.key, set: { value: fingerprint } });
+  console.log(`✓ Senha de ${u.name} (${user.email}) redefinida.`);
+}
+
 export async function ensureUsers(db: DB, opts: { allowGenerated: boolean }) {
   const created: { email: string; password: string }[] = [];
   for (const u of seedUsersFromEnv()) {
     const exists = await db.query.users.findFirst({ where: eq(s.users.email, u.email.toLowerCase()) });
+    await resetPassword(db, u);
     if (exists) continue;
     let password = u.password;
     if (!password) {
