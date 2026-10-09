@@ -59,6 +59,7 @@ A Vercel publica em produção o que está na `main`. Fazer o merge da branch `c
 - **Backup:** no mesmo lugar, **Baixar backup (.json)** com tudo, menos senhas. Vale guardar um por semana no Google Drive.
 - **Domínio próprio:** Vercel → Settings → Domains → adicionar o domínio → apontar o DNS como a Vercel indicar → trocar `NEXT_PUBLIC_SITE_URL` → Redeploy.
 - **Conta nova de sócio:** definir o e-mail e a senha nas variáveis e fazer Redeploy. Contas que já existem não são alteradas.
+- **Esqueceu a senha:** em Settings → Environment Variables, criar `ZRO_REDEFINIR_SENHA` = `victor` (ou `edu`) e `ZRO_VICTOR_PASSWORD` (ou `ZRO_EDU_PASSWORD`) com a senha nova (10+ caracteres), e fazer Redeploy. Depois de entrar, apagar as duas variáveis. Cada senha nova só é aplicada uma vez, então um deploy depois não desfaz uma troca feita no painel.
 
 ## Custos
 
