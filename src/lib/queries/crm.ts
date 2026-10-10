@@ -83,11 +83,11 @@ export async function listClients() {
   const [rows, projectCounts, received] = await Promise.all([
     db.select().from(clients),
     db
-      .select({ clientId: projects.clientId, n: sql<number>`count(*)` })
+      .select({ clientId: projects.clientId, n: sql<number>`count(*)`.mapWith(Number) })
       .from(projects)
       .groupBy(projects.clientId),
     db
-      .select({ clientId: financeEntries.clientId, paid: sql<number>`coalesce(sum(${financeEntries.paidAmount}), 0)` })
+      .select({ clientId: financeEntries.clientId, paid: sql<number>`coalesce(sum(${financeEntries.paidAmount}), 0)`.mapWith(Number) })
       .from(financeEntries)
       .where(eq(financeEntries.kind, "entrada"))
       .groupBy(financeEntries.clientId),
@@ -240,7 +240,7 @@ async function quotesWhere(where: SQL | undefined) {
     .orderBy(desc(quotes.issueDate), desc(quotes.number), desc(quotes.version));
   if (!rows.length) return [];
   const totals = await db
-    .select({ quoteId: quoteItems.quoteId, total: sql<number>`sum(round(${quoteItems.quantity} * ${quoteItems.unitPrice}))` })
+    .select({ quoteId: quoteItems.quoteId, total: sql<number>`sum(round(${quoteItems.quantity} * ${quoteItems.unitPrice}))`.mapWith(Number) })
     .from(quoteItems)
     .where(
       inArray(

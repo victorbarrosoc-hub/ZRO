@@ -1,12 +1,9 @@
 import { defineConfig } from "drizzle-kit";
-import { databaseConfig } from "./src/lib/db/config";
 
-const { url, authToken } = databaseConfig();
-
+// Só gera as migrações (npm run db:generate); quem aplica é scripts/db-migrate.mts.
 export default defineConfig({
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
-  dialect: "turso",
+  dialect: "postgresql",
   casing: "snake_case",
-  dbCredentials: { url, authToken },
 });

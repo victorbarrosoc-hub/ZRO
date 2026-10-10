@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { bool, fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { requireUser } from "@/lib/auth/dal";
-import { db, schema } from "@/lib/db";
+import { db, schema, transact, type Tx } from "@/lib/db";
 import { CATALOG_GROUPS, CATALOG_UNITS, CATEGORY_KEYS, FUNNEL_BUDGETS, optionLabel } from "@/lib/domain";
 import { addDaysISO, brl, dateBR, todayISO } from "@/lib/format";
 import { nextQuoteNumber, otherOpenQuotesForLead } from "@/lib/queries/quotes";
@@ -166,7 +166,7 @@ export async function saveCustomToCatalog(_prev: ActionResult | null, fd: FormDa
     cost: money(fd, "cost") ?? 0,
   });
   if (!parsed.success) return fromZod(parsed.error);
-  const [row] = await db.select({ max: sql<number | null>`max(${catalogItems.sortOrder})` }).from(catalogItems);
+  const [row] = await db.select({ max: sql<number | null>`max(${catalogItems.sortOrder})`.mapWith(Number) }).from(catalogItems);
   const [created] = await db
     .insert(catalogItems)
     .values({
@@ -311,7 +311,8 @@ export async function saveQuote(_prev: ActionResult | null, fd: FormData): Promi
     for (const it of items) if (it.catalogItemId && !known.has(it.catalogItemId)) it.catalogItemId = null;
   }
 
-  const update = db
+  const update = (t: Tx) =>
+    t
     .update(quotes)
     .set({
       title: data.title,
@@ -328,13 +329,12 @@ export async function saveQuote(_prev: ActionResult | null, fd: FormData): Promi
       internalNotes: data.internalNotes ?? null,
     })
     .where(eq(quotes.id, quote.id));
-  const clear = db.delete(quoteItems).where(eq(quoteItems.quoteId, quote.id));
   // Tudo de uma vez (atômico): dados do orçamento e a lista nova de itens.
-  if (items.length) {
-    await db.batch([update, clear, db.insert(quoteItems).values(items.map((it, i) => ({ ...it, quoteId: quote.id, sortOrder: i })))]);
-  } else {
-    await db.batch([update, clear]);
-  }
+  await transact((t) => [
+    update(t),
+    t.delete(quoteItems).where(eq(quoteItems.quoteId, quote.id)),
+    ...(items.length ? [t.insert(quoteItems).values(items.map((it, i) => ({ ...it, quoteId: quote.id, sortOrder: i })))] : []),
+  ]);
 
   revalidateQuote(quote.id, { leadId: quote.leadId, clientId: data.clientId });
   return ok("Orçamento salvo.");
@@ -454,25 +454,19 @@ export async function approveQuote(_prev: ActionResult | null, fd: FormData): Pr
     amount: p.amount,
     dueDate: p.dueDate,
   }));
-  const approve = db
-    .update(quotes)
-    .set({ status: "aprovado", decidedAt: new Date(), projectId: project.id, clientId })
-    .where(eq(quotes.id, quote.id));
-  const insertEntries = db.insert(financeEntries).values(entries);
-
   try {
-    if (quote.leadId) {
-      await db.batch([
-        approve,
-        insertEntries,
-        db
-          .update(leads)
-          .set({ stage: "ganho", clientId, lostReason: null, estimatedValue: totals.total })
-          .where(eq(leads.id, quote.leadId)),
-      ]);
-    } else {
-      await db.batch([approve, insertEntries]);
-    }
+    await transact((t) => [
+      t.update(quotes).set({ status: "aprovado", decidedAt: new Date(), projectId: project.id, clientId }).where(eq(quotes.id, quote.id)),
+      t.insert(financeEntries).values(entries),
+      ...(quote.leadId
+        ? [
+            t
+              .update(leads)
+              .set({ stage: "ganho", clientId, lostReason: null, estimatedValue: totals.total })
+              .where(eq(leads.id, quote.leadId)),
+          ]
+        : []),
+    ]);
   } catch {
     // Sem lançamentos, o projeto criado agora não faz sentido: desfaz.
     await db.delete(projects).where(eq(projects.id, project.id));
@@ -544,7 +538,8 @@ export async function newQuoteVersion(_prev: ActionResult | null, fd: FormData):
   const today = todayISO();
   const id = crypto.randomUUID();
 
-  const insertQuote = db.insert(quotes).values({
+  const insertQuote = (t: Tx) =>
+    t.insert(quotes).values({
     id,
     number: source.number,
     version,
@@ -564,10 +559,11 @@ export async function newQuoteVersion(_prev: ActionResult | null, fd: FormData):
     internalNotes: source.internalNotes,
   });
   try {
-    if (items.length) {
-      await db.batch([
-        insertQuote,
-        db.insert(quoteItems).values(
+    await transact((t) => [
+      insertQuote(t),
+      ...(items.length
+        ? [
+            t.insert(quoteItems).values(
           items.map((it) => ({
             quoteId: id,
             catalogItemId: it.catalogItemId,
@@ -579,11 +575,10 @@ export async function newQuoteVersion(_prev: ActionResult | null, fd: FormData):
             unitCost: it.unitCost,
             sortOrder: it.sortOrder,
           })),
-        ),
-      ]);
-    } else {
-      await db.batch([insertQuote]);
-    }
+            ),
+          ]
+        : []),
+    ]);
   } catch (e) {
     if (isUniqueError(e)) return fail("Outra versão acabou de ser criada. Recarregue a página.");
     throw e;
@@ -600,9 +595,9 @@ export async function deleteQuote(_prev: ActionResult | null, fd: FormData): Pro
   if (!quote) return fail("Orçamento não encontrado.");
   if (quote.status !== "rascunho") return fail("Só rascunhos podem ser excluídos.");
 
-  await db.batch([
-    db.delete(quoteItems).where(eq(quoteItems.quoteId, quote.id)),
-    db.delete(quotes).where(eq(quotes.id, quote.id)),
+  await transact((t) => [
+    t.delete(quoteItems).where(eq(quoteItems.quoteId, quote.id)),
+    t.delete(quotes).where(eq(quotes.id, quote.id)),
   ]);
 
   const [previous] = await db

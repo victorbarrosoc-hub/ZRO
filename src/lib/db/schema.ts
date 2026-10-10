@@ -1,57 +1,57 @@
 /**
- * Banco da ZRO (SQLite/libSQL via Drizzle).
- * Dinheiro sempre em centavos (inteiro). Datas de calendário em texto "AAAA-MM-DD".
+ * Banco da ZRO (Postgres no Supabase; PGlite no computador, via Drizzle).
+ * Dinheiro sempre em centavos (inteiro, bigint para não estourar). Datas de calendário em texto "AAAA-MM-DD".
  */
 import { relations } from "drizzle-orm";
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { bigint, boolean, doublePrecision, index, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import type { CreativeRuleAnswers } from "@/lib/domain";
 
 const id = () => text().primaryKey().$defaultFn(() => crypto.randomUUID());
 const createdAt = () =>
-  integer({ mode: "timestamp_ms" })
+  timestamp({ mode: "date", withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date());
 const updatedAt = () =>
-  integer({ mode: "timestamp_ms" })
+  timestamp({ mode: "date", withTimezone: true })
     .notNull()
     .$defaultFn(() => new Date())
     .$onUpdateFn(() => new Date());
 
 /* ============================== Acesso ============================== */
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: id(),
   name: text().notNull(),
   email: text().notNull().unique(),
   passwordHash: text().notNull(),
   role: text().notNull().default("socio"),
-  lastLoginAt: integer({ mode: "timestamp_ms" }),
+  lastLoginAt: timestamp({ mode: "date", withTimezone: true }),
   createdAt: createdAt(),
 });
 
 /** Tentativas de login, para frear força bruta. */
-export const loginAttempts = sqliteTable(
+export const loginAttempts = pgTable(
   "login_attempts",
   {
     id: id(),
     email: text().notNull(),
     ip: text(),
-    success: integer({ mode: "boolean" }).notNull().default(false),
+    success: boolean().notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [index("login_attempts_email_idx").on(t.email, t.createdAt)],
 );
 
 /** Configurações em chave/valor (dados da empresa, WhatsApp, alíquota...). */
-export const settings = sqliteTable("settings", {
+export const settings = pgTable("settings", {
   key: text().primaryKey(),
-  value: text({ mode: "json" }).$type<unknown>().notNull(),
+  value: jsonb().$type<unknown>().notNull(),
   updatedAt: updatedAt(),
 });
 
 /* ============================== Site ============================== */
 
-export const films = sqliteTable(
+export const films = pgTable(
   "films",
   {
     id: id(),
@@ -59,7 +59,7 @@ export const films = sqliteTable(
     title: text().notNull(),
     client: text(),
     category: text().notNull(),
-    year: integer(),
+    year: bigint({ mode: "number" }),
     duration: text(),
     format: text().notNull().default("16:9"),
     videoUrl: text(),
@@ -67,44 +67,44 @@ export const films = sqliteTable(
     previewUrl: text(),
     summary: text(),
     intention: text(),
-    credits: text({ mode: "json" }).$type<{ role: string; name: string }[]>(),
-    stills: text({ mode: "json" }).$type<string[]>(),
-    featured: integer({ mode: "boolean" }).notNull().default(false),
-    published: integer({ mode: "boolean" }).notNull().default(true),
-    sortOrder: integer().notNull().default(0),
+    credits: jsonb().$type<{ role: string; name: string }[]>(),
+    stills: jsonb().$type<string[]>(),
+    featured: boolean().notNull().default(false),
+    published: boolean().notNull().default(true),
+    sortOrder: bigint({ mode: "number" }).notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [uniqueIndex("films_slug_idx").on(t.slug)],
 );
 
-export const teamMembers = sqliteTable("team_members", {
+export const teamMembers = pgTable("team_members", {
   id: id(),
   name: text().notNull(),
   role: text().notNull(),
   quote: text(),
   photoUrl: text(),
   instagram: text(),
-  sortOrder: integer().notNull().default(0),
-  published: integer({ mode: "boolean" }).notNull().default(true),
+  sortOrder: bigint({ mode: "number" }).notNull().default(0),
+  published: boolean().notNull().default(true),
   createdAt: createdAt(),
 });
 
-export const showcaseClients = sqliteTable("showcase_clients", {
+export const showcaseClients = pgTable("showcase_clients", {
   id: id(),
   name: text().notNull(),
   logoUrl: text(),
-  sortOrder: integer().notNull().default(0),
-  published: integer({ mode: "boolean" }).notNull().default(true),
+  sortOrder: bigint({ mode: "number" }).notNull().default(0),
+  published: boolean().notNull().default(true),
   createdAt: createdAt(),
 });
 
-export const faqs = sqliteTable("faqs", {
+export const faqs = pgTable("faqs", {
   id: id(),
   question: text().notNull(),
   answer: text().notNull(),
-  sortOrder: integer().notNull().default(0),
-  published: integer({ mode: "boolean" }).notNull().default(true),
+  sortOrder: bigint({ mode: "number" }).notNull().default(0),
+  published: boolean().notNull().default(true),
   createdAt: createdAt(),
 });
 
@@ -114,19 +114,19 @@ export const faqs = sqliteTable("faqs", {
  * Foto de freela e logo de cliente. Chegam já reduzidas pelo navegador e ficam
  * aqui em base64 (assim entram no backup). Só abrem para quem está logado.
  */
-export const images = sqliteTable("images", {
+export const images = pgTable("images", {
   id: id(),
   mime: text().notNull(),
   data: text().notNull(),
-  width: integer().notNull(),
-  height: integer().notNull(),
-  bytes: integer().notNull(),
+  width: bigint({ mode: "number" }).notNull(),
+  height: bigint({ mode: "number" }).notNull(),
+  bytes: bigint({ mode: "number" }).notNull(),
   createdAt: createdAt(),
 });
 
 /* ============================== CRM ============================== */
 
-export const clients = sqliteTable(
+export const clients = pgTable(
   "clients",
   {
     id: id(),
@@ -147,7 +147,7 @@ export const clients = sqliteTable(
   (t) => [index("clients_name_idx").on(t.name)],
 );
 
-export const leads = sqliteTable(
+export const leads = pgTable(
   "leads",
   {
     id: id(),
@@ -164,15 +164,15 @@ export const leads = sqliteTable(
     days: text(),
     videos: text(),
     format: text(),
-    extras: text({ mode: "json" }).$type<string[]>(),
+    extras: jsonb().$type<string[]>(),
     budget: text(),
     stage: text().notNull().default("novo"),
     lostReason: text(),
     source: text().notNull().default("site"),
-    estimatedValue: integer(),
+    estimatedValue: bigint({ mode: "number" }),
     followUpAt: text(),
     notes: text(),
-    consentAt: integer({ mode: "timestamp_ms" }),
+    consentAt: timestamp({ mode: "date", withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -180,7 +180,7 @@ export const leads = sqliteTable(
 );
 
 /** Histórico de interações (lead, cliente ou projeto). */
-export const activities = sqliteTable(
+export const activities = pgTable(
   "activities",
   {
     id: id(),
@@ -197,7 +197,7 @@ export const activities = sqliteTable(
 
 /* ============================== Freelas ============================== */
 
-export const freelancers = sqliteTable(
+export const freelancers = pgTable(
   "freelancers",
   {
     id: id(),
@@ -207,10 +207,10 @@ export const freelancers = sqliteTable(
     email: text(),
     instagram: text(),
     pixKey: text(),
-    functions: text({ mode: "json" }).$type<string[]>().notNull().default([]),
+    functions: jsonb().$type<string[]>().notNull().default([]),
     equipment: text(),
     notes: text(),
-    active: integer({ mode: "boolean" }).notNull().default(true),
+    active: boolean().notNull().default(true),
     photoId: text().references(() => images.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -219,7 +219,7 @@ export const freelancers = sqliteTable(
 );
 
 /** Valor padrão de um freela por função (e, opcionalmente, por tipo de job). */
-export const freelancerRates = sqliteTable(
+export const freelancerRates = pgTable(
   "freelancer_rates",
   {
     id: id(),
@@ -228,7 +228,7 @@ export const freelancerRates = sqliteTable(
       .references(() => freelancers.id, { onDelete: "cascade" }),
     function: text().notNull(),
     category: text(),
-    amount: integer().notNull(),
+    amount: bigint({ mode: "number" }).notNull(),
     unit: text().notNull().default("diaria"),
   },
   (t) => [index("freelancer_rates_freelancer_idx").on(t.freelancerId)],
@@ -236,7 +236,7 @@ export const freelancerRates = sqliteTable(
 
 /* ============================== Projetos ============================== */
 
-export const projects = sqliteTable(
+export const projects = pgTable(
   "projects",
   {
     id: id(),
@@ -250,9 +250,9 @@ export const projects = sqliteTable(
     status: text().notNull().default("ativo"),
     startDate: text(),
     dueDate: text(),
-    value: integer().notNull().default(0),
+    value: bigint({ mode: "number" }).notNull().default(0),
     briefing: text(),
-    creativeRule: text({ mode: "json" }).$type<CreativeRuleAnswers>(),
+    creativeRule: jsonb().$type<CreativeRuleAnswers>(),
     driveUrl: text(),
     notes: text(),
     createdAt: createdAt(),
@@ -261,7 +261,7 @@ export const projects = sqliteTable(
   (t) => [uniqueIndex("projects_code_idx").on(t.code), index("projects_stage_idx").on(t.stage)],
 );
 
-export const projectDeliverables = sqliteTable(
+export const projectDeliverables = pgTable(
   "project_deliverables",
   {
     id: id(),
@@ -271,18 +271,18 @@ export const projectDeliverables = sqliteTable(
     title: text().notNull(),
     format: text(),
     duration: text(),
-    quantity: integer().notNull().default(1),
+    quantity: bigint({ mode: "number" }).notNull().default(1),
     dueDate: text(),
     status: text().notNull().default("pendente"),
-    revision: integer().notNull().default(0),
+    revision: bigint({ mode: "number" }).notNull().default(0),
     link: text(),
-    sortOrder: integer().notNull().default(0),
+    sortOrder: bigint({ mode: "number" }).notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [index("deliverables_project_idx").on(t.projectId)],
 );
 
-export const projectTasks = sqliteTable(
+export const projectTasks = pgTable(
   "project_tasks",
   {
     id: id(),
@@ -291,15 +291,15 @@ export const projectTasks = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     stage: text().notNull(),
     title: text().notNull(),
-    done: integer({ mode: "boolean" }).notNull().default(false),
-    sortOrder: integer().notNull().default(0),
+    done: boolean().notNull().default(false),
+    sortOrder: bigint({ mode: "number" }).notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [index("tasks_project_idx").on(t.projectId)],
 );
 
 /** Equipe do projeto: quem trabalha, em qual função, por quanto. */
-export const projectCrew = sqliteTable(
+export const projectCrew = pgTable(
   "project_crew",
   {
     id: id(),
@@ -313,9 +313,9 @@ export const projectCrew = sqliteTable(
     startDate: text(),
     dueDate: text(),
     deliveredAt: text(),
-    amount: integer().notNull().default(0),
+    amount: bigint({ mode: "number" }).notNull().default(0),
     /** Valor por diária. Com ele, o valor total é a diária × os dias em que a pessoa está escalada na agenda do projeto. */
-    dailyRate: integer(),
+    dailyRate: bigint({ mode: "number" }),
     /** "manual" (montado na aba Equipe) ou "agenda" (entrou ao ser escalado numa diária). */
     source: text().notNull().default("manual"),
     notes: text(),
@@ -326,7 +326,7 @@ export const projectCrew = sqliteTable(
 
 /* ============================== Agenda ============================== */
 
-export const events = sqliteTable(
+export const events = pgTable(
   "events",
   {
     id: id(),
@@ -345,7 +345,7 @@ export const events = sqliteTable(
 );
 
 /** Quem está escalado em cada diária (para avisar conflito de agenda). */
-export const eventCrew = sqliteTable(
+export const eventCrew = pgTable(
   "event_crew",
   {
     id: id(),
@@ -365,25 +365,25 @@ export const eventCrew = sqliteTable(
 
 /* ============================== Orçamentos ============================== */
 
-export const catalogItems = sqliteTable("catalog_items", {
+export const catalogItems = pgTable("catalog_items", {
   id: id(),
   name: text().notNull(),
   description: text(),
   group: text().notNull().default("extra"),
   unit: text().notNull().default("unidade"),
-  price: integer().notNull().default(0),
-  cost: integer().notNull().default(0),
-  active: integer({ mode: "boolean" }).notNull().default(true),
-  sortOrder: integer().notNull().default(0),
+  price: bigint({ mode: "number" }).notNull().default(0),
+  cost: bigint({ mode: "number" }).notNull().default(0),
+  active: boolean().notNull().default(true),
+  sortOrder: bigint({ mode: "number" }).notNull().default(0),
   createdAt: createdAt(),
 });
 
-export const quotes = sqliteTable(
+export const quotes = pgTable(
   "quotes",
   {
     id: id(),
     number: text().notNull(),
-    version: integer().notNull().default(1),
+    version: bigint({ mode: "number" }).notNull().default(1),
     clientId: text().references(() => clients.id, { onDelete: "set null" }),
     leadId: text().references(() => leads.id, { onDelete: "set null" }),
     projectId: text(),
@@ -396,18 +396,18 @@ export const quotes = sqliteTable(
     scope: text(),
     paymentTerms: text(),
     conditions: text(),
-    discount: integer().notNull().default(0),
-    taxRate: real().notNull().default(0),
+    discount: bigint({ mode: "number" }).notNull().default(0),
+    taxRate: doublePrecision().notNull().default(0),
     internalNotes: text(),
-    sentAt: integer({ mode: "timestamp_ms" }),
-    decidedAt: integer({ mode: "timestamp_ms" }),
+    sentAt: timestamp({ mode: "date", withTimezone: true }),
+    decidedAt: timestamp({ mode: "date", withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [uniqueIndex("quotes_number_version_idx").on(t.number, t.version)],
 );
 
-export const quoteItems = sqliteTable(
+export const quoteItems = pgTable(
   "quote_items",
   {
     id: id(),
@@ -417,18 +417,18 @@ export const quoteItems = sqliteTable(
     catalogItemId: text().references(() => catalogItems.id, { onDelete: "set null" }),
     description: text().notNull(),
     detail: text(),
-    quantity: real().notNull().default(1),
+    quantity: doublePrecision().notNull().default(1),
     unit: text(),
-    unitPrice: integer().notNull().default(0),
-    unitCost: integer().notNull().default(0),
-    sortOrder: integer().notNull().default(0),
+    unitPrice: bigint({ mode: "number" }).notNull().default(0),
+    unitCost: bigint({ mode: "number" }).notNull().default(0),
+    sortOrder: bigint({ mode: "number" }).notNull().default(0),
   },
   (t) => [index("quote_items_quote_idx").on(t.quoteId)],
 );
 
 /* ============================== Financeiro ============================== */
 
-export const financeEntries = sqliteTable(
+export const financeEntries = pgTable(
   "finance_entries",
   {
     id: id(),
@@ -442,8 +442,8 @@ export const financeEntries = sqliteTable(
     /** Custo de uma diária específica (alimentação, deslocamento, locação...). */
     eventId: text().references(() => events.id, { onDelete: "set null" }),
     quoteId: text(),
-    amount: integer().notNull(),
-    paidAmount: integer().notNull().default(0),
+    amount: bigint({ mode: "number" }).notNull(),
+    paidAmount: bigint({ mode: "number" }).notNull().default(0),
     dueDate: text().notNull(),
     paidAt: text(),
     competence: text(),
@@ -460,14 +460,14 @@ export const financeEntries = sqliteTable(
 );
 
 /** Baixas (inclusive parciais) de um lançamento. */
-export const financePayments = sqliteTable(
+export const financePayments = pgTable(
   "finance_payments",
   {
     id: id(),
     entryId: text()
       .notNull()
       .references(() => financeEntries.id, { onDelete: "cascade" }),
-    amount: integer().notNull(),
+    amount: bigint({ mode: "number" }).notNull(),
     date: text().notNull(),
     method: text(),
     notes: text(),
@@ -479,27 +479,27 @@ export const financePayments = sqliteTable(
 /* ============================== Processos ============================== */
 
 /** Modelo de projeto: tarefas padrão por etapa. */
-export const projectTemplates = sqliteTable("project_templates", {
+export const projectTemplates = pgTable("project_templates", {
   id: id(),
   name: text().notNull(),
   category: text(),
   description: text(),
-  tasks: text({ mode: "json" }).$type<{ stage: string; title: string }[]>().notNull().default([]),
+  tasks: jsonb().$type<{ stage: string; title: string }[]>().notNull().default([]),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
 
-export const equipmentKits = sqliteTable("equipment_kits", {
+export const equipmentKits = pgTable("equipment_kits", {
   id: id(),
   name: text().notNull(),
   description: text(),
-  items: text({ mode: "json" }).$type<{ name: string; qty: number }[]>().notNull().default([]),
+  items: jsonb().$type<{ name: string; qty: number }[]>().notNull().default([]),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
 
 /** Checklist de equipamento de um projeto, com saída e retorno. */
-export const projectChecklists = sqliteTable(
+export const projectChecklists = pgTable(
   "project_checklists",
   {
     id: id(),
@@ -508,7 +508,7 @@ export const projectChecklists = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     title: text().notNull(),
     date: text(),
-    items: text({ mode: "json" })
+    items: jsonb()
       .$type<{ name: string; qty: number; out: boolean; back: boolean }[]>()
       .notNull()
       .default([]),
@@ -519,7 +519,7 @@ export const projectChecklists = sqliteTable(
 );
 
 /** Ordem do dia. */
-export const callSheets = sqliteTable(
+export const callSheets = pgTable(
   "call_sheets",
   {
     id: id(),
@@ -532,15 +532,15 @@ export const callSheets = sqliteTable(
     callTime: text(),
     location: text(),
     locationUrl: text(),
-    schedule: text({ mode: "json" })
+    schedule: jsonb()
       .$type<{ time: string; activity: string; notes?: string }[]>()
       .notNull()
       .default([]),
-    crew: text({ mode: "json" })
+    crew: jsonb()
       .$type<{ name: string; role: string; phone?: string; call?: string }[]>()
       .notNull()
       .default([]),
-    contacts: text({ mode: "json" }).$type<{ name: string; role: string; phone?: string }[]>().notNull().default([]),
+    contacts: jsonb().$type<{ name: string; role: string; phone?: string }[]>().notNull().default([]),
     notes: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -549,7 +549,7 @@ export const callSheets = sqliteTable(
 );
 
 /** Roteiros, decupagens e shot lists. */
-export const scripts = sqliteTable(
+export const scripts = pgTable(
   "scripts",
   {
     id: id(),
@@ -559,7 +559,7 @@ export const scripts = sqliteTable(
     kind: text().notNull().default("roteiro"),
     title: text().notNull(),
     content: text(),
-    shots: text({ mode: "json" })
+    shots: jsonb()
       .$type<{ scene: string; shot: string; description: string; lens?: string; movement?: string; done?: boolean }[]>()
       .notNull()
       .default([]),

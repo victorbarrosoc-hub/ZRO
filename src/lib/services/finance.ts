@@ -8,7 +8,7 @@ const { financeEntries, financePayments } = schema;
 /** Recalcula o valor pago de um lançamento a partir das baixas. */
 export async function recalcPaid(entryId: string) {
   const [row] = await db
-    .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)`, last: sql<string | null>`max(${financePayments.date})` })
+    .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)`.mapWith(Number), last: sql<string | null>`max(${financePayments.date})` })
     .from(financePayments)
     .where(eq(financePayments.entryId, entryId));
   const paid = Number(row?.total ?? 0);

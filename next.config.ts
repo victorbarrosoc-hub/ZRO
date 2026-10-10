@@ -12,6 +12,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Postgres local (PGlite, WebAssembly): carregado do node_modules, sem passar pelo bundler.
+  serverExternalPackages: ["@electric-sql/pglite"],
   images: {
     // Capas do YouTube e do Vimeo e imagens compartilhadas do Google Drive.
     // O painel (Site) só aceita links destes domínios; arquivos em /media valem sempre.

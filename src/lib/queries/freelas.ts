@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FUNCTIONS } from "@/lib/domain";
 
@@ -9,7 +9,7 @@ export async function listFreelancers(filters: { q?: string; funcao?: string; at
   const where = [];
   if (filters.q) {
     const q = `%${filters.q}%`;
-    where.push(or(like(freelancers.name, q), like(freelancers.city, q)));
+    where.push(or(ilike(freelancers.name, q), ilike(freelancers.city, q)));
   }
   if (filters.ativos !== false) where.push(eq(freelancers.active, true));
   const rows = await db
@@ -26,13 +26,13 @@ export async function listFreelancers(filters: { q?: string; funcao?: string; at
     db
       .select({
         freelancerId: financeEntries.freelancerId,
-        open: sql<number>`sum(${financeEntries.amount} - ${financeEntries.paidAmount})`,
+        open: sql<number>`sum(${financeEntries.amount} - ${financeEntries.paidAmount})`.mapWith(Number),
       })
       .from(financeEntries)
       .where(and(eq(financeEntries.kind, "saida"), sql`${financeEntries.amount} > ${financeEntries.paidAmount}`))
       .groupBy(financeEntries.freelancerId),
     db
-      .select({ freelancerId: projectCrew.freelancerId, n: sql<number>`count(*)` })
+      .select({ freelancerId: projectCrew.freelancerId, n: sql<number>`count(*)`.mapWith(Number) })
       .from(projectCrew)
       .groupBy(projectCrew.freelancerId),
   ]);

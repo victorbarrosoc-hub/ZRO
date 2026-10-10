@@ -6,17 +6,15 @@
  *
  * Uso: ZRO_VICTOR_EMAIL=... ZRO_VICTOR_PASSWORD=... ZRO_EDU_EMAIL=... ZRO_EDU_PASSWORD=... npm run db:setup
  */
-import { mkdirSync } from "node:fs";
-import { migrate } from "drizzle-orm/libsql/migrator";
 import { databaseCandidates, databaseConfig, databaseLabel } from "../src/lib/db/config";
 
 const { local, url } = databaseConfig();
 if (local && process.env.VERCEL) {
-  // Na Vercel não existe disco para o SQLite: sem banco remoto, o site sobe quebrado.
+  // Na Vercel não existe disco para banco local: sem Postgres, o site sobe quebrado.
   console.error(
     "\n✖ Falta o banco de dados.\n" +
-      "  Conecte um banco Turso ao projeto na Vercel (Storage → Turso) ou defina\n" +
-      "  DATABASE_URL e DATABASE_AUTH_TOKEN nas variáveis de ambiente. Passo a passo no DEPLOY.md.\n",
+      "  Defina DATABASE_URL (Postgres do Supabase, Transaction pooler) nas variáveis\n" +
+      "  de ambiente da Vercel. Passo a passo no DEPLOY.md.\n",
   );
   process.exit(1);
 }
@@ -24,51 +22,46 @@ if (local && process.env.VERCEL) {
 // Dois bancos ligados ao mesmo projeto: um deploy poderia ler um e o seguinte o
 // outro, e os dados "sumiriam". Melhor o deploy parar do que escolher sozinho.
 const candidates = databaseCandidates();
-if (process.env.VERCEL && !process.env.DATABASE_URL && candidates.length > 1) {
+if (process.env.VERCEL && candidates.length > 1) {
   console.error(
     "\n✖ Há mais de um banco de dados ligado a este projeto:\n" +
       candidates.map((c) => `  - ${c.label}: ${c.keys.join(", ")}`).join("\n") +
-      "\n  Deixe só o banco certo em Storage (Vercel) ou defina DATABASE_URL e\n" +
-      "  DATABASE_AUTH_TOKEN com ele. O site no ar continua como estava. Veja o DEPLOY.md.\n",
+      "\n  Deixe só o banco certo (DATABASE_URL). O site no ar continua como estava. Veja o DEPLOY.md.\n",
   );
   process.exit(1);
 }
-if (local) mkdirSync("./data", { recursive: true });
-
-const { db } = await import("../src/lib/db/client");
+const { db, runMigrations, closeDatabase } = await import("../src/lib/db/client");
 const s = await import("../src/lib/db/schema");
 const { ensureBaseData } = await import("./lib/base-data");
 const { databaseSummary, ensureDatabaseIdentity, recordDeploy, summaryLine } = await import("../src/lib/db/summary");
 
-await migrate(db, { migrationsFolder: "./drizzle" });
+await runMigrations();
 const found = await databaseSummary(db);
 
 // Continuidade: em produção, cada deploy precisa usar o MESMO banco do deploy anterior.
 // Banco vazio, ou que não viu o último deploy publicado, é banco trocado ou cópia nova:
 // publicar esconderia o CRM. Melhor parar e deixar o site no ar como está.
-// O banco oficial registra os deploys desde o bf5a852 (25/09/2026). Daqui pra frente,
-// banco sem esse histórico também é banco trocado.
-const EXIGIR_HISTORICO = true;
+// Vale mesmo sem VERCEL_GIT_PREVIOUS_SHA (redeploy, deploy pela API): em out/2026 a
+// integração do Turso criou um banco vazio por deploy e a trava antiga não viu.
 const previousSha = process.env.VERCEL_GIT_PREVIOUS_SHA;
-if (process.env.VERCEL_ENV === "production" && previousSha && process.env.ZRO_ACEITAR_BANCO_NOVO !== "1") {
+if (process.env.VERCEL_ENV === "production" && process.env.ZRO_ACEITAR_BANCO_NOVO !== "1") {
   const seen = found.identity?.deploys ?? [];
   const problem = !found.firstSetupAt
-    ? "este deploy recebeu um banco VAZIO, mas o site já tinha sido publicado antes"
-    : seen.length === 0 && EXIGIR_HISTORICO
-      ? "este banco não tem o histórico de publicações que o banco oficial tem"
-      : seen.length > 0 && !seen.includes(previousSha)
+    ? "este deploy recebeu um banco VAZIO"
+    : seen.length === 0
+      ? "este banco não tem o histórico de publicações do banco oficial"
+      : previousSha && !seen.includes(previousSha)
         ? "este banco não é o mesmo que o último deploy publicado usava"
         : null;
   if (problem) {
     console.error(
       `\n✖ Deploy parado para proteger os dados: ${problem}.\n` +
         `  Banco deste deploy: ${databaseLabel(url)}.\n` +
-        "  Causas prováveis: a integração do banco criando uma cópia nova a cada deploy\n" +
-        "  (Vercel → Integrations → Turso → Deployment Actions) ou o banco foi trocado.\n" +
-        "  O site no ar continua com os dados de antes.\n" +
-        "  Trocou o banco de propósito? Crie a variável ZRO_ACEITAR_BANCO_NOVO=1, publique\n" +
-        "  de novo e depois apague a variável. Veja o DEPLOY.md.\n",
+        "  Confira a variável DATABASE_URL na Vercel. O site no ar continua com os dados de antes.\n" +
+        "  Banco novo de propósito (primeira publicação nele)? Crie ZRO_ACEITAR_BANCO_NOVO=1,\n" +
+        "  publique e depois apague a variável. Veja o DEPLOY.md.\n",
     );
+    await closeDatabase();
     process.exit(1);
   }
 }
@@ -95,3 +88,4 @@ const identity = await ensureDatabaseIdentity(db);
 if (process.env.VERCEL_GIT_COMMIT_SHA) await recordDeploy(db, process.env.VERCEL_GIT_COMMIT_SHA);
 const where = process.env.VERCEL_ENV ? ` · ambiente ${process.env.VERCEL_ENV}` : "";
 console.log(`Banco pronto: ${databaseLabel(url)} · id ${identity.id.slice(0, 8)}${where} · ${summaryLine(found)}`);
+await closeDatabase();

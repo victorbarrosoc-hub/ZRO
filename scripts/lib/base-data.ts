@@ -114,7 +114,7 @@ export async function ensureSettings(db: DB) {
 }
 
 async function isEmpty(db: DB, table: SQLiteTable) {
-  const [row] = await db.select({ n: sql<number>`count(*)` }).from(table);
+  const [row] = await db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(table);
   return Number(row?.n ?? 0) === 0;
 }
 

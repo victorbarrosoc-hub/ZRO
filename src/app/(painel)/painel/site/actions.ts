@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
-import { db, schema } from "@/lib/db";
+import { db, schema, transact } from "@/lib/db";
 import { bool, fail, fromZod, ok, str, type ActionResult } from "@/lib/actions";
 import { CATEGORY_KEYS } from "@/lib/domain";
 import { slugify } from "@/lib/utils";
@@ -26,7 +26,7 @@ function revalidateSite(...adminPaths: string[]) {
 type Orderable = typeof films | typeof teamMembers | typeof showcaseClients | typeof faqs;
 
 async function nextSortOrder(table: Orderable) {
-  const [row] = await db.select({ max: sql<number | null>`max(${table.sortOrder})` }).from(table);
+  const [row] = await db.select({ max: sql<number | null>`max(${table.sortOrder})`.mapWith(Number) }).from(table);
   return row?.max == null ? 0 : Number(row.max) + 1;
 }
 
@@ -38,8 +38,7 @@ async function moveRow(table: Orderable, id: string, dir: "up" | "down") {
   const j = dir === "up" ? i - 1 : i + 1;
   if (j < 0 || j >= rows.length) return true;
   [rows[i], rows[j]] = [rows[j], rows[i]];
-  const [head, ...tail] = rows.map((r, n) => db.update(table).set({ sortOrder: n }).where(eq(table.id, r.id)));
-  await db.batch([head, ...tail]);
+  await transact((t) => rows.map((r, n) => t.update(table).set({ sortOrder: n }).where(eq(table.id, r.id))));
   return true;
 }
 
