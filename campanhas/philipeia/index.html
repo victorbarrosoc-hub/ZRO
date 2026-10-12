@@ -183,7 +183,7 @@ body {
 .chk:hover .box { border-color: var(--ash); }
 .chk.master { grid-column: 1 / -1; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); font-weight: 600; color: var(--white); }
 .chk.master input:checked ~ .txt { color: var(--white); text-decoration: none; }
-.row.done > .num, .row.done > .cell { opacity: 0.38; transition: opacity 0.2s; }
+.row.done > .num > span, .row.done > .cell { opacity: 0.38; transition: opacity 0.2s; }
 .row.done .checks { border-color: var(--line-strong); }
 
 .save-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
@@ -198,7 +198,15 @@ body {
 .reset-confirm { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--light); font-size: 13px; }
 .reset-confirm [data-reset-yes] { background: var(--white); color: var(--void); border-color: var(--white); }
 
+
+/* quadradinho da cena */
+.num { display: grid; justify-items: start; align-content: start; gap: 10px; }
+.num .chk.master { grid-template-columns: 28px; min-height: 44px; min-width: 44px; margin: 0; padding: 0; border: 0; }
+.num .chk .box { width: 26px; height: 26px; }
+.num .chk input:checked + .box::after { left: 8px; top: 3px; width: 7px; height: 13px; }
+
 @media (max-width: 760px) {
+  .num { grid-auto-flow: column; justify-content: start; align-items: center; gap: 16px; }
   .row.head { display: none; }
   .row { grid-template-columns: 1fr; gap: 14px; padding: 22px 0; }
   .cell .mobile-label { display: block; }
@@ -219,10 +227,12 @@ body {
   .checks { padding: 6px 12px 8px; background: none; margin-top: 8px; }
   .chk { min-height: 0; padding: 3px 0; font-size: 10pt; }
   .chk .box { width: 13px; height: 13px; border-color: rgb(0 0 0 / 0.5); }
+  .num .chk.master { min-height: 0; min-width: 0; }
+  .num .chk .box { width: 18px; height: 18px; border: 1.5px solid #000; }
   .chk input:checked + .box { background: none; border-color: rgb(0 0 0 / 0.5); }
   .chk input:checked + .box::after { display: none; }
   .chk input:checked ~ .txt { color: var(--light); text-decoration: none; }
-  .row.done > .num, .row.done > .cell { opacity: 1; }
+  .row.done > .num > span, .row.done > .cell { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
 </style>
@@ -249,59 +259,40 @@ body {
   <div class="board" role="table" aria-label="Filme 01">
     <div class="row head" role="row"><span class="label">#</span><span class="label">Cena</span><span class="label">Áudio</span><span class="label">Lettering</span></div>
     <div class="row" role="row" id="cena-01-01" data-scene="1">
-  <span class="num">01</span>
+  <div class="num"><span>01</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="01-01-ok" aria-label="Cena 01 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Sala de reunião · primeira pessoa</p><p>A câmera é o olhar do personagem. Pessoas falando ao mesmo tempo. Alguém interrompe alguém. Uma pessoa aponta para a apresentação. Outra discorda. Papéis passam pela mesa.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Vozes ao mesmo tempo. Um telefone toca.</p>
 <p>Alguém chama o personagem:</p>
 <p class="line">— Ei. Ei. Você tá ouvindo?</p>
 <p>O som vai ficando cada vez mais confuso e exagerado.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="01-01-0"><span class="box" aria-hidden="true"></span><span class="txt">Sala de reunião em primeira pessoa</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-1"><span class="box" aria-hidden="true"></span><span class="txt">Pessoas falando ao mesmo tempo</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-2"><span class="box" aria-hidden="true"></span><span class="txt">Alguém interrompe alguém</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-3"><span class="box" aria-hidden="true"></span><span class="txt">Uma pessoa aponta para a apresentação</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-4"><span class="box" aria-hidden="true"></span><span class="txt">Outra discorda</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-5"><span class="box" aria-hidden="true"></span><span class="txt">Papéis passam pela mesa</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-6"><span class="box" aria-hidden="true"></span><span class="txt">Telefone toca</span></label>
-<label class="chk "><input type="checkbox" data-k="01-01-7"><span class="box" aria-hidden="true"></span><span class="txt">“Ei. Ei. Você tá ouvindo?”</span></label><label class="chk master"><input type="checkbox" data-k="01-01-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-01-02" data-scene="1">
-  <span class="num">02</span>
+  <div class="num"><span>02</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="01-02-ok" aria-label="Cena 02 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">O personagem pisca</p><span class="cut">Corte</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="01-02-0"><span class="box" aria-hidden="true"></span><span class="txt">O personagem pisca</span></label><label class="chk master"><input type="checkbox" data-k="01-02-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-01-03" data-scene="1">
-  <span class="num">03</span>
+  <div class="num"><span>03</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="01-03-ok" aria-label="Cena 03 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">A mesma sala virou uma confraternização</p><p>Chopeira Philipeia. Gente rindo. Comida na mesa. O colega que parecia estar discutindo agora oferece um copo. O personagem brinda.</p>
 <p>Pisca novamente.</p>
 <span class="cut">Corte</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Música. Risadas.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="01-03-0"><span class="box" aria-hidden="true"></span><span class="txt">Mesma sala como confraternização</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-1"><span class="box" aria-hidden="true"></span><span class="txt">Chopeira Philipeia</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-2"><span class="box" aria-hidden="true"></span><span class="txt">Gente rindo</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-3"><span class="box" aria-hidden="true"></span><span class="txt">Comida na mesa</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-4"><span class="box" aria-hidden="true"></span><span class="txt">Colega oferece um copo</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-5"><span class="box" aria-hidden="true"></span><span class="txt">O personagem brinda</span></label>
-<label class="chk "><input type="checkbox" data-k="01-03-6"><span class="box" aria-hidden="true"></span><span class="txt">Pisca novamente</span></label><label class="chk master"><input type="checkbox" data-k="01-03-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-01-04" data-scene="1">
-  <span class="num">04</span>
+  <div class="num"><span>04</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="01-04-ok" aria-label="Cena 04 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Volta para a reunião</p><p>Dessa vez, tudo está absolutamente normal. Ninguém está brigando. As pessoas conversam normalmente.</p>
 <p>Percebemos que o caos estava, em parte, na percepção de quem já chegou ao limite.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Conversa normal.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="01-04-0"><span class="box" aria-hidden="true"></span><span class="txt">Reunião com tudo normal</span></label>
-<label class="chk "><input type="checkbox" data-k="01-04-1"><span class="box" aria-hidden="true"></span><span class="txt">Pessoas conversando normalmente</span></label><label class="chk master"><input type="checkbox" data-k="01-04-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-01-05">
-  <span class="num">05</span>
+  <div class="num"><span>05</span></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Tela limpa</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><div class="letter"><span class="claim">Você precisa de uma pausa.</span><span class="brand">Philipeia.</span></div></div>
-  <div class="checks post"><span class="label">Entra na edição</span></div>
 </div>
   </div>
   <div class="end-card"><span class="claim">Você precisa de uma pausa.</span><span class="brand">Philipeia</span></div>
@@ -313,49 +304,33 @@ body {
   <div class="board" role="table" aria-label="Filme 02">
     <div class="row head" role="row"><span class="label">#</span><span class="label">Cena</span><span class="label">Áudio</span><span class="label">Lettering</span></div>
     <div class="row" role="row" id="cena-02-01" data-scene="1">
-  <span class="num">01</span>
+  <div class="num"><span>01</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="02-01-ok" aria-label="Cena 01 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Escritório escuro</p><p>Na tela do computador:</p>
 <span class="art"><small>Arte em cena · tela do computador</small>PRAZO FATAL</span>
 <p>O personagem leva as mãos à cabeça.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Silêncio.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="02-01-0"><span class="box" aria-hidden="true"></span><span class="txt">Escritório escuro</span></label>
-<label class="chk "><input type="checkbox" data-k="02-01-1"><span class="box" aria-hidden="true"></span><span class="txt">Tela do computador: PRAZO FATAL</span></label>
-<label class="chk "><input type="checkbox" data-k="02-01-2"><span class="box" aria-hidden="true"></span><span class="txt">Mãos na cabeça</span></label><label class="chk master"><input type="checkbox" data-k="02-01-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-02-02" data-scene="1">
-  <span class="num">02</span>
+  <div class="num"><span>02</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="02-02-ok" aria-label="Cena 02 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">A pilha de papéis</p><p>Alguém entra no escritório e coloca uma pilha de papéis sobre sua mesa. Mais papéis. Mais um documento.</p>
 <p>O personagem olha para tudo. Chegou no limite. Pega os papéis e joga para cima.</p>
 <p>As folhas cobrem completamente a câmera.</p>
 <span class="cut">Transição</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="02-02-0"><span class="box" aria-hidden="true"></span><span class="txt">Alguém entra com a pilha de papéis</span></label>
-<label class="chk "><input type="checkbox" data-k="02-02-1"><span class="box" aria-hidden="true"></span><span class="txt">Mais papéis</span></label>
-<label class="chk "><input type="checkbox" data-k="02-02-2"><span class="box" aria-hidden="true"></span><span class="txt">Mais um documento</span></label>
-<label class="chk "><input type="checkbox" data-k="02-02-3"><span class="box" aria-hidden="true"></span><span class="txt">O personagem olha para tudo</span></label>
-<label class="chk "><input type="checkbox" data-k="02-02-4"><span class="box" aria-hidden="true"></span><span class="txt">Joga os papéis para cima</span></label>
-<label class="chk "><input type="checkbox" data-k="02-02-5"><span class="box" aria-hidden="true"></span><span class="txt">Folhas cobrindo a câmera</span></label><label class="chk master"><input type="checkbox" data-k="02-02-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-02-03" data-scene="1">
-  <span class="num">03</span>
+  <div class="num"><span>03</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="02-03-ok" aria-label="Cena 03 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">As folhas descem. Churrasco.</p><p>Estamos em outro ambiente. Chopeira Philipeia. Todo mundo conversando e se divertindo. Ao fundo:</p>
 <span class="art"><small>Arte em cena · ao fundo</small>CONFRA DA FIRMA</span>
 <p>Chope sendo servido. Brinde. Risadas.</p>
 <span class="cut">Corte</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Música. Conversa. Risadas.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="02-03-0"><span class="box" aria-hidden="true"></span><span class="txt">Folhas descendo</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-1"><span class="box" aria-hidden="true"></span><span class="txt">Churrasco</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-2"><span class="box" aria-hidden="true"></span><span class="txt">Chopeira Philipeia</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-3"><span class="box" aria-hidden="true"></span><span class="txt">Faixa CONFRA DA FIRMA ao fundo</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-4"><span class="box" aria-hidden="true"></span><span class="txt">Chope sendo servido</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-5"><span class="box" aria-hidden="true"></span><span class="txt">Brinde</span></label>
-<label class="chk "><input type="checkbox" data-k="02-03-6"><span class="box" aria-hidden="true"></span><span class="txt">Risadas</span></label><label class="chk master"><input type="checkbox" data-k="02-03-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-02-04" data-scene="1">
-  <span class="num">04</span>
+  <div class="num"><span>04</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="02-04-ok" aria-label="Cena 04 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Voltamos ao escritório</p><p>Mesmo lugar, mas agora o ambiente parece mais claro e menos opressor.</p>
 <p>A mesma pessoa que antes chegou carregando aqueles papéis entra novamente. Dessa vez, entendemos o que ela estava realmente entregando: um convite.</p>
 <p>Close:</p>
@@ -363,18 +338,12 @@ body {
 <p>O personagem olha para o convite.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="02-04-0"><span class="box" aria-hidden="true"></span><span class="txt">Escritório mais claro</span></label>
-<label class="chk "><input type="checkbox" data-k="02-04-1"><span class="box" aria-hidden="true"></span><span class="txt">A mesma pessoa entra de novo</span></label>
-<label class="chk "><input type="checkbox" data-k="02-04-2"><span class="box" aria-hidden="true"></span><span class="txt">Entrega do convite</span></label>
-<label class="chk "><input type="checkbox" data-k="02-04-3"><span class="box" aria-hidden="true"></span><span class="txt">Close: CONFRA DA FIRMA 12.12.26</span></label>
-<label class="chk "><input type="checkbox" data-k="02-04-4"><span class="box" aria-hidden="true"></span><span class="txt">O personagem olha para o convite</span></label><label class="chk master"><input type="checkbox" data-k="02-04-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-02-05">
-  <span class="num">05</span>
+  <div class="num"><span>05</span></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Tela limpa</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><div class="letter"><span class="claim">Você precisa de uma confra.</span><span class="brand">Philipeia.</span></div></div>
-  <div class="checks post"><span class="label">Entra na edição</span></div>
 </div>
   </div>
   <div class="end-card"><span class="claim">Você precisa de uma confra.</span><span class="brand">Philipeia</span></div>
@@ -386,74 +355,49 @@ body {
   <div class="board" role="table" aria-label="Filme 03">
     <div class="row head" role="row"><span class="label">#</span><span class="label">Cena</span><span class="label">Áudio</span><span class="label">Lettering</span></div>
     <div class="row" role="row" id="cena-03-01" data-scene="1">
-  <span class="num">01</span>
+  <div class="num"><span>01</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="03-01-ok" aria-label="Cena 01 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Sala montada para apresentação corporativa</p><p>Projetor ligado. Pessoa apresentando. No slide:</p>
 <span class="art"><small>Arte em cena · slide</small>ESSA REUNIÃO PODIA SER UM E-MAIL.</span>
 <p>Próximo slide:</p>
 <span class="art"><small>Arte em cena · slide</small>MEU DEUS. AINDA É TERÇA.</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="03-01-0"><span class="box" aria-hidden="true"></span><span class="txt">Sala de apresentação com projetor</span></label>
-<label class="chk "><input type="checkbox" data-k="03-01-1"><span class="box" aria-hidden="true"></span><span class="txt">Pessoa apresentando</span></label>
-<label class="chk "><input type="checkbox" data-k="03-01-2"><span class="box" aria-hidden="true"></span><span class="txt">Slide: ESSA REUNIÃO PODIA SER UM E-MAIL.</span></label>
-<label class="chk "><input type="checkbox" data-k="03-01-3"><span class="box" aria-hidden="true"></span><span class="txt">Slide: MEU DEUS. AINDA É TERÇA.</span></label><label class="chk master"><input type="checkbox" data-k="03-01-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-03-02" data-scene="1">
-  <span class="num">02</span>
+  <div class="num"><span>02</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="03-02-ok" aria-label="Cena 02 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Corta para alguém da plateia</p><p>A pessoa pega um memorando. Amassa. Faz uma bola. Joga em direção à câmera.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="03-02-0"><span class="box" aria-hidden="true"></span><span class="txt">Pega o memorando</span></label>
-<label class="chk "><input type="checkbox" data-k="03-02-1"><span class="box" aria-hidden="true"></span><span class="txt">Amassa</span></label>
-<label class="chk "><input type="checkbox" data-k="03-02-2"><span class="box" aria-hidden="true"></span><span class="txt">Faz uma bola</span></label>
-<label class="chk "><input type="checkbox" data-k="03-02-3"><span class="box" aria-hidden="true"></span><span class="txt">Joga em direção à câmera</span></label><label class="chk master"><input type="checkbox" data-k="03-02-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-03-03" data-scene="1">
-  <span class="num">03</span>
+  <div class="num"><span>03</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="03-03-ok" aria-label="Cena 03 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Primeira pessoa</p><p>A bola vem diretamente para o personagem. Ele levanta a mão para se proteger. A bola cobre a câmera.</p>
 <span class="cut">Corte</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="03-03-0"><span class="box" aria-hidden="true"></span><span class="txt">Bola vindo para a câmera</span></label>
-<label class="chk "><input type="checkbox" data-k="03-03-1"><span class="box" aria-hidden="true"></span><span class="txt">Mão levantando para se proteger</span></label>
-<label class="chk "><input type="checkbox" data-k="03-03-2"><span class="box" aria-hidden="true"></span><span class="txt">Bola cobrindo a câmera</span></label><label class="chk master"><input type="checkbox" data-k="03-03-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-03-04" data-scene="1">
-  <span class="num">04</span>
+  <div class="num"><span>04</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="03-04-ok" aria-label="Cena 04 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">A mão abaixa. A sala virou festa.</p><p>Chopeira Philipeia. Copos cheios. Comida. Todo mundo comemorando. No projetor:</p>
 <span class="art"><small>Arte em cena · slide</small>METAS 2026: BATIDAS.</span>
 <p>Muda o slide:</p>
 <span class="art"><small>Arte em cena · slide</small>VIVA SEU MOMENTO.<br>VIVA ESSA CONFRA.</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Música.</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="03-04-0"><span class="box" aria-hidden="true"></span><span class="txt">Mão abaixando</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-1"><span class="box" aria-hidden="true"></span><span class="txt">Sala em festa</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-2"><span class="box" aria-hidden="true"></span><span class="txt">Chopeira Philipeia</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-3"><span class="box" aria-hidden="true"></span><span class="txt">Copos cheios</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-4"><span class="box" aria-hidden="true"></span><span class="txt">Comida</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-5"><span class="box" aria-hidden="true"></span><span class="txt">Todo mundo comemorando</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-6"><span class="box" aria-hidden="true"></span><span class="txt">Slide: METAS 2026: BATIDAS.</span></label>
-<label class="chk "><input type="checkbox" data-k="03-04-7"><span class="box" aria-hidden="true"></span><span class="txt">Slide: VIVA SEU MOMENTO. VIVA ESSA CONFRA.</span></label><label class="chk master"><input type="checkbox" data-k="03-04-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-03-05" data-scene="1">
-  <span class="num">05</span>
+  <div class="num"><span>05</span><label class="chk master" title="Cena gravada"><input type="checkbox" data-k="03-05-ok" aria-label="Cena 05 gravada"><span class="box" aria-hidden="true"></span></label></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Brinde coletivo</p><p>Todo mundo levanta os copos.</p>
 <p>Por último, aproxima-se justamente a pessoa que havia jogado a bola de papel. Ela estende um copo de Philipeia. O personagem brinda com ela.</p>
 <span class="cut">Corte para preto</span></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><p>Música (segue).</p></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><span class="none">—</span></div>
-  <div class="checks"><span class="label">Checklist</span><label class="chk "><input type="checkbox" data-k="03-05-0"><span class="box" aria-hidden="true"></span><span class="txt">Todo mundo levanta os copos</span></label>
-<label class="chk "><input type="checkbox" data-k="03-05-1"><span class="box" aria-hidden="true"></span><span class="txt">Brinde coletivo</span></label>
-<label class="chk "><input type="checkbox" data-k="03-05-2"><span class="box" aria-hidden="true"></span><span class="txt">A pessoa da bola se aproxima</span></label>
-<label class="chk "><input type="checkbox" data-k="03-05-3"><span class="box" aria-hidden="true"></span><span class="txt">Estende um copo de Philipeia</span></label>
-<label class="chk "><input type="checkbox" data-k="03-05-4"><span class="box" aria-hidden="true"></span><span class="txt">O personagem brinda com ela</span></label><label class="chk master"><input type="checkbox" data-k="03-05-ok"><span class="box" aria-hidden="true"></span><span class="txt">Cena gravada</span></label></div>
 </div>
 <div class="row" role="row" id="cena-03-06">
-  <span class="num">06</span>
+  <div class="num"><span>06</span></div>
   <div class="cell"><span class="label mobile-label">Cena</span><p class="scene-title">Preto</p><p>Logo Philipeia.</p></div>
   <div class="cell audio"><span class="label mobile-label">Áudio</span><span class="none">—</span></div>
   <div class="cell"><span class="label mobile-label">Lettering</span><div class="letter"><span class="claim">Você precisa de uma Philipeia.</span><span class="brand">PHILIPEIA</span><span class="sign">A Philipeia faz a sua festa.</span></div></div>
-  <div class="checks post"><span class="label">Entra na edição</span></div>
 </div>
   </div>
   <div class="end-card"><span class="claim">Você precisa de uma Philipeia.</span><span class="brand">Philipeia</span><span class="sign">A Philipeia faz a sua festa.</span></div>
@@ -500,9 +444,9 @@ body {
   boxes.forEach((b) => {
     b.checked = !!saved[b.dataset.k];
     b.addEventListener("change", () => {
-      // marcar "Cena gravada" fecha os itens da cena
-      if (b.closest(".chk.master") && b.checked) {
-        b.closest(".checks").querySelectorAll("input[data-k]").forEach((x) => { x.checked = true; });
+            const group = b.closest(".checks");
+      if (group && b.closest(".chk.master") && b.checked) {
+        group.querySelectorAll("input[data-k]").forEach((x) => { x.checked = true; });
       }
       save();
       refresh();
