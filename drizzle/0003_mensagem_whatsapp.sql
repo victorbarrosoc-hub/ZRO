@@ -1,0 +1,1 @@
+ALTER TABLE "freelancers" ADD COLUMN "whatsapp_message" text;

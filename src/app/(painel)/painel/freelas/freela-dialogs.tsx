@@ -1,10 +1,12 @@
 "use client";
 
-import { Archive, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { Archive, MessageSquareText, Pencil, Plus, Trash2, X } from "lucide-react";
 import { ConfirmAction, FormModal, fieldError } from "@/components/painel/form";
 import { Button } from "@/components/ui/button";
-import { Field, Input, MoneyInput, Select } from "@/components/ui/field";
-import { CATEGORIES, PAYMENT_METHODS, RATE_UNITS, functionOptions } from "@/lib/domain";
+import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
+import type { ActionResult } from "@/lib/actions";
+import { CATEGORIES, FREELA_WHATSAPP_DEFAULT, FREELA_WHATSAPP_MAX, PAYMENT_METHODS, RATE_UNITS, freelaWhatsappText, functionOptions } from "@/lib/domain";
 import { brl, centsToInput, todayISO } from "@/lib/format";
 import {
   addRate,
@@ -12,6 +14,7 @@ import {
   deleteFreelancer,
   deleteRate,
   payFreelancerEntry,
+  saveFreelaWhatsappMessage,
   toggleFreelancerActive,
   updateFreelancer,
 } from "./actions";
@@ -67,6 +70,74 @@ export function EditFreelaButton({
         <FreelaFields state={state} defaults={defaults} customFunctions={customFunctions} equipmentCatalog={equipmentCatalog} />
       )}
     </FormModal>
+  );
+}
+
+/** Mensagem do WhatsApp desse freela, com prévia de como chega. */
+export function WhatsappMessageButton({ id, name, message }: { id: string; name: string; message: string | null }) {
+  return (
+    <FormModal
+      title="Mensagem do WhatsApp"
+      description={`O texto que já vem escrito quando você abre a conversa com ${name.split(" ")[0]}.`}
+      action={saveFreelaWhatsappMessage}
+      trigger={
+        <Button variant="secondary" size="sm">
+          <MessageSquareText /> Mensagem
+        </Button>
+      }
+    >
+      {(state) => <WhatsappMessageFields state={state} id={id} name={name} message={message} />}
+    </FormModal>
+  );
+}
+
+function WhatsappMessageFields({
+  state,
+  id,
+  name,
+  message,
+}: {
+  state: ActionResult | null;
+  id: string;
+  name: string;
+  message: string | null;
+}) {
+  const [text, setText] = useState(message ?? FREELA_WHATSAPP_DEFAULT);
+  return (
+    <>
+      <input type="hidden" name="id" value={id} />
+      <Field
+        label="Mensagem"
+        htmlFor="wa-msg"
+        error={fieldError(state, "message")}
+        hint="Escreva {nome} onde entra o primeiro nome do freela."
+      >
+        <Textarea
+          id="wa-msg"
+          name="message"
+          rows={4}
+          maxLength={FREELA_WHATSAPP_MAX}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+        />
+      </Field>
+      <div className="grid gap-2">
+        <p className="label text-mute">Como chega</p>
+        <p className="w-fit max-w-full rounded-2xl rounded-tr-sm border border-line-strong bg-white/[0.06] px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-line text-white">
+          {freelaWhatsappText(text, name)}
+        </p>
+      </div>
+      {text.trim() !== FREELA_WHATSAPP_DEFAULT ? (
+        <button
+          type="button"
+          onClick={() => setText(FREELA_WHATSAPP_DEFAULT)}
+          className="w-fit text-[13px] text-ash underline decoration-white/20 underline-offset-4 hover:text-light"
+        >
+          Voltar para a mensagem padrão
+        </button>
+      ) : null}
+    </>
   );
 }
 

@@ -208,6 +208,8 @@ export const freelancers = pgTable(
     instagram: text(),
     /** CPF (ou CNPJ, se for MEI), só os dígitos. */
     document: text(),
+    /** Mensagem que abre a conversa no WhatsApp ({nome} vira o primeiro nome). Vazia: a padrão. */
+    whatsappMessage: text(),
     pixKey: text(),
     functions: jsonb().$type<string[]>().notNull().default([]),
     equipment: text(),
