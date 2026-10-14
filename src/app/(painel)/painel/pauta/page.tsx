@@ -13,7 +13,7 @@ const FORMATOS = ["Post", "Carrossel", "Reels", "Story", "Shorts", "Vídeo", "Fi
 
 /**
  * A Pauta: o Quadro da Maestro dentro do painel (o código mora em ../quadro). Quem faz: os sócios e os freelas ativos.
- * Quem revisa: o Victor (cuida do nível da entrega); sem ele, os dois sócios.
+ * Quem revisa: os dois sócios (Victor e Edu).
  * Clientes: os do CRM, mais "Interno" para o trabalho da casa.
  */
 export default async function PautaPage() {
@@ -29,10 +29,8 @@ export default async function PautaPage() {
     quadroCarregar(ORG),
   ]);
 
-  const victor = (nome: string) => /^victor\b/i.test(nome.normalize("NFD").replace(/\p{Diacritic}/gu, ""));
-  const temVictor = socios.some((s) => victor(s.name));
   const pessoas: Pessoa[] = [
-    ...socios.map((s) => ({ id: `u:${s.id}`, nome: s.name, revisor: temVictor ? victor(s.name) : true })),
+    ...socios.map((s) => ({ id: `u:${s.id}`, nome: s.name, revisor: true })),
     ...freelas.map((f) => ({ id: `f:${f.id}`, nome: f.name, fotoId: f.photoId })),
   ];
   const cfg: Config = {
