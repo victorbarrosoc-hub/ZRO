@@ -8,7 +8,7 @@ import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { CATEGORIES, EQUIPMENT_CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, formatDocument, instagramUrl, todayISO } from "@/lib/format";
+import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, formatDocument, formatPhone, instagramUrl, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
 import { getFreelancer, listCustomFunctions, listEquipmentCatalog } from "@/lib/queries/freelas";
 import {
@@ -250,7 +250,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                           label: "CPF",
                           value: f.document ? <span className="font-mono text-[13px]">{formatDocument(f.document)}</span> : null,
                         },
-                        { label: "WhatsApp", value: f.phone },
+                        { label: "WhatsApp", value: formatPhone(f.phone) },
                         { label: "E-mail", value: f.email },
                         {
                           label: "Instagram",

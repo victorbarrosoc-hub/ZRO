@@ -11,6 +11,7 @@ import * as s from "../../src/lib/db/schema";
 import { ensureDatabaseIdentity } from "../../src/lib/db/summary";
 import { hashPassword } from "../../src/lib/auth/password";
 import { cleanEquipmentName, guessEquipmentCategory } from "../../src/lib/domain";
+import { formatPhone } from "../../src/lib/format";
 import {
   DEFAULT_CATALOG,
   DEFAULT_EQUIPMENT,
@@ -378,6 +379,18 @@ export async function moveFreelaCpfFromNotes(db: DB) {
   }
 }
 
+/** WhatsApp dos freelas no formato padrão: (84) 99919-7374. Número fora do padrão fica como está. */
+export async function formatFreelaPhones(db: DB) {
+  const rows = await db
+    .select({ id: s.freelancers.id, phone: s.freelancers.phone })
+    .from(s.freelancers)
+    .where(sql`${s.freelancers.phone} is not null`);
+  for (const f of rows) {
+    const formatted = formatPhone(f.phone);
+    if (formatted && formatted !== f.phone) await db.update(s.freelancers).set({ phone: formatted }).where(eq(s.freelancers.id, f.id));
+  }
+}
+
 export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: boolean }) {
   await ensureUsers(db, { allowGenerated: opts.allowGeneratedPasswords });
   await ensureSettings(db);
@@ -390,5 +403,6 @@ export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: bo
   await ensureShowcaseClients(db);
   await ensureEquipment(db);
   await moveFreelaCpfFromNotes(db);
+  await formatFreelaPhones(db);
   await ensureDatabaseIdentity(db);
 }

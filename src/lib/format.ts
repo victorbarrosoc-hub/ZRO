@@ -167,6 +167,31 @@ export const ENTRY_STATUS_LABEL: Record<EntryStatus, string> = {
   pendente: "Pendente",
 };
 
+/** Telefone sem o +55, só dígitos. */
+function localPhoneDigits(phone: string) {
+  const d = phone.replace(/\D/g, "");
+  return (d.length === 12 || d.length === 13) && d.startsWith("55") ? d.slice(2) : d;
+}
+
+/** "84999197374" → "(84) 99919-7374"; fixo com 10 dígitos → "(84) 3211-1234". Outro formato volta como veio. */
+export function formatPhone(phone: string | null | undefined) {
+  if (!phone?.trim()) return null;
+  const d = localPhoneDigits(phone);
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  return phone.trim();
+}
+
+/** Máscara enquanto digita: (84) 99919-7374. */
+export function maskPhone(input: string) {
+  const d = localPhoneDigits(input).slice(0, 11);
+  if (!d) return "";
+  if (d.length <= 2) return `(${d}`;
+  const rest = d.slice(2);
+  const head = rest.length === 9 ? 5 : 4;
+  return rest.length > head ? `(${d.slice(0, 2)}) ${rest.slice(0, head)}-${rest.slice(head)}` : `(${d.slice(0, 2)}) ${rest}`;
+}
+
 /** Só dígitos de um telefone brasileiro, com DDI 55. */
 export function whatsappDigits(phone: string | null | undefined) {
   const digits = (phone ?? "").replace(/\D/g, "");
