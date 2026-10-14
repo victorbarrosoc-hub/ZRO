@@ -343,6 +343,7 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
       else if (u.ficha && !card && !t.closest(".qz-ficha, .qz-painel, .qz-nao-salvos, .qz-menu-pos")) fecharFicha();
     };
     const keydown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return; // um campo já usou a tecla (ex.: Esc na edição da checklist)
       const u = uiRef.current;
       const { abrirFicha, fecharFicha } = qRef.current;
       if (e.key === "Escape") {
@@ -385,7 +386,7 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
     <QCtx.Provider value={q}>
       <div className="qz">
         <Topo nLix={nLix} abrir={() => q.up({ lixeira: true })} />
-        <div aria-live="polite">
+        <div className="q-area" aria-live="polite">
           <Barra />
           {ui.vista === "prazo" ? <VistaPorPrazo /> : <VistaColunas />}
         </div>

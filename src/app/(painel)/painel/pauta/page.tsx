@@ -19,7 +19,7 @@ const FORMATOS = ["Post", "Carrossel", "Reels", "Story", "Shorts", "Vídeo", "Fi
 export default async function PautaPage() {
   const user = await requireUser();
   const [socios, freelas, clientes, inicio] = await Promise.all([
-    db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).orderBy(asc(schema.users.name)),
+    db.select({ id: schema.users.id, name: schema.users.name, photoId: schema.users.photoId }).from(schema.users).orderBy(asc(schema.users.name)),
     db
       .select({ id: schema.freelancers.id, name: schema.freelancers.name, photoId: schema.freelancers.photoId })
       .from(schema.freelancers)
@@ -30,7 +30,7 @@ export default async function PautaPage() {
   ]);
 
   const pessoas: Pessoa[] = [
-    ...socios.map((s) => ({ id: `u:${s.id}`, nome: s.name, revisor: true })),
+    ...socios.map((s) => ({ id: `u:${s.id}`, nome: s.name, revisor: true, fotoId: s.photoId })),
     ...freelas.map((f) => ({ id: `f:${f.id}`, nome: f.name, fotoId: f.photoId })),
   ];
   const cfg: Config = {

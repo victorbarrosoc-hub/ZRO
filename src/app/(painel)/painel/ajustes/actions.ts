@@ -9,6 +9,7 @@ import { createSession } from "@/lib/auth/session";
 import { db, schema, transact } from "@/lib/db";
 import { bool, fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
+import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { saveSetting } from "@/lib/settings";
 import { DEMO_CLEANUP } from "./demo-data";
 
@@ -338,6 +339,24 @@ export async function changePassword(_prev: ActionResult | null, fd: FormData): 
   await createSession({ id: me.id, name: me.name, passwordHash });
   revalidatePath("/painel/ajustes/conta");
   return ok("Senha trocada. Os outros aparelhos vão pedir login de novo.");
+}
+
+/* ============================== Perfil ============================== */
+
+/** Nome e foto de quem está logado (aparecem no menu e nos cards da Pauta). */
+export async function saveProfile(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const me = await requireUser();
+  const name = str(fd, "name") ?? "";
+  if (name.length < 2) return fail("Digite o seu nome.", { name: ["Digite o seu nome."] });
+  if (name.length > 80) return fail("Nome longo demais.", { name: ["Use até 80 caracteres."] });
+  const photo = readImageField(fd, "photo");
+  if ("error" in photo) return fail(photo.error, { photo: [photo.error] });
+  const current = await db.query.users.findFirst({ where: eq(users.id, me.id), columns: { photoId: true } });
+  const photoId = await resolveImageField(photo, current?.photoId);
+  await db.update(users).set({ name, photoId }).where(eq(users.id, me.id));
+  if (current?.photoId && current.photoId !== photoId) await deleteImages([current.photoId]);
+  revalidatePath("/painel", "layout");
+  return ok("Perfil salvo.");
 }
 
 /* ============================== Dados de exemplo ============================== */

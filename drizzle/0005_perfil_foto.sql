@@ -1,0 +1,2 @@
+ALTER TABLE "users" ADD COLUMN "photo_id" text;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_photo_id_images_id_fk" FOREIGN KEY ("photo_id") REFERENCES "public"."images"("id") ON DELETE set null ON UPDATE no action;

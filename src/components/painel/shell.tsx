@@ -6,19 +6,22 @@ import { useState } from "react";
 import { Dialog as D } from "radix-ui";
 import { ArrowUpRight, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, X } from "lucide-react";
 import { Logo, Symbol } from "@/components/brand/logo";
+import { Avatar } from "@/components/painel/avatar";
 import { Tip } from "@/components/ui/overlay";
 import { logout } from "@/app/entrar/actions";
-import { initials } from "@/lib/format";
 import { useLocalFlag } from "@/lib/use-local-flag";
 import { cn } from "@/lib/utils";
 import { PAINEL_NAV, isActive, type NavItem } from "./nav";
 
 const STORAGE_KEY = "zro-sidebar-recolhida";
 
-export function PainelShell({ user, children }: { user: { name: string; email: string }; children: React.ReactNode }) {
+type ShellUser = { name: string; email: string; photoId?: string | null };
+
+export function PainelShell({ user, children }: { user: ShellUser; children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useLocalFlag(STORAGE_KEY);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const telaCheia = pathname === "/painel/pauta";
 
   function toggle() {
     setCollapsed(!collapsed);
@@ -68,7 +71,15 @@ export function PainelShell({ user, children }: { user: { name: string; email: s
       </div>
 
       <div className={cn("relative transition-[padding] duration-500 ease-out-expo", collapsed ? "lg:pl-[92px]" : "lg:pl-[276px]")}>
-        <main className="mx-auto w-full max-w-[1480px] px-4 pt-6 pb-24 sm:px-6 lg:px-10 lg:pt-10">{children}</main>
+        <main
+          className={cn(
+            "mx-auto w-full px-4 pt-6 sm:px-6",
+            // A Pauta ocupa a tela toda (colunas lado a lado, sem rolar para o lado)
+            telaCheia ? "pb-4 lg:px-8 lg:pt-8" : "max-w-[1480px] pb-24 lg:px-10 lg:pt-10",
+          )}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -83,13 +94,19 @@ function SidebarContent({
 }: {
   pathname: string;
   collapsed: boolean;
-  user: { name: string; email: string };
+  user: ShellUser;
   onToggle?: () => void;
   onNavigate?: () => void;
 }) {
   return (
     <>
-      <div className={cn("flex h-16 shrink-0 items-center border-b border-line", collapsed ? "justify-center px-0" : "justify-between px-5")}>
+      {/* Recolher e abrir ficam no mesmo lugar: no topo */}
+      <div
+        className={cn(
+          "flex shrink-0 items-center border-b border-line",
+          collapsed ? "flex-col justify-center gap-2 px-0 py-3" : "h-16 justify-between px-5",
+        )}
+      >
         <Link href="/painel" className="flex items-center gap-2.5 text-white" aria-label="Visão geral">
           {collapsed ? <Symbol className="size-6" /> : <Logo className="h-[15px]" />}
           {!collapsed ? <span className="label text-mute">Interno</span> : null}
@@ -103,6 +120,18 @@ function SidebarContent({
           >
             <PanelLeftClose className="size-4" />
           </button>
+        ) : null}
+        {onToggle && collapsed ? (
+          <Tip content="Abrir menu" side="right">
+            <button
+              type="button"
+              onClick={onToggle}
+              className="grid size-8 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.06] hover:text-light"
+              aria-label="Abrir menu"
+            >
+              <PanelLeftOpen className="size-4" />
+            </button>
+          </Tip>
         ) : null}
       </div>
 
@@ -138,18 +167,37 @@ function SidebarContent({
           </Link>
         )}
 
-        <div className={cn("flex items-center gap-3 rounded-2xl", collapsed ? "flex-col" : "px-2 py-1")}>
-          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-line-strong bg-white/[0.04] text-[12px] font-medium text-light">
-            {initials(user.name)}
-          </span>
-          {!collapsed ? (
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-medium text-light">{user.name}</span>
-              <Link href="/" target="_blank" className="flex items-center gap-1 text-[12px] text-mute hover:text-light">
-                Ver o site <ArrowUpRight className="size-3" />
+        <div className={cn("flex items-center gap-1", collapsed ? "flex-col" : "")}>
+          {/* Foto e nome levam para o perfil (Ajustes → Minha conta) */}
+          {collapsed ? (
+            <Tip content="Editar perfil" side="right">
+              <Link href="/painel/ajustes/conta" className="rounded-full" aria-label="Editar perfil">
+                <Avatar name={user.name} imageId={user.photoId} className="size-9" />
               </Link>
-            </span>
-          ) : null}
+            </Tip>
+          ) : (
+            <Link
+              href="/painel/ajustes/conta"
+              onClick={onNavigate}
+              className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-1.5 transition-colors hover:bg-white/[0.04]"
+            >
+              <Avatar name={user.name} imageId={user.photoId} className="size-9" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-medium text-light">{user.name}</span>
+                <span className="block text-[12px] text-mute group-hover:text-light">Editar perfil</span>
+              </span>
+            </Link>
+          )}
+          <Tip content="Ver o site" side={collapsed ? "right" : "top"}>
+            <Link
+              href="/"
+              target="_blank"
+              className="grid size-8 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.06] hover:text-light"
+              aria-label="Ver o site"
+            >
+              <ArrowUpRight className="size-4" />
+            </Link>
+          </Tip>
           <form action={logout}>
             <Tip content="Sair" side={collapsed ? "right" : "top"}>
               <button
@@ -163,18 +211,6 @@ function SidebarContent({
           </form>
         </div>
 
-        {onToggle && collapsed ? (
-          <Tip content="Abrir menu" side="right">
-            <button
-              type="button"
-              onClick={onToggle}
-              className="mx-auto grid size-8 place-items-center rounded-full text-mute transition-colors hover:bg-white/[0.06] hover:text-light"
-              aria-label="Abrir menu"
-            >
-              <PanelLeftOpen className="size-4" />
-            </button>
-          </Tip>
-        ) : null}
       </div>
     </>
   );

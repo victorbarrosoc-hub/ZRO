@@ -4,7 +4,7 @@ import { Card, CardHeader, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { dateTimeBR } from "@/lib/format";
 import { getAccount } from "@/lib/queries/admin-content";
-import { ChangePasswordForm } from "../account-form";
+import { ChangePasswordForm, ProfileForm } from "../account-form";
 import { AjustesTabs } from "../ajustes-tabs";
 
 export const metadata: Metadata = { title: "Minha conta" };
@@ -19,10 +19,16 @@ export default async function ContaPage() {
       <AjustesTabs active="conta" />
 
       <div className="grid gap-4 xl:grid-cols-12 xl:items-start">
-        <Card className="xl:col-span-7">
-          <CardHeader title="Trocar senha" />
-          <ChangePasswordForm email={user.email} />
-        </Card>
+        <div className="grid gap-4 xl:col-span-7">
+          <Card>
+            <CardHeader title="Perfil" />
+            <ProfileForm name={user.name} photoId={user.photoId} />
+          </Card>
+          <Card>
+            <CardHeader title="Trocar senha" />
+            <ChangePasswordForm email={user.email} />
+          </Card>
+        </div>
         <Card className="xl:col-span-5">
           <CardHeader title="Conta" />
           <div className="px-5 pb-2 sm:px-6">
