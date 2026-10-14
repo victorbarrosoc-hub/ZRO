@@ -21,7 +21,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { EVENT_TYPES, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
-import { brl, dateBR, dateShort, entryStatus, todayISO } from "@/lib/format";
+import { brl, dateBR, dateShort, entryStatus, formatPhone, todayISO } from "@/lib/format";
 import { getClient } from "@/lib/queries/crm";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
@@ -221,7 +221,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
                     <InfoList
                       items={[
                         { label: "Contato", value: c.contactName },
-                        { label: "WhatsApp", value: c.phone },
+                        { label: "WhatsApp", value: formatPhone(c.phone) },
                         {
                           label: "E-mail",
                           value: c.email ? <span className="break-all">{c.email}</span> : null,

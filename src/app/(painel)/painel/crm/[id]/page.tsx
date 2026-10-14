@@ -16,7 +16,7 @@ import {
   LEAD_SOURCES,
   optionLabel,
 } from "@/lib/domain";
-import { brl, dateBR, dateTimeBR, relativeDay, todayISO } from "@/lib/format";
+import { brl, dateBR, dateTimeBR, formatPhone, relativeDay, todayISO } from "@/lib/format";
 import { getLead, listClientOptions } from "@/lib/queries/crm";
 import {
   ActivityForm,
@@ -241,7 +241,7 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
               <InfoList
                 items={[
                   { label: "Nome", value: lead.name },
-                  { label: "WhatsApp", value: lead.phone },
+                  { label: "WhatsApp", value: formatPhone(lead.phone) },
                   { label: "E-mail", value: lead.email ? <span className="break-all">{lead.email}</span> : null },
                   {
                     label: "Cliente",

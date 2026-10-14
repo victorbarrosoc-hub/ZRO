@@ -17,7 +17,7 @@ import {
   LEAD_SOURCES,
   LEAD_STAGE_KEYS,
 } from "@/lib/domain";
-import { instagramHandle } from "@/lib/format";
+import { formatPhone, instagramHandle } from "@/lib/format";
 import { ensureClientForLead } from "@/lib/services/clients";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { ACTIVITY_TYPES, STAGE_ACTIVITY, keysOf, stageLabel } from "./crm-options";
@@ -88,7 +88,7 @@ function readContact(fd: FormData) {
     name: str(fd, "name"),
     company: str(fd, "company"),
     segment: str(fd, "segment"),
-    phone: str(fd, "phone"),
+    phone: formatPhone(str(fd, "phone")) ?? undefined,
     email: str(fd, "email"),
     source: str(fd, "source") ?? "outro",
   };
@@ -375,7 +375,7 @@ function readClient(fd: FormData) {
     document: str(fd, "document"),
     contactName: str(fd, "contactName"),
     email: str(fd, "email"),
-    phone: str(fd, "phone"),
+    phone: formatPhone(str(fd, "phone")) ?? undefined,
     instagram: instagramHandle(str(fd, "instagram")),
     source: str(fd, "source") ?? "outro",
     notes: str(fd, "notes"),
