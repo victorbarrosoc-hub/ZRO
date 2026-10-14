@@ -7,7 +7,7 @@ import { SearchField } from "@/components/painel/search-field";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { RATE_UNITS, functionOptions, optionLabel } from "@/lib/domain";
+import { RATE_UNITS, freelaWhatsappText, functionOptions, optionLabel } from "@/lib/domain";
 import { brl } from "@/lib/format";
 import { listCustomFunctions, listEquipmentCatalog, listFreelancers } from "@/lib/queries/freelas";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
                 </Link>
                 {whatsappHref(f.phone) ? (
                   <a
-                    href={whatsappHref(f.phone, `Oi, ${f.name.split(" ")[0]}! Tudo bem? Aqui é da ZRO.`) ?? undefined}
+                    href={whatsappHref(f.phone, freelaWhatsappText(f.whatsappMessage, f.name)) ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     aria-label={`WhatsApp de ${f.name}`}

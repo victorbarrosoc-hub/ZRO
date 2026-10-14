@@ -7,7 +7,7 @@ import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref, What
 import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { CATEGORIES, EQUIPMENT_CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
+import { CATEGORIES, EQUIPMENT_CATEGORIES, FUNCTIONS, RATE_UNITS, freelaWhatsappText, optionLabel } from "@/lib/domain";
 import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, formatDocument, formatPhone, instagramUrl, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
 import { getFreelancer, listCustomFunctions, listEquipmentCatalog } from "@/lib/queries/freelas";
@@ -18,6 +18,7 @@ import {
   DeleteRateButton,
   EditFreelaButton,
   PayEntryButton,
+  WhatsappMessageButton,
 } from "../freela-dialogs";
 import { CopyTextButton } from "../../projetos/[id]/_tabs/documentos-client";
 
@@ -55,7 +56,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
   const counts: Partial<Record<TabKey, number>> = { pagamentos: f.entries.length, jobs: f.crew.length };
   const totalPaid = f.entries.reduce((s, e) => s + e.paidAmount, 0);
   const totalOpen = f.entries.reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0);
-  const wa = whatsappHref(f.phone, `Oi, ${f.name.split(" ")[0]}! Tudo bem? Aqui é da ZRO.`);
+  const wa = whatsappHref(f.phone, freelaWhatsappText(f.whatsappMessage, f.name));
 
   return (
     <div className="grid gap-8">
@@ -81,6 +82,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <WhatsAppButton href={wa} />
+          <WhatsappMessageButton id={f.id} name={f.name} message={f.whatsappMessage} />
           {f.email ? (
             <a
               href={`mailto:${f.email}`}

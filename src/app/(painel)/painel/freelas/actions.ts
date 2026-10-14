@@ -7,7 +7,14 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
-import { CATEGORY_KEYS, FUNCTION_MAX, RATE_UNITS, normalizeFunction } from "@/lib/domain";
+import {
+  CATEGORY_KEYS,
+  FREELA_WHATSAPP_DEFAULT,
+  FREELA_WHATSAPP_MAX,
+  FUNCTION_MAX,
+  RATE_UNITS,
+  normalizeFunction,
+} from "@/lib/domain";
 import { formatPhone, instagramHandle, isValidCpf } from "@/lib/format";
 import { listCustomFunctions } from "@/lib/queries/freelas";
 import { registerPayment } from "@/lib/services/finance";
@@ -112,6 +119,26 @@ export async function updateFreelancer(_prev: ActionResult | null, fd: FormData)
   if (current.photoId !== photoId) await deleteImages([current.photoId]);
   revalidateFreela(id);
   return ok("Dados atualizados.");
+}
+
+/** Mensagem que abre a conversa no WhatsApp com esse freela. Vazia volta para a padrão. */
+export async function saveFreelaWhatsappMessage(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return fail("Freela não encontrado.");
+  const message = str(fd, "message") ?? "";
+  if (message.length > FREELA_WHATSAPP_MAX) {
+    return fail(`Mensagem longa demais (até ${FREELA_WHATSAPP_MAX} letras).`, { message: [`Até ${FREELA_WHATSAPP_MAX} letras.`] });
+  }
+  const custom = message.trim() && message.trim() !== FREELA_WHATSAPP_DEFAULT ? message.trim() : null;
+  const [row] = await db
+    .update(schema.freelancers)
+    .set({ whatsappMessage: custom })
+    .where(eq(schema.freelancers.id, id))
+    .returning({ id: schema.freelancers.id });
+  if (!row) return fail("Freela não encontrado.");
+  revalidateFreela(id);
+  return ok(custom ? "Mensagem salva." : "Voltou para a mensagem padrão.");
 }
 
 export async function toggleFreelancerActive(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {

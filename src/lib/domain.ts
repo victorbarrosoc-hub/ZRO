@@ -212,6 +212,15 @@ export function normalizeFunction(input: string, existing: Iterable<string> = []
   return text.charAt(0).toLocaleUpperCase("pt-BR") + text.slice(1);
 }
 
+/** Mensagem padrão do WhatsApp do freela; {nome} vira o primeiro nome. */
+export const FREELA_WHATSAPP_DEFAULT = "Oi, {nome}! Tudo bem? Aqui é da ZRO.";
+export const FREELA_WHATSAPP_MAX = 500;
+
+export function freelaWhatsappText(template: string | null | undefined, fullName: string) {
+  const first = fullName.trim().split(/\s+/)[0] ?? "";
+  return (template?.trim() || FREELA_WHATSAPP_DEFAULT).replace(/\{nome\}/gi, first);
+}
+
 export const RATE_UNITS = [
   { key: "diaria", label: "por diária" },
   { key: "projeto", label: "por projeto" },
