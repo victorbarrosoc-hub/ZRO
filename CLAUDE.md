@@ -64,6 +64,8 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Orçamento com item avulso e pacote personalizado (opção de salvar no catálogo); freelas com foto, funções personalizadas e banco de equipamentos (busca, categorias, quem tem o quê); clientes do CRM com logo (imagens no banco, entram no backup)
 - [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
 - [x] Pauta (`/painel/pauta`, código em `painel/quadro/`): o Quadro (kanban) da Maestro com a cara da ZRO; o Victor pediu o nome "Pauta" para a tela. Método igual (8 colunas, próximo passo, filtros, Por prazo, ficha), especificação em `docs/quadro/`. Banco próprio (`quadro_cards` por campo, lápide, histórico em `quadro_historico`), endereço fixo `/painel/quadro/banco` e atualização a cada 4 s. Provas: lista do `docs/quadro/PROMPT.md`, no computador e em 390 px
+- [x] Processos: pós-produção completa nos modelos (backup, decupagem, montagem, corte travado, conform, color, som, versões, render, QC, entrega e arquivamento) e modelo "Pós-produção (Absolute ZRO)"; modelos de fábrica já salvos são atualizados uma vez no deploy (marcador `processos-pos:v1`), os editados à mão ficam como estão
+- [x] Perfil do usuário com foto (Ajustes → Minha conta; abre pelo nome no rodapé do menu)
 - [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, arte do board (eclipse e paisagem) em `public/media/absolute/`, sem mockups
 
 ## Escolhas provisórias (a confirmar com o Victor)
@@ -80,6 +82,8 @@ Antes de propor ou construir qualquer coisa, leia:
 - **Clientes no site:** todos podem aparecer
 - **Absolute ZRO:** frase de abertura "Cada frame tem uma temperatura."; assina como empresa (sem nome de pessoa); tom de casa de cor high-end (texto base em `docs/marca/absolute-texto.md`)
 - **Nada de mostrar o que não é real:** sem mockups de estúdio, porta, roupa, perfil ou números inventados no site. Só arte da marca e trabalho de verdade.
+- **Etapas do projeto sem trava:** dá para ir a qualquer etapa; a regra criativa é lembrete, não impede (nem todo projeto passa por todas)
+- **Revisores da Pauta:** Victor e Edu
 - **Dados nunca podem sumir:** a área interna só roda no endereço oficial (prévias redirecionam), o deploy para se houver dois bancos, e Ajustes → Dados e backup mostra o banco em uso e baixa backup. Não mexer nisso sem falar com o Victor.
 
 ## Estrutura
