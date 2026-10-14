@@ -3,6 +3,7 @@
  * abas em link, campo de busca e bloco de "chave: valor".
  */
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/surface";
 import {
   DELIVERABLE_STATUS,
@@ -175,6 +176,26 @@ export function InfoList({ items, className }: { items: { label: string; value: 
         </div>
       ))}
     </dl>
+  );
+}
+
+/**
+ * Botão de WhatsApp do perfil. Sem número cadastrado ele aparece apagado,
+ * para ficar claro onde está e o que falta.
+ */
+export function WhatsAppButton({ href }: { href: string | null }) {
+  const base = "inline-flex h-10 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium sm:h-8";
+  if (!href) {
+    return (
+      <span className={`${base} cursor-not-allowed border border-dashed border-line-strong text-mute`} title="Cadastre o WhatsApp em Editar">
+        <MessageCircle className="size-4" /> Sem WhatsApp
+      </span>
+    );
+  }
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={`${base} bg-white text-void hover:bg-light`}>
+      <MessageCircle className="size-4" /> WhatsApp
+    </a>
   );
 }
 

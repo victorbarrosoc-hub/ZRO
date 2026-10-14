@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Building2, FileText, Mail, MessageCircle, ShieldCheck } from "lucide-react";
-import { InfoList, LeadStageBadge, whatsappHref } from "@/components/painel/bits";
+import { ArrowLeft, ArrowUpRight, Building2, FileText, Mail, ShieldCheck } from "lucide-react";
+import { InfoList, LeadStageBadge, whatsappHref, WhatsAppButton } from "@/components/painel/bits";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, CardHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
@@ -122,16 +122,7 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {wa ? (
-            <a
-              href={wa}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-3.5 text-[13px] font-medium text-void hover:bg-light sm:h-8"
-            >
-              <MessageCircle className="size-4" /> WhatsApp
-            </a>
-          ) : null}
+          <WhatsAppButton href={wa} />
           {lead.email ? (
             <a
               href={`mailto:${lead.email}`}
@@ -241,7 +232,14 @@ export default async function LeadPage({ params }: PageProps<"/painel/crm/[id]">
               <InfoList
                 items={[
                   { label: "Nome", value: lead.name },
-                  { label: "WhatsApp", value: formatPhone(lead.phone) },
+                  {
+                    label: "WhatsApp",
+                    value: formatPhone(lead.phone) ? (
+                            <a href={wa ?? undefined} target="_blank" rel="noreferrer" className="hover:underline">
+                              {formatPhone(lead.phone)}
+                            </a>
+                          ) : null,
+                  },
                   { label: "E-mail", value: lead.email ? <span className="break-all">{lead.email}</span> : null },
                   {
                     label: "Cliente",

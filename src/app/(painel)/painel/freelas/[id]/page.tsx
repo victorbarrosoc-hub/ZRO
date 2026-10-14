@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { Avatar } from "@/components/painel/avatar";
-import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref } from "@/components/painel/bits";
+import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref, WhatsAppButton } from "@/components/painel/bits";
 import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
@@ -80,16 +80,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {wa ? (
-            <a
-              href={wa}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-8 items-center gap-2 rounded-full bg-white px-3.5 text-[13px] font-medium text-void hover:bg-light"
-            >
-              <MessageCircle className="size-4" /> WhatsApp
-            </a>
-          ) : null}
+          <WhatsAppButton href={wa} />
           {f.email ? (
             <a
               href={`mailto:${f.email}`}
@@ -250,7 +241,14 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                           label: "CPF",
                           value: f.document ? <span className="font-mono text-[13px]">{formatDocument(f.document)}</span> : null,
                         },
-                        { label: "WhatsApp", value: formatPhone(f.phone) },
+                        {
+                          label: "WhatsApp",
+                          value: formatPhone(f.phone) ? (
+                            <a href={wa ?? undefined} target="_blank" rel="noreferrer" className="hover:underline">
+                              {formatPhone(f.phone)}
+                            </a>
+                          ) : null,
+                        },
                         { label: "E-mail", value: f.email },
                         {
                           label: "Instagram",
