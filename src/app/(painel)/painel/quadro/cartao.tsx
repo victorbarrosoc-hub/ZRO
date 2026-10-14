@@ -1,6 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element -- foto do freela, servida pela rota logada */
+import { useRef } from "react";
 import { CalendarDays, Check, Clock, MessageSquare } from "lucide-react";
 import { imageUrl } from "@/components/painel/avatar";
 import { cn } from "@/lib/utils";
@@ -52,12 +53,61 @@ export function ProximoPasso({ c }: { c: Card }) {
   );
 }
 
-export function Cartao({ c, comColuna }: { c: Card; comColuna?: boolean }) {
-  const { m, ui } = useQ();
+/**
+ * O prazo de entrega no próprio card: tocar abre o calendário e grava sem abrir a ficha.
+ * Card em produção sem prazo mostra "Prazo" para pôr um.
+ */
+function PrazoChip({ c }: { c: Card }) {
+  const { store } = useQ();
+  const ref = useRef<HTMLInputElement>(null);
   const pz = c.prazo;
   const h = hoje();
   const trabalho = EM_TRABALHO.includes(c.coluna);
+  if (!pz && !trabalho) return null;
   const atrasado = !!pz && pz < h && trabalho;
+  function abrir() {
+    const el = ref.current;
+    if (!el) return;
+    try {
+      el.showPicker();
+    } catch {
+      el.focus();
+    }
+  }
+  return (
+    <span className="q-prazo">
+      <button
+        type="button"
+        data-acao="prazo"
+        className={cn("q-chip", !pz && "vazio", atrasado ? "atrasado" : pz === h && trabalho && "hoje")}
+        title={pz ? "A equipe entrega até (toque para mudar)" : "Pôr prazo de entrega"}
+        onClick={abrir}
+      >
+        <Clock size={11} aria-hidden />
+        {pz ? (
+          <>
+            <em>Entrega</em> {rotuloDia(pz)}
+            {c.prazoHora ? ` ${c.prazoHora}` : ""}
+          </>
+        ) : (
+          "Prazo"
+        )}
+      </button>
+      <input
+        ref={ref}
+        type="date"
+        tabIndex={-1}
+        aria-label="Prazo de entrega"
+        className="q-prazo-in"
+        value={pz ?? ""}
+        onChange={(e) => store.mudar(c.id, { prazo: e.currentTarget.value })}
+      />
+    </span>
+  );
+}
+
+export function Cartao({ c, comColuna }: { c: Card; comColuna?: boolean }) {
+  const { m, ui } = useQ();
   const ck = Array.isArray(c.checklist) ? c.checklist : [];
   const nMsg = Object.keys(c).filter((k) => k.startsWith("cm_")).length;
   const revisores = m.revisores();
@@ -77,13 +127,7 @@ export function Cartao({ c, comColuna }: { c: Card; comColuna?: boolean }) {
       </div>
       <h3 className="q-card-tit">{c.tema}</h3>
       <div className="q-card-meta">
-        {pz ? (
-          <span className={cn("q-chip", atrasado ? "atrasado" : pz === h && trabalho && "hoje")} title="A equipe entrega até">
-            <Clock size={11} aria-hidden />
-            <em>Entrega</em> {rotuloDia(pz)}
-            {c.prazoHora ? ` ${c.prazoHora}` : ""}
-          </span>
-        ) : null}
+        <PrazoChip c={c} />
         {c.data && !m.interno(c) ? (
           <span className="q-chip" title="Vai ao ar">
             <CalendarDays size={11} aria-hidden />

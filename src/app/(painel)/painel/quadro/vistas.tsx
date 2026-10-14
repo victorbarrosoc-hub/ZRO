@@ -184,7 +184,7 @@ function FormAdd({ k }: { k: ColKey }) {
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = e.currentTarget;
-    const el = f.elements as unknown as { tema: HTMLInputElement; cliente: HTMLSelectElement; formato: HTMLSelectElement };
+    const el = f.elements as unknown as { tema: HTMLInputElement; cliente: HTMLSelectElement; formato: HTMLSelectElement; prazo: HTMLInputElement };
     const tema = el.tema.value.trim();
     if (!tema) {
       el.tema.focus();
@@ -197,6 +197,7 @@ function FormAdd({ k }: { k: ColKey }) {
       formatos: [el.formato.value],
       coluna: k,
       resp: fp === "meus" ? cfg.eu : cfg.pessoas.some((p) => p.id === fp) ? fp : null,
+      prazo: el.prazo.value || undefined,
     });
     up((u) => ({ addN: u.addN + 1 })); // o campo fica aberto para o próximo
   }
@@ -218,6 +219,10 @@ function FormAdd({ k }: { k: ColKey }) {
           ))}
         </select>
       </div>
+      <label className="q-add-pz">
+        Entrega
+        <input type="date" name="prazo" aria-label="Prazo de entrega (opcional)" />
+      </label>
       <p className="q-prev">Enter cria. O nome fica “Cliente · Formato · Tema”.</p>
       <div className="q-lin">
         <button type="submit" className="q-pil prim">

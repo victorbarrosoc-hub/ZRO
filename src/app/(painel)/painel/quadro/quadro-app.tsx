@@ -247,14 +247,16 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
       const t = e.touches[0];
       const alvo = e.target instanceof Element ? e.target : null;
       const card = alvo?.closest<HTMLElement>(".q-card") ?? null;
-      const naFicha = !!alvo?.closest(".qz-ficha, .qz-painel, .qz-menu-pos, input, textarea, select, button");
+      const naFicha = !!alvo?.closest(".qz-ficha, .qz-painel, .qz-menu-pos, input, textarea, select");
+      // segurar para arrastar não começa num botão; deslizar para o lado pode (o toque que anda não vira clique)
+      const noBotao = !!alvo?.closest("button");
       const u = uiRef.current;
       const mob = matchMedia(MQ).matches;
       toque = {
         x: t.clientX,
         y: t.clientY,
         em: Date.now(),
-        card: naFicha ? null : card,
+        card: naFicha || noBotao ? null : card,
         ativo: false,
         deslize: !naFicha && mob && u.vista === "colunas" && !!alvo?.closest(".q-quadro"),
       };
