@@ -84,7 +84,23 @@ type Toque = {
   fantasma?: HTMLElement;
   alvo?: HTMLElement | null;
   ay?: number;
+  /** Deslize: o eixo do gesto (decidido nos primeiros pixels) e a coluna que segue o dedo. */
+  eixo?: "x" | "y";
+  col?: HTMLElement | null;
 };
+
+/** Coluna que seguiu o dedo volta para o lugar (ou só limpa, se vai sumir). */
+function soltarColuna(col: HTMLElement | null | undefined, animar: boolean) {
+  if (!col) return;
+  if (!animar) {
+    col.style.transition = col.style.transform = col.style.opacity = "";
+    return;
+  }
+  col.style.transition = "transform .28s cubic-bezier(.16,1,.3,1), opacity .28s ease";
+  col.style.transform = "";
+  col.style.opacity = "";
+  setTimeout(() => (col.style.transition = ""), 300);
+}
 
 function Quadro({ cfg, iniciais, cursor }: Props) {
   const [store] = useState(() => pegarStore(cfg, iniciais, cursor));
@@ -109,6 +125,8 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
     arraste: null,
     alvo: null,
     pede: null,
+    fichaSaindo: null,
+    dirMovel: 1,
     ...lerPrefs(),
   }));
 
@@ -124,7 +142,7 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
   const q = useMemo<Q>(() => {
     const up: Q["up"] = (p) => setUi((u) => ({ ...u, ...(typeof p === "function" ? p(u) : p) }));
     const abrirFicha: Q["abrirFicha"] = (id, campoFoco) => {
-      up({ ficha: id, troca: null, apagando: false, pede: campoFoco ?? null });
+      up({ ficha: id, fichaSaindo: null, troca: null, apagando: false, pede: campoFoco ?? null });
       if (campoFoco)
         setTimeout(() => {
           const el = document.querySelector<HTMLElement>(`.qz-ficha [data-campo="${campoFoco}"]`);
@@ -134,7 +152,10 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
           }
         }, 30);
     };
-    const fecharFicha = () => up({ ficha: null, pede: null });
+    const fecharFicha = () => {
+      setUi((u) => (u.ficha ? { ...u, ficha: null, pede: null, fichaSaindo: u.ficha } : u));
+      setTimeout(() => setUi((u) => (u.fichaSaindo && !u.ficha ? { ...u, fichaSaindo: null } : u)), 200);
+    };
     const executar: Q["executar"] = (id, acao, bt) => {
       const c = store.achar(id);
       if (!c) return;
@@ -286,7 +307,24 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
       if (!toque) return;
       const t = e.touches[0];
       if (!toque.ativo) {
-        if (Math.hypot(t.clientX - toque.x, t.clientY - toque.y) > 10) clearTimeout(toque.timer);
+        const dx = t.clientX - toque.x;
+        const dy = t.clientY - toque.y;
+        if (Math.hypot(dx, dy) > 10) clearTimeout(toque.timer);
+        if (!toque.eixo && Math.hypot(dx, dy) > 8) toque.eixo = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        // deslize para o lado: a coluna acompanha o dedo (com resistência na primeira e na última)
+        if (toque.deslize && toque.eixo === "x") {
+          e.preventDefault();
+          toque.col ??= document.querySelector<HTMLElement>(".q-col.on");
+          const ks = COLUNAS.map((c) => c.k);
+          const i = ks.indexOf(uiRef.current.colMovel);
+          const borda = (i === 0 && dx > 0) || (i === ks.length - 1 && dx < 0);
+          const d = borda ? dx * 0.25 : dx;
+          if (toque.col) {
+            toque.col.style.transition = "none";
+            toque.col.style.transform = `translateX(${d}px)`;
+            toque.col.style.opacity = String(1 - Math.min(Math.abs(d) / 520, 0.4));
+          }
+        }
         return;
       }
       e.preventDefault();
@@ -317,15 +355,23 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
       if (tq.deslize) {
         const dx = t.clientX - tq.x;
         const dy = t.clientY - tq.y;
-        if (Math.abs(dx) > 60 && Math.abs(dy) < Math.abs(dx) * 0.6 && Date.now() - tq.em < 800) {
+        const rapido = Date.now() - tq.em < 300 && Math.abs(dx) > 30;
+        let trocou = false;
+        if ((Math.abs(dx) > 60 || rapido) && Math.abs(dy) < Math.abs(dx) * 0.6) {
           const ks = COLUNAS.map((c) => c.k);
           const i = ks.indexOf(uiRef.current.colMovel);
           const j = Math.max(0, Math.min(ks.length - 1, i + (dx < 0 ? 1 : -1)));
-          if (j !== i) up({ colMovel: ks[j] });
+          if (j !== i) {
+            trocou = true;
+            up({ colMovel: ks[j], dirMovel: dx < 0 ? 1 : -1 });
+          }
         }
+        // trocou: a coluna velha some e a nova entra deslizando; senão a coluna volta para o lugar
+        soltarColuna(tq.col, !trocou);
       }
     };
     const touchcancel = () => {
+      soltarColuna(toque?.col, true);
       toque?.fantasma?.remove();
       if (toque?.ativo) fimArraste();
       toque = null;

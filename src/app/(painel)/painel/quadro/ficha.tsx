@@ -191,11 +191,13 @@ function MandarFreela({ c }: { c: Card }) {
 
 export function Ficha() {
   const { ui, store } = useQ();
-  const c = store.achar(ui.ficha);
-  const aberta = !!c && !c.apagadoEm;
+  // ao fechar, a ficha ainda aparece um instante, saindo de cena (ui.fichaSaindo)
+  const c = store.achar(ui.ficha ?? ui.fichaSaindo);
+  const visivel = !!c && !c.apagadoEm;
+  const aberta = visivel && !!ui.ficha;
   return (
-    <aside className={cn("qz-ficha", aberta && "aberta")} aria-label="Ficha do card">
-      {aberta ? <FichaDentro key={c.id} c={c} /> : null}
+    <aside className={cn("qz-ficha", aberta && "aberta", visivel && !aberta && "saindo")} aria-label="Ficha do card">
+      {visivel ? <FichaDentro key={c.id} c={c} /> : null}
     </aside>
   );
 }
@@ -238,22 +240,6 @@ function FichaDentro({ c }: { c: Card }) {
     <div className="q-ficha-in" role="dialog" aria-label={m.titulo(c)}>
       <div className="q-ficha-topo">
         <select
-          data-acao-mudar="cliente"
-          aria-label="Cliente do card"
-          value={c.cliente || ""}
-          onChange={(ev) => {
-            const v = ev.currentTarget.value;
-            if (v !== (c.cliente || "")) up({ troca: v });
-          }}
-        >
-          {cfg.clientes.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.nome}
-            </option>
-          ))}
-          {c.cliente && cfg.clientes.some((x) => x.id === c.cliente) ? null : <option value={c.cliente || ""}>{m.cliente(c.cliente).nome}</option>}
-        </select>
-        <select
           data-acao-mudar="coluna"
           aria-label="Coluna"
           style={cc(c.coluna)}
@@ -271,6 +257,31 @@ function FichaDentro({ c }: { c: Card }) {
           <X size={14} aria-hidden />
         </button>
       </div>
+
+      {/* Cliente à vista: card sem cliente ganha um direto; trocar de um cliente para outro pergunta antes */}
+      <label className="q-campo q-cliente">
+        Cliente
+        <select
+          className="q-in"
+          data-acao-mudar="cliente"
+          aria-label="Cliente do card"
+          value={c.cliente || ""}
+          onChange={(ev) => {
+            const v = ev.currentTarget.value;
+            if (v === (c.cliente || "")) return;
+            if (!c.cliente) mudar({ cliente: v });
+            else up({ troca: v });
+          }}
+        >
+          {!c.cliente ? <option value="">Sem cliente: escolha…</option> : null}
+          {cfg.clientes.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.nome}
+            </option>
+          ))}
+          {c.cliente && !cfg.clientes.some((x) => x.id === c.cliente) ? <option value={c.cliente}>{m.cliente(c.cliente).nome}</option> : null}
+        </select>
+      </label>
 
       {ui.troca ? (
         <div className="q-troca">
@@ -370,6 +381,7 @@ function FichaDentro({ c }: { c: Card }) {
         ))}
       </div>
 
+      <div key={aba} className="q-aba-conteudo">
       {aba === "conteudo" ? (
         <>
           <Texto c={c} k="briefing" rotulo="Briefing" ph="O que o card precisa dizer, para quem, com que objetivo" />
@@ -538,6 +550,8 @@ function FichaDentro({ c }: { c: Card }) {
           </div>
         </>
       ) : null}
+
+      </div>
 
       <div className="q-bloco">
         <h4>

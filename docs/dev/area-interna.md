@@ -95,6 +95,8 @@ export async function criarAlgo(_prev: ActionResult | null, fd: FormData): Promi
 - Gráficos novos seguem a skill **dataviz** (colunas ≤ 24px, legenda, tabela alternativa, dica no hover/foco, sem eixo duplo).
 - Texto de interface: português do Brasil, direto e operacional (ver `docs/marca/voice.md`).
 
+- **Movimento:** cada página entra com um leve movimento (`.zro-pagina` no `shell.tsx`, chave = endereço) e o conteúdo abaixo das abas anima quando a aba muda (`tab-links.tsx`, o traço desliza na hora do toque). Use `cubic-bezier(0.16, 1, 0.3, 1)` e respeite `prefers-reduced-motion`. Animação com `transform` só com `backwards` (nada fica transformado depois: elemento `fixed` dentro continua no lugar).
+
 ## Testar
 
 - O servidor de desenvolvimento já roda em `http://localhost:3000`. **Não inicie outro e não derrube este.**
