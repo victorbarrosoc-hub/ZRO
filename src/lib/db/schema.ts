@@ -3,7 +3,20 @@
  * Dinheiro sempre em centavos (inteiro, bigint para não estourar). Datas de calendário em texto "AAAA-MM-DD".
  */
 import { relations, sql } from "drizzle-orm";
-import { bigint, boolean, doublePrecision, index, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  bigserial,
+  boolean,
+  doublePrecision,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import type { CreativeRuleAnswers } from "@/lib/domain";
 
 const id = () => text().primaryKey().$defaultFn(() => crypto.randomUUID());
@@ -268,6 +281,41 @@ export const freelancerEquipment = pgTable(
     uniqueIndex("freelancer_equipment_unique_idx").on(t.freelancerId, t.equipmentId),
     index("freelancer_equipment_equipment_idx").on(t.equipmentId),
   ],
+);
+
+/* ============================== Quadro (kanban de conteúdo) ==============================
+ * O método é o da Maestro (docs/quadro). Tudo do card mora em "dados", um campo por chave:
+ * grava-se por campo, apagar é lápide (apagadoEm) e toda gravação vai para o histórico.
+ */
+
+export const quadroCards = pgTable(
+  "quadro_cards",
+  {
+    org: text().notNull(),
+    id: text().notNull(),
+    dados: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    versao: integer().notNull().default(1),
+    /** campo → versão em que mudou por último */
+    versoes: jsonb().$type<Record<string, number>>().notNull().default({}),
+    criadoEm: timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
+    atualizadoEm: timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.org, t.id] }), index("quadro_cards_atualizado_idx").on(t.org, t.atualizadoEm)],
+);
+
+/** Cada gravação: quem, quando e cada campo [antes, depois]. Explica qualquer sumiço. */
+export const quadroHistorico = pgTable(
+  "quadro_historico",
+  {
+    n: bigserial({ mode: "number" }).primaryKey(),
+    org: text().notNull(),
+    cardId: text().notNull(),
+    quando: timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
+    quem: text(),
+    operacao: text().notNull(),
+    campos: jsonb().$type<Record<string, [unknown, unknown]>>().notNull().default({}),
+  },
+  (t) => [index("quadro_historico_card_idx").on(t.org, t.cardId, t.quando)],
 );
 
 /* ============================== Projetos ============================== */

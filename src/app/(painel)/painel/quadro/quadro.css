@@ -1,0 +1,230 @@
+/* =====================================================================
+   1. IDENTIDADE VISUAL — troque SÓ estes tokens para a IDV da plataforma
+   ===================================================================== */
+/* Tokens do Quadro ligados à identidade da ZRO (src/app/globals.css).
+   Preto e branco; a única cor é a de cada coluna, que orienta a equipe. */
+.qz{
+  --q-fonte: var(--font-sans);
+  --q-fundo: var(--color-void);
+  --q-superficie: #101010;
+  --q-superficie-2: var(--color-smoke);
+  --q-superficie-3: var(--color-mist);
+  --q-borda: var(--color-line);
+  --q-texto: var(--color-light);
+  --q-texto-2: var(--color-ash);
+  --q-texto-3: var(--color-mute);
+  --q-acao: var(--color-white);
+  --q-acao-texto: var(--color-void);
+  --q-perigo: var(--color-danger);
+  --q-alerta: var(--color-warn);
+  --q-ok: var(--color-ok);
+  --q-raio: 20px;
+  --q-raio-p: 14px;
+  --q-sombra: 0 24px 80px -24px rgb(0 0 0 / .9);
+  /* uma cor por coluna, sóbrias para conviver com o preto e branco */
+  --col-pauta: #8c8c8c; --col-afazer: #6f93c9; --col-fazendo: #4fb3a6; --col-revisao: #a58ad6;
+  --col-cliente: #d0895b; --col-aprovado: #6dbb87; --col-agendado: #c2a24e; --col-publicado: #5f5f5f;
+  color-scheme: dark;
+  font: 14px/1.45 var(--q-fonte); color: var(--q-texto); -webkit-font-smoothing: antialiased;
+}
+/* ===================================================================== */
+/* :where() mantém o peso destas regras igual ao do esqueleto: as classes de baixo valem mais */
+:where(.qz) :is(button,input,select,textarea){ font:inherit; color:inherit }
+:where(.qz) button{ cursor:pointer }
+:where(.qz) :focus-visible{ outline:2px solid var(--q-acao); outline-offset:2px }
+.q-topo{ display:flex; align-items:center; gap:12px; padding:0 0 8px }
+.q-topo h1{ margin:0; font-size:clamp(24px,2.6vw,40px); font-weight:600; letter-spacing:-.035em; line-height:1.05; color:var(--color-white) }
+.q-topo .q-esp{ flex:1 }
+.q-pil{ border:0; border-radius:999px; padding:7px 14px; background:var(--q-superficie-3); display:inline-flex; align-items:center; gap:6px; font-weight:500; white-space:nowrap }
+.q-pil.prim{ background:var(--q-acao); color:var(--q-acao-texto); font-weight:600 }
+.q-pil.perigo{ color:var(--q-perigo) }
+.q-pil span{ opacity:.7 }
+
+/* barra: COMO ver | o que FILTRA */
+.q-barra{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:6px 0 12px }
+.q-vista{ display:inline-flex; background:var(--q-superficie); border-radius:999px; padding:3px }
+.q-vista button{ border:0; background:none; border-radius:999px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; color:var(--q-texto-2); font-weight:500 }
+.q-vista button.on{ background:var(--q-superficie-3); color:var(--q-texto) }
+.q-filtros{ display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+.q-filtro{ display:inline-flex; align-items:center; gap:6px; background:var(--q-superficie); border-radius:999px; padding:4px 6px 4px 12px; font-size:13px }
+.q-filtro span{ color:var(--q-texto-3) }
+.q-filtro select{ border:0; background:transparent; padding:3px 4px; max-width:190px; font-weight:500 }
+.q-filtro select option, .q-filtro select optgroup{ background:var(--q-superficie); color:var(--q-texto) }
+.q-filtro.ligado{ background:color-mix(in srgb, var(--q-acao) 20%, var(--q-superficie)) }
+.q-limpar{ border:0; background:none; color:var(--q-texto-2); text-decoration:underline; text-underline-offset:3px }
+
+/* colunas */
+.q-quadro{ display:flex; gap:12px; padding:0 0 120px; overflow-x:auto; align-items:flex-start; scroll-snap-type:x proximity }
+.q-col{ flex:0 0 288px; background:var(--q-superficie); border:1px solid var(--q-borda); border-radius:var(--q-raio); padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(100dvh - 210px); scroll-snap-align:start }
+.q-col-hd{ display:flex; align-items:center; gap:8px; padding:2px 4px }
+.q-col-hd i{ width:9px; height:9px; border-radius:50%; background:var(--cc); flex:none }
+.q-col-hd b{ font-weight:600 }
+.q-col-hd span{ color:var(--q-texto-3); font-variant-numeric:tabular-nums }
+.q-col-hd .q-recolhe{ margin-left:auto; border:0; background:none; color:var(--q-texto-3); padding:4px; border-radius:6px; transform:rotate(180deg) }
+.q-col-desc{ margin:0 4px; color:var(--q-texto-3); font-size:12.5px }
+.q-col-corpo{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; min-height:40px; padding:2px; margin:-2px }
+.q-col.recolhida{ flex:0 0 52px; padding:6px; max-height:none }
+.q-faixa-rec{ border:0; background:none; display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; padding:8px 0; color:var(--q-texto) }
+.q-faixa-rec b{ writing-mode:vertical-rl; transform:rotate(180deg); font-weight:600 }
+.q-faixa-rec span{ color:var(--q-texto-3) }
+.q-faixa-rec::before{ content:''; width:9px; height:9px; border-radius:50%; background:var(--cc) }
+.q-vazio{ color:var(--q-texto-3); margin:6px 4px; font-size:13px }
+.q-mais{ border:0; background:none; color:var(--q-texto-2); padding:6px; border-radius:8px; font-weight:500 }
+.q-mais span{ color:var(--q-texto-3); font-weight:400 }
+.q-add-bt{ border:0; background:none; color:var(--q-texto-2); text-align:left; padding:8px 6px; border-radius:8px }
+.q-add-bt:hover{ background:var(--q-superficie-2) }
+.q-add{ display:flex; flex-direction:column; gap:6px; background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:8px }
+.q-add input, .q-add select{ width:100%; border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:8px; padding:7px 9px }
+.q-add .q-lin{ display:flex; gap:6px }
+.q-add .q-prev{ margin:0; color:var(--q-texto-3); font-size:12px }
+
+/* o card */
+.q-card{ position:relative; background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:10px 10px 10px 13px; display:flex; flex-direction:column; gap:6px; cursor:pointer;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; transition:transform .12s ease, background .12s ease }
+.q-card::before{ content:''; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:3px; background:var(--cc) }
+.q-card:hover{ background:var(--q-superficie-3) }
+.q-card:active{ transform:scale(.99) }
+.q-card.arrastando{ opacity:.35 }
+.q-card.importante .q-card-tit::after{ content:' ●'; color:var(--q-perigo); font-size:10px; vertical-align:middle }
+.q-card-topo{ display:flex; flex-wrap:wrap; gap:4px 8px; font-size:11.5px; color:var(--q-texto-3) }
+.q-card-topo .q-cli{ color:var(--q-texto-2); font-weight:500 }
+.q-colb{ border-radius:999px; padding:0 7px; background:color-mix(in srgb, var(--cc) 22%, transparent); color:var(--q-texto) }
+.q-card-tit{ margin:0; font-size:14px; font-weight:600; line-height:1.3; overflow-wrap:anywhere }
+.q-card-meta{ display:flex; flex-wrap:wrap; align-items:center; gap:6px }
+.q-chip{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:var(--q-texto-2); background:var(--q-superficie); border-radius:999px; padding:2px 8px }
+.q-chip em{ font-style:normal; color:var(--q-texto-3) }
+.q-chip.atrasado{ color:#fff; background:color-mix(in srgb, var(--q-perigo) 75%, transparent) }
+.q-chip.atrasado em{ color:#fff }
+.q-chip.hoje{ color:var(--q-acao-texto); background:var(--q-alerta) }
+.q-chip.hoje em{ color:var(--q-acao-texto) }
+.q-av{ margin-left:auto; width:24px; height:24px; border-radius:50%; display:inline-grid; place-items:center; font-size:10.5px; font-weight:700; background:var(--q-superficie-3); color:var(--q-texto); flex:none }
+.q-av{ overflow:hidden; position:relative }
+.q-av img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+.q-av.vazio{ border:1px dashed var(--q-texto-3); background:none; color:var(--q-texto-3) }
+.q-prox{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px }
+.q-prox button{ border:0; border-radius:999px; padding:5px 11px; font-size:12.5px; font-weight:600; background:color-mix(in srgb, var(--cc) 24%, var(--q-superficie)); color:var(--q-texto) }
+.q-prox button.sec{ background:none; color:var(--q-texto-2); font-weight:500; padding:5px 6px }
+.q-prox .info{ font-size:12px; color:var(--q-texto-2) }
+.q-revisa{ font-size:11.5px; color:var(--q-texto-3) }
+.q-lugar{ height:6px; border-radius:3px; background:var(--q-acao); margin:-1px 0 }
+
+/* celular: uma coluna por vez, com abas */
+.q-abas-col, .q-desc-m{ display:none }
+@media (max-width:760px){
+  .q-topo{ padding:0 0 4px }
+  .q-barra{ padding:6px 0 10px }
+  /* os três filtros numa linha: no celular o rótulo sai, a opção já diz o que é */
+  .q-filtros{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); width:100%; gap:6px }
+  .q-filtro{ padding:4px 6px; min-width:0 }
+  .q-filtro span{ display:none }
+  .q-filtro select{ width:100%; max-width:none; font-size:12.5px }
+  .q-limpar{ grid-column:1 / -1; justify-self:start }
+  .q-abas-col{ display:flex; gap:6px; overflow-x:auto; padding:8px 16px 6px; margin:0 -16px; scrollbar-width:none; position:sticky; top:56px; z-index:5; background:var(--q-fundo) }
+  .q-abas-col::-webkit-scrollbar{ display:none }
+  .q-aba-col{ flex:none; border:0; border-radius:999px; padding:6px 12px; background:var(--q-superficie); color:var(--q-texto-2); font-weight:500; white-space:nowrap }
+  .q-aba-col span{ color:var(--q-texto-3) }
+  .q-aba-col.on{ background:color-mix(in srgb, var(--cc) 30%, var(--q-superficie)); color:var(--q-texto) }
+  .q-desc-m{ display:block; margin:2px 0 8px; color:var(--q-texto-3); font-size:12.5px }
+  .q-quadro{ display:block; padding:0 0 120px; overflow:visible }
+  .q-col{ display:none; max-height:none; background:none; border:0; padding:0 }
+  .q-col.on{ display:flex }
+  .q-col .q-col-hd, .q-col .q-col-desc{ display:none }
+  .q-col-corpo{ overflow:visible }
+  .q-col.recolhida{ display:none }
+  .q-col.recolhida.on{ display:flex }
+}
+
+/* por prazo */
+.q-pzbase{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 0 10px }
+.q-pzbase button{ border:0; border-radius:999px; padding:6px 14px; background:var(--q-superficie); color:var(--q-texto-2); font-weight:500 }
+.q-pzbase button.on{ background:var(--q-superficie-3); color:var(--q-texto) }
+.q-pzbase .q-mut{ color:var(--q-texto-3); font-size:12.5px }
+.q-porprazo{ padding:0 0 120px; display:flex; flex-direction:column; gap:18px }
+.q-pz-hd{ display:flex; align-items:center; gap:8px; margin:0 0 8px }
+.q-pz-hd b{ font-size:15px }
+.q-pz-hd span{ color:var(--q-texto-3) }
+.q-pz-atrasados .q-pz-hd b{ color:var(--q-perigo) }
+.q-pz-grade{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px }
+@media (max-width:760px){ .q-pz-grade{ grid-template-columns:1fr } }
+
+/* a ficha do card */
+.qz-ficha{ position:fixed; inset:0 0 0 auto; width:min(460px, 100vw); z-index:85; pointer-events:none }
+.qz-ficha.aberta{ pointer-events:auto }
+.q-ficha-in{ --px:18px; height:100%; overflow-y:auto; overflow-x:hidden; background:var(--q-superficie); border-left:1px solid var(--q-borda); box-shadow:var(--q-sombra); padding:14px var(--px) 40px; display:flex; flex-direction:column; gap:14px;
+  animation:q-entra .2s ease; overscroll-behavior:contain }
+.q-ficha-in > *{ flex-shrink:0 }   /* numa coluna que rola, nada encolhe até sumir */
+@keyframes q-entra{ from{ transform:translateX(24px); opacity:0 } }
+@media (max-width:760px){ .qz-ficha{ width:100vw } .q-ficha-in{ --px:16px; padding:14px var(--px) calc(40px + env(safe-area-inset-bottom)) } @keyframes q-entra{ from{ transform:translateY(24px); opacity:0 } } }
+.q-ficha-topo{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto 32px; align-items:center; gap:8px; position:sticky; top:-14px; margin:-14px calc(-1 * var(--px)) 0; padding:12px var(--px) 10px; background:var(--q-superficie); z-index:2; border-bottom:1px solid var(--q-borda) }
+.q-ficha-topo select{ border:0; background:var(--q-superficie-2); border-radius:999px; padding:5px 10px; min-width:0; width:100% }
+.q-salvo{ font-size:12px; color:var(--q-texto-3); max-width:96px; text-align:right; line-height:1.2 }
+.q-salvo.erro{ color:var(--q-perigo) }
+.q-fechar{ border:0; background:var(--q-superficie-2); width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex:none }
+.q-troca{ background:color-mix(in srgb, var(--q-alerta) 18%, var(--q-superficie-2)); border-radius:var(--q-raio-p); padding:10px 12px; display:flex; flex-direction:column; gap:8px }
+.q-troca p{ margin:0 }
+.q-tit{ width:100%; border:0; background:none; font-size:20px; font-weight:700; padding:0; resize:none; line-height:1.25 }
+.q-prefixo{ color:var(--q-texto-3); font-size:12.5px; margin:-8px 0 0 }
+.q-bloco{ background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:12px; display:flex; flex-direction:column; gap:10px; border-left:3px solid var(--borda-bloco, transparent) }
+.q-bloco h4{ margin:0; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px }
+.q-bloco h4 span{ color:var(--q-texto-3); font-weight:400 }
+.q-grade2{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:8px }
+.q-campo{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--q-texto-2); min-width:0 }
+.q-in{ width:100%; min-width:0; border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:8px; padding:8px 10px; font-size:14px; color:var(--q-texto) }
+textarea.q-in{ resize:vertical; min-height:62px; line-height:1.45 }
+.q-in.pede{ outline:2px solid var(--q-alerta) }
+.q-abas{ display:flex; border-bottom:1px solid var(--q-borda) }
+.q-abas button{ flex:1; border:0; background:none; padding:9px 6px; color:var(--q-texto-2); font-weight:500; border-bottom:2px solid transparent }
+.q-abas button.on{ color:var(--q-texto); border-bottom-color:var(--q-acao) }
+.q-abas button em{ display:block; font-style:normal; font-size:11.5px; color:var(--q-texto-3) }
+.q-chips{ display:flex; flex-wrap:wrap; gap:6px }
+.q-chips button{ border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:999px; padding:5px 11px; font-size:12.5px }
+.q-chips button.on{ background:var(--q-acao); color:var(--q-acao-texto); border-color:transparent; font-weight:600 }
+.q-ck{ display:flex; align-items:center; gap:8px }
+.q-ck button.tg{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--q-texto-3); background:none; display:grid; place-items:center; padding:0; flex:none }
+.q-ck.ok button.tg{ background:var(--q-ok); border-color:var(--q-ok); color:#fff }
+.q-ck.ok span{ text-decoration:line-through; color:var(--q-texto-3) }
+.q-ck span{ flex:1; overflow-wrap:anywhere }
+.q-x{ border:0; background:none; color:var(--q-texto-3); font-size:16px; line-height:1; padding:2px 6px; border-radius:6px }
+.q-link{ display:flex; align-items:center; gap:8px }
+.q-link a{ color:var(--q-texto); flex:1; overflow-wrap:anywhere }
+.q-msgs{ display:flex; flex-direction:column; gap:8px }
+.q-msg{ background:var(--q-superficie); border-radius:10px; padding:8px 10px }
+.q-msg small{ color:var(--q-texto-3) }
+.q-msg p{ margin:2px 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
+.q-form-lin{ display:flex; gap:8px }
+.q-form-lin .q-in{ flex:1 }
+.q-pe{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:8px; border-top:1px solid var(--q-borda) }
+
+/* a faixa "soltar em" (arrastar) */
+.qz-faixa{ position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:86; background:var(--q-superficie); border:1px solid var(--q-borda); border-radius:var(--q-raio); box-shadow:var(--q-sombra); padding:10px; display:flex; flex-direction:column; gap:8px }
+.qz-faixa[hidden]{ display:none }
+.qz-faixa > b{ font-size:12px; color:var(--q-texto-3); font-weight:500; padding-left:4px }
+.q-faixa-lin{ display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:6px }
+@media (max-width:760px){ .q-faixa-lin{ grid-template-columns:repeat(4, minmax(0,1fr)) } }
+.q-faixa-bt{ border:0; border-radius:10px; padding:10px 4px; background:color-mix(in srgb, var(--cc) 22%, var(--q-superficie-2)); font-size:12.5px; font-weight:600; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.q-faixa-bt.alvo{ outline:2px solid var(--q-acao); background:color-mix(in srgb, var(--cc) 45%, var(--q-superficie-2)) }
+.q-fantasma{ position:fixed; z-index:87; pointer-events:none; opacity:.92; transform:rotate(2deg); box-shadow:var(--q-sombra) }
+
+/* menu (atribuir) e painel (lixeira) */
+.qz-menu-pos{ position:fixed; z-index:88 }
+.q-menu{ background:var(--q-superficie); border-radius:12px; box-shadow:var(--q-sombra); padding:6px; min-width:200px; display:flex; flex-direction:column }
+.q-menu button{ border:0; background:none; text-align:left; padding:8px 10px; border-radius:8px; display:flex; align-items:center; gap:8px }
+.q-menu button:hover{ background:var(--q-superficie-2) }
+.qz-painel{ position:fixed; inset:0; z-index:89; display:grid; place-items:center; background:rgba(0,0,0,.45); padding:16px }
+.qz-painel[hidden]{ display:none }
+.q-painel-in{ background:var(--q-superficie); border-radius:var(--q-raio); width:min(520px, 100%); max-height:80vh; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px }
+.q-painel-in h3{ margin:0 }
+.q-lix{ display:flex; align-items:center; gap:8px; background:var(--q-superficie-2); border-radius:10px; padding:8px 10px }
+.q-lix span{ flex:1; overflow-wrap:anywhere }
+.q-lix small{ color:var(--q-texto-3) }
+
+/* "não salvos" — o que não chegou ao banco nunca é silencioso */
+.qz-nao-salvos{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:95; display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:min(420px, calc(100vw - 32px)) }
+.q-ns-pil{ border:0; border-radius:999px; padding:9px 16px; background:var(--q-perigo); color:#fff; font-weight:600; box-shadow:var(--q-sombra) }
+.q-ns-painel{ background:var(--q-superficie); border-radius:var(--q-raio); padding:12px 14px; box-shadow:var(--q-sombra); display:flex; flex-direction:column; gap:8px; max-height:min(70dvh, 520px); overflow:auto }
+.q-ns-nome{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere }
+.q-ns-painel ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px }
+.q-ns-painel li{ display:flex; flex-direction:column; min-width:0 }
+.q-ns-painel small{ color:var(--q-texto-3) }
+.q-mut{ color:var(--q-texto-3) }
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important } }
