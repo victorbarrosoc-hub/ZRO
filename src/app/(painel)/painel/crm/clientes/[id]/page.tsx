@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clapperboard, FileText, Mail, MessageCircle } from "lucide-react";
+import { ArrowLeft, Clapperboard, FileText, Mail } from "lucide-react";
 import {
   TabLinks,
   EntryStatusBadge,
@@ -14,6 +14,7 @@ import {
   Td,
   Th,
   whatsappHref,
+  WhatsAppButton,
 } from "@/components/painel/bits";
 import { Avatar } from "@/components/painel/avatar";
 import { StatTile } from "@/components/painel/stat";
@@ -83,16 +84,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {wa ? (
-            <a
-              href={wa}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-3.5 text-[13px] font-medium text-void hover:bg-light sm:h-8"
-            >
-              <MessageCircle className="size-4" /> WhatsApp
-            </a>
-          ) : null}
+          <WhatsAppButton href={wa} />
           {c.email ? (
             <a
               href={`mailto:${c.email}`}
@@ -221,7 +213,14 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
                     <InfoList
                       items={[
                         { label: "Contato", value: c.contactName },
-                        { label: "WhatsApp", value: formatPhone(c.phone) },
+                        {
+                          label: "WhatsApp",
+                          value: formatPhone(c.phone) ? (
+                            <a href={wa ?? undefined} target="_blank" rel="noreferrer" className="hover:underline">
+                              {formatPhone(c.phone)}
+                            </a>
+                          ) : null,
+                        },
                         {
                           label: "E-mail",
                           value: c.email ? <span className="break-all">{c.email}</span> : null,

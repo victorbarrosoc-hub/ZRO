@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Camera } from "lucide-react";
+import { Camera, MessageCircle } from "lucide-react";
 import { Avatar } from "@/components/painel/avatar";
+import { whatsappHref } from "@/components/painel/bits";
 import { SearchField } from "@/components/painel/search-field";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
@@ -69,7 +70,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
           {freelas.map((f) => {
             const rate = f.rates[0];
             return (
-              <li key={f.id}>
+              <li key={f.id} className="relative">
                 <Link href={`/painel/freelas/${f.id}`} className="group block h-full">
                   <Card className="flex h-full flex-col gap-5 p-5 transition-colors duration-300 group-hover:border-white/20">
                     <div className="flex items-start gap-4">
@@ -99,10 +100,24 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
                       </span>
                       <span className="text-mute">
                         {f.jobs} job{f.jobs === 1 ? "" : "s"}
+                        {/* espaço do atalho de WhatsApp, que fica por cima do cartão */}
+                        {f.phone ? <span className="inline-block w-12" aria-hidden /> : null}
                       </span>
                     </div>
                   </Card>
                 </Link>
+                {whatsappHref(f.phone) ? (
+                  <a
+                    href={whatsappHref(f.phone, `Oi, ${f.name.split(" ")[0]}! Tudo bem? Aqui é da ZRO.`) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`WhatsApp de ${f.name}`}
+                    title="WhatsApp"
+                    className="absolute right-4 bottom-3 grid size-10 place-items-center rounded-full bg-white text-void transition-opacity hover:opacity-90"
+                  >
+                    <MessageCircle className="size-[18px]" aria-hidden />
+                  </a>
+                ) : null}
               </li>
             );
           })}
