@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Plus, Search, X } from "lucide-react";
-import { EQUIPMENT_CATEGORIES, cleanEquipmentName, guessEquipmentCategory, optionLabel } from "@/lib/domain";
+import { EQUIPMENT_CATEGORIES, cleanEquipmentName, equipmentKey, guessEquipmentCategory, optionLabel } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 
 export type EquipmentOption = { id: string; name: string; category: string };
@@ -28,7 +28,8 @@ export function EquipmentPicker({ catalog, defaults = [] }: { catalog: Equipment
   const [newCategory, setNewCategory] = useState<string | null>(null);
 
   const pickedKeys = new Set(picked.map((p) => p.key));
-  const pickedNames = new Set(picked.map((p) => norm(p.name)));
+  const pickedNames = new Set(picked.map((p) => equipmentKey(p.name)));
+  const compact = equipmentKey(query);
   const words = norm(query).split(/\s+/).filter(Boolean);
   const browsing = words.length > 0 || category !== null;
 
@@ -37,7 +38,8 @@ export function EquipmentPicker({ catalog, defaults = [] }: { catalog: Equipment
     const list = catalog.filter((e) => {
       if (category && e.category !== category) return false;
       const n = norm(e.name);
-      return words.every((w) => n.includes(w));
+      // "a7iv" também acha "Sony A7 IV".
+      return words.every((w) => n.includes(w)) || (compact.length > 1 && equipmentKey(e.name).includes(compact));
     });
     const first = words[0];
     if (first) list.sort((a, b) => Number(!norm(a.name).startsWith(first)) - Number(!norm(b.name).startsWith(first)));
@@ -46,13 +48,13 @@ export function EquipmentPicker({ catalog, defaults = [] }: { catalog: Equipment
 
   const available = matches.filter((e) => !pickedKeys.has(e.id)).slice(0, words.length ? 12 : 100);
   const typed = cleanEquipmentName(query);
-  const exists = typed ? catalog.some((e) => norm(e.name) === norm(typed)) || pickedNames.has(norm(typed)) : true;
+  const exists = typed ? catalog.some((e) => equipmentKey(e.name) === equipmentKey(typed)) || pickedNames.has(equipmentKey(typed)) : true;
   // Categoria do novo: a escolhida no seletor; senão a que o nome indica; senão a do filtro aberto.
   const fromName = typed ? guessEquipmentCategory(typed) : "outro";
   const guessed = newCategory ?? (fromName !== "outro" ? fromName : (category ?? "outro"));
 
   function add(item: Picked) {
-    setPicked((prev) => (prev.some((p) => p.key === item.key || norm(p.name) === norm(item.name)) ? prev : [...prev, item]));
+    setPicked((prev) => (prev.some((p) => p.key === item.key || equipmentKey(p.name) === equipmentKey(item.name)) ? prev : [...prev, item]));
     setQuery("");
     setNewCategory(null);
     inputRef.current?.focus();
