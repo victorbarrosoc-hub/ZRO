@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, PackagePlus, PencilLine, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Fuel, PackagePlus, PencilLine, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, MoneyInput, Select } from "@/components/ui/field";
@@ -12,6 +12,7 @@ import type { CatalogOption } from "@/lib/queries/quotes";
 import { lineTotal, quantityLabel } from "@/lib/services/quotes";
 import { cn } from "@/lib/utils";
 import { CustomItemDialog, type CustomMode } from "./custom-item";
+import { TravelDialog } from "./travel-item";
 import { blankItem, groupCatalog, itemFromCatalog, parseQuantity, type DraftItem } from "./draft";
 
 /* Colunas da linha no modo tabela (cartão com 860px ou mais). */
@@ -35,6 +36,7 @@ export function ItemsEditor({
   const [custom, setCustom] = useState<{ open: boolean; mode: CustomMode }>({ open: false, mode: "item" });
   const groups = groupCatalog(catalog);
   const openCustom = (mode: CustomMode) => setCustom({ open: true, mode });
+  const [travelOpen, setTravelOpen] = useState(false);
 
   const update = (key: string, patch: Partial<DraftItem>) => onChange(items.map((it) => (it.key === key ? { ...it, ...patch } : it)));
   const add = (item: DraftItem, focus = false) => {
@@ -226,6 +228,10 @@ export function ItemsEditor({
                 <PackagePlus className="size-3.5 shrink-0" aria-hidden />
                 Pacote personalizado
               </button>
+              <button type="button" onClick={() => setTravelOpen(true)} className={CUSTOM_CHIP}>
+                <Fuel className="size-3.5 shrink-0" aria-hidden />
+                Deslocamento
+              </button>
             </div>
           </div>
           {groups.map((g) => (
@@ -283,12 +289,27 @@ export function ItemsEditor({
               <Button variant="secondary" size="sm" onClick={() => openCustom("pacote")}>
                 <PackagePlus /> Pacote personalizado
               </Button>
+              <Button variant="secondary" size="sm" onClick={() => setTravelOpen(true)}>
+                <Fuel /> Deslocamento
+              </Button>
             </>
           ) : null}
           <Button variant="ghost" size="sm" onClick={() => add(blankItem(), true)}>
             <Plus /> Item em branco
           </Button>
         </div>
+      ) : null}
+
+      {!disabled && travelOpen ? (
+        <TravelDialog
+          open={travelOpen}
+          onOpenChange={setTravelOpen}
+          onAdd={(item, message) => {
+            add(item);
+            setTravelOpen(false);
+            toast.success(message);
+          }}
+        />
       ) : null}
 
       {!disabled ? (
