@@ -63,7 +63,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Integração: diária na agenda → equipe do projeto (valor por diária) → pagamento no financeiro → histórico do cliente no CRM; dashboard com abas (Resumo, Projetos, Freelas a pagar, Fluxo)
 - [x] Orçamento com item avulso e pacote personalizado (opção de salvar no catálogo); freelas com foto, funções personalizadas e banco de equipamentos (busca, categorias, quem tem o quê); clientes do CRM com logo (imagens no banco, entram no backup)
 - [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
-- [x] Quadro (`/painel/quadro`): o kanban da Maestro com a cara da ZRO. Método igual (8 colunas, próximo passo, filtros, Por prazo, ficha), especificação em `docs/quadro/`. Banco próprio (`quadro_cards` por campo, lápide, histórico em `quadro_historico`), endereço fixo `/painel/quadro/banco` e atualização a cada 4 s. Provas: lista do `docs/quadro/PROMPT.md`, no computador e em 390 px
+- [x] Pauta (`/painel/pauta`, código em `painel/quadro/`): o Quadro (kanban) da Maestro com a cara da ZRO; o Victor pediu o nome "Pauta" para a tela. Método igual (8 colunas, próximo passo, filtros, Por prazo, ficha), especificação em `docs/quadro/`. Banco próprio (`quadro_cards` por campo, lápide, histórico em `quadro_historico`), endereço fixo `/painel/quadro/banco` e atualização a cada 4 s. Provas: lista do `docs/quadro/PROMPT.md`, no computador e em 390 px
 - [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, arte do board (eclipse e paisagem) em `public/media/absolute/`, sem mockups
 
 ## Escolhas provisórias (a confirmar com o Victor)
@@ -99,7 +99,7 @@ src/
   app/(site)/          site público
   app/orcamento/       funil até o WhatsApp
   app/entrar/          login
-  app/(painel)/painel/ área interna (um diretório por módulo; quadro/ é o kanban)
+  app/(painel)/painel/ área interna (um diretório por módulo; quadro/ é o kanban da tela Pauta)
   components/          brand, site, painel, ui
   lib/                 db (schema), domain, format, queries, services, settings
 ```

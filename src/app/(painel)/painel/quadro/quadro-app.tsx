@@ -37,7 +37,7 @@ export function QuadroApp(props: Props) {
     return (
       <div className="qz">
         <Topo nLix={0} />
-        <p className="q-vazio">Abrindo o quadro…</p>
+        <p className="q-vazio">Abrindo a pauta…</p>
       </div>
     );
   return <Quadro {...props} />;
@@ -46,7 +46,7 @@ export function QuadroApp(props: Props) {
 function Topo({ nLix, abrir }: { nLix: number; abrir?: () => void }) {
   return (
     <header className="q-topo">
-      <h1>Quadro</h1>
+      <h1>Pauta</h1>
       <span className="q-esp" />
       <button type="button" className="q-pil" data-acao="lixeira" onClick={abrir}>
         Lixeira <span>{nLix ? String(nLix) : ""}</span>

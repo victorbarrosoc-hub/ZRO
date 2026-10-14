@@ -32,7 +32,7 @@ export const PAINEL_NAV: NavItem[] = [
     ],
   },
   { href: "/painel/projetos", label: "Projetos", icon: Clapperboard },
-  { href: "/painel/quadro", label: "Quadro", icon: SquareKanban },
+  { href: "/painel/pauta", label: "Pauta", icon: SquareKanban },
   { href: "/painel/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/painel/orcamentos", label: "Orçamentos", icon: FileText },
   { href: "/painel/freelas", label: "Freelas", icon: Users },
