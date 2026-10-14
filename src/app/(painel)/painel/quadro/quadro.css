@@ -96,7 +96,7 @@
 .q-chip em{ font-style:normal; color:var(--q-texto-3) }
 .q-chip.atrasado{ color:#fff; background:color-mix(in srgb, var(--q-perigo) 75%, transparent) }
 .q-chip.atrasado em{ color:#fff }
-.q-chip.hoje{ color:var(--q-acao-texto); background:var(--q-alerta) }
+.q-chip.hoje{ color:var(--q-acao-texto); background:var(--q-acao) } /* entrega hoje: balão branco (a ZRO é preto e branco) */
 .q-chip.hoje em{ color:var(--q-acao-texto) }
 .q-prazo{ position:relative; display:inline-flex }
 button.q-chip{ border:0; cursor:pointer }
