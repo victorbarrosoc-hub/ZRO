@@ -14,6 +14,7 @@ import { cleanEquipmentName, guessEquipmentCategory } from "../../src/lib/domain
 import {
   DEFAULT_CATALOG,
   DEFAULT_EQUIPMENT,
+  DEFAULT_EQUIPMENT_MORE,
   DEFAULT_FAQS,
   DEFAULT_KITS,
   DEFAULT_SETTINGS,
@@ -310,10 +311,14 @@ export async function ensureShowcaseClients(db: DB) {
  * de cada freela vira itens do banco, um por linha, vírgula ou marcador.
  */
 export async function ensureEquipment(db: DB) {
-  const marker = "equipamentos-base:v1";
-  const seeded = await db.query.settings.findFirst({ where: eq(s.settings.key, marker) });
-  if (!seeded) {
-    const rows = Object.entries(DEFAULT_EQUIPMENT).flatMap(([category, names]) => names.map((name) => ({ name, category })));
+  // Cada leva entra uma vez só: o que alguém apagou depois não volta.
+  for (const [marker, list] of [
+    ["equipamentos-base:v1", DEFAULT_EQUIPMENT],
+    ["equipamentos-base:v2", DEFAULT_EQUIPMENT_MORE],
+  ] as const) {
+    const seeded = await db.query.settings.findFirst({ where: eq(s.settings.key, marker) });
+    if (seeded) continue;
+    const rows = Object.entries(list).flatMap(([category, names]) => names.map((name: string) => ({ name, category })));
     await db.insert(s.equipment).values(rows).onConflictDoNothing();
     await db.insert(s.settings).values({ key: marker, value: new Date().toISOString() }).onConflictDoNothing();
   }
@@ -354,6 +359,25 @@ async function convertEquipmentText(db: DB) {
   }
 }
 
+/**
+ * CPF que ficou escrito nas observações ("CPF: 000.000.000-00") passa para o
+ * campo CPF do freela, e a linha sai das observações. Só quando o campo está vazio.
+ */
+export async function moveFreelaCpfFromNotes(db: DB) {
+  const rows = await db
+    .select({ id: s.freelancers.id, notes: s.freelancers.notes })
+    .from(s.freelancers)
+    .where(sql`${s.freelancers.document} is null and ${s.freelancers.notes} ~* 'cpf'`);
+  for (const f of rows) {
+    const line = /^[ \t]*cpf[ \t]*:?[ \t]*([\d.\-\/ ]{11,20})[ \t]*$/im.exec(f.notes ?? "");
+    const digits = line?.[1].replace(/\D/g, "");
+    if (!line || !digits || (digits.length !== 11 && digits.length !== 14)) continue;
+    const notes = (f.notes ?? "").replace(line[0], "").replace(/\n{3,}/g, "\n\n").trim() || null;
+    await db.update(s.freelancers).set({ document: digits, notes }).where(eq(s.freelancers.id, f.id));
+    console.log("✓ CPF de um freela saiu das observações e foi para o campo CPF.");
+  }
+}
+
 export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: boolean }) {
   await ensureUsers(db, { allowGenerated: opts.allowGeneratedPasswords });
   await ensureSettings(db);
@@ -365,5 +389,6 @@ export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: bo
   await ensureFilms(db);
   await ensureShowcaseClients(db);
   await ensureEquipment(db);
+  await moveFreelaCpfFromNotes(db);
   await ensureDatabaseIdentity(db);
 }

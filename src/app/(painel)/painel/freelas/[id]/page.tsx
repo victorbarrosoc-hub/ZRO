@@ -8,7 +8,7 @@ import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { CATEGORIES, EQUIPMENT_CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, instagramUrl, todayISO } from "@/lib/format";
+import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, formatDocument, instagramUrl, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
 import { getFreelancer, listCustomFunctions, listEquipmentCatalog } from "@/lib/queries/freelas";
 import {
@@ -19,6 +19,7 @@ import {
   EditFreelaButton,
   PayEntryButton,
 } from "../freela-dialogs";
+import { CopyTextButton } from "../../projetos/[id]/_tabs/documentos-client";
 
 export async function generateMetadata({ params }: PageProps<"/painel/freelas/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -97,6 +98,13 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
               <Mail className="size-4" /> E-mail
             </a>
           ) : null}
+          {f.document ? (
+            <CopyTextButton
+              text={`${f.name}\nCPF: ${formatDocument(f.document)}`}
+              label="Copiar nome e CPF"
+              done="Nome completo e CPF copiados."
+            />
+          ) : null}
           <EditFreelaButton
             defaults={{
               id: f.id,
@@ -105,6 +113,7 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
               phone: f.phone,
               email: f.email,
               instagram: f.instagram,
+              document: f.document,
               pixKey: f.pixKey,
               functions: f.functions,
               equipment: f.gear,
@@ -237,6 +246,10 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                   <div className="px-5 pb-2 sm:px-6">
                     <InfoList
                       items={[
+                        {
+                          label: "CPF",
+                          value: f.document ? <span className="font-mono text-[13px]">{formatDocument(f.document)}</span> : null,
+                        },
                         { label: "WhatsApp", value: f.phone },
                         { label: "E-mail", value: f.email },
                         {

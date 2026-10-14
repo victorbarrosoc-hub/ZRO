@@ -7,7 +7,7 @@ import { ImageField } from "@/components/painel/image-field";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { FUNCTION_MAX, functionOptions, normalizeFunction } from "@/lib/domain";
-import { instagramHandle, instagramUrl } from "@/lib/format";
+import { instagramHandle, instagramUrl, isValidCpf, maskDocument } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { EquipmentPicker, type EquipmentOption } from "./equipment-picker";
 
@@ -18,6 +18,7 @@ export type FreelaDefaults = {
   phone?: string | null;
   email?: string | null;
   instagram?: string | null;
+  document?: string | null;
   pixKey?: string | null;
   functions?: string[];
   equipment?: EquipmentOption[];
@@ -47,6 +48,7 @@ export function FreelaFields({
         <Field label="Nome" htmlFor="f-name" error={fieldError(state, "name")} className="sm:col-span-2">
           <Input id="f-name" name="name" defaultValue={defaults.name} required autoFocus />
         </Field>
+        <CpfField defaultValue={defaults.document ?? ""} error={fieldError(state, "document")} />
         <Field label="Cidade" htmlFor="f-city">
           <Input id="f-city" name="city" defaultValue={defaults.city ?? "Natal/RN"} />
         </Field>
@@ -69,6 +71,27 @@ export function FreelaFields({
         <Textarea id="f-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
       </Field>
     </>
+  );
+}
+
+/** CPF com máscara enquanto digita (aceita CNPJ, para quem é MEI). */
+function CpfField({ defaultValue, error }: { defaultValue: string; error?: string }) {
+  const [value, setValue] = useState(maskDocument(defaultValue));
+  const digits = value.replace(/\D/g, "");
+  const wrong = digits.length === 11 && !isValidCpf(digits);
+  return (
+    <Field label="CPF" htmlFor="f-doc" error={error ?? (wrong ? "Confira os números: esse CPF não fecha." : undefined)}>
+      <Input
+        id="f-doc"
+        name="document"
+        inputMode="numeric"
+        autoComplete="off"
+        value={value}
+        onChange={(e) => setValue(maskDocument(e.target.value))}
+        placeholder="000.000.000-00"
+        className="font-mono"
+      />
+    </Field>
   );
 }
 

@@ -44,7 +44,7 @@ export function EquipmentPicker({ catalog, defaults = [] }: { catalog: Equipment
     return list;
   })();
 
-  const available = matches.filter((e) => !pickedKeys.has(e.id)).slice(0, words.length ? 12 : 40);
+  const available = matches.filter((e) => !pickedKeys.has(e.id)).slice(0, words.length ? 12 : 100);
   const typed = cleanEquipmentName(query);
   const exists = typed ? catalog.some((e) => norm(e.name) === norm(typed)) || pickedNames.has(norm(typed)) : true;
   // Categoria do novo: a escolhida no seletor; senão a que o nome indica; senão a do filtro aberto.

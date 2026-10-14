@@ -70,11 +70,4 @@ export function leadTitle(lead: { company: string | null; name: string }) {
   return lead.company?.trim() || lead.name;
 }
 
-/** CPF (11 dígitos) ou CNPJ (14) com máscara; outro formato volta como veio. */
-export function formatDocument(doc: string | null | undefined) {
-  if (!doc) return null;
-  const d = doc.replace(/\D/g, "");
-  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  return doc;
-}
+export { formatDocument } from "@/lib/format";

@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATEGORY_KEYS, FUNCTION_MAX, RATE_UNITS, normalizeFunction } from "@/lib/domain";
-import { instagramHandle } from "@/lib/format";
+import { instagramHandle, isValidCpf } from "@/lib/format";
 import { listCustomFunctions } from "@/lib/queries/freelas";
 import { registerPayment } from "@/lib/services/finance";
 import { setFreelancerEquipment } from "@/lib/services/equipment";
@@ -20,6 +20,10 @@ const FreelaSchema = z.object({
   phone: z.string().max(30).optional(),
   email: z.email("E-mail inválido.").optional(),
   instagram: z.string().max(60).optional(),
+  document: z
+    .string()
+    .optional()
+    .refine((v) => !v || (v.length === 11 ? isValidCpf(v) : v.length === 14), "CPF inválido. Confira os números."),
   pixKey: z.string().max(120).optional(),
   functions: z
     .array(z.string().max(FUNCTION_MAX, `Nome de função longo demais (até ${FUNCTION_MAX} letras).`))
@@ -36,6 +40,7 @@ function readFreela(fd: FormData) {
     phone: str(fd, "phone"),
     email: str(fd, "email"),
     instagram: instagramHandle(str(fd, "instagram")),
+    document: str(fd, "document")?.replace(/\D/g, "") || undefined,
     pixKey: str(fd, "pixKey"),
     functions: list(fd, "functions"),
     equipment: list(fd, "equipment"),

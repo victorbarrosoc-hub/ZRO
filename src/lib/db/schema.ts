@@ -206,6 +206,8 @@ export const freelancers = pgTable(
     phone: text(),
     email: text(),
     instagram: text(),
+    /** CPF (ou CNPJ, se for MEI), só os dígitos. */
+    document: text(),
     pixKey: text(),
     functions: jsonb().$type<string[]>().notNull().default([]),
     equipment: text(),

@@ -15,6 +15,13 @@
       "when": 1791979517962,
       "tag": "0001_equipamentos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791983864679,
+      "tag": "0002_cpf_freela",
+      "breakpoints": true
     }
   ]
 }
