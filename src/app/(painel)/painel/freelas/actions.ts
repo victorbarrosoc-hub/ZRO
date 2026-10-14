@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATEGORY_KEYS, FUNCTION_MAX, RATE_UNITS, normalizeFunction } from "@/lib/domain";
-import { instagramHandle, isValidCpf } from "@/lib/format";
+import { formatPhone, instagramHandle, isValidCpf } from "@/lib/format";
 import { listCustomFunctions } from "@/lib/queries/freelas";
 import { registerPayment } from "@/lib/services/finance";
 import { setFreelancerEquipment } from "@/lib/services/equipment";
@@ -37,7 +37,7 @@ function readFreela(fd: FormData) {
   return FreelaSchema.safeParse({
     name: str(fd, "name"),
     city: str(fd, "city"),
-    phone: str(fd, "phone"),
+    phone: formatPhone(str(fd, "phone")) ?? undefined,
     email: str(fd, "email"),
     instagram: instagramHandle(str(fd, "instagram")),
     document: str(fd, "document")?.replace(/\D/g, "") || undefined,

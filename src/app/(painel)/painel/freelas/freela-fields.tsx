@@ -7,7 +7,7 @@ import { ImageField } from "@/components/painel/image-field";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { FUNCTION_MAX, functionOptions, normalizeFunction } from "@/lib/domain";
-import { instagramHandle, instagramUrl, isValidCpf, maskDocument } from "@/lib/format";
+import { instagramHandle, instagramUrl, isValidCpf, maskDocument, maskPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { EquipmentPicker, type EquipmentOption } from "./equipment-picker";
 
@@ -52,9 +52,7 @@ export function FreelaFields({
         <Field label="Cidade" htmlFor="f-city">
           <Input id="f-city" name="city" defaultValue={defaults.city ?? "Natal/RN"} />
         </Field>
-        <Field label="WhatsApp" htmlFor="f-phone">
-          <Input id="f-phone" name="phone" inputMode="tel" defaultValue={defaults.phone ?? ""} placeholder="(84) 90000-0000" />
-        </Field>
+        <PhoneField defaultValue={defaults.phone ?? ""} />
         <Field label="E-mail" htmlFor="f-email" error={fieldError(state, "email")}>
           <Input id="f-email" name="email" type="email" defaultValue={defaults.email ?? ""} />
         </Field>
@@ -71,6 +69,25 @@ export function FreelaFields({
         <Textarea id="f-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
       </Field>
     </>
+  );
+}
+
+/** WhatsApp no formato de celular: (84) 99919-7374. */
+function PhoneField({ defaultValue }: { defaultValue: string }) {
+  const [value, setValue] = useState(maskPhone(defaultValue));
+  return (
+    <Field label="WhatsApp" htmlFor="f-phone">
+      <Input
+        id="f-phone"
+        name="phone"
+        type="tel"
+        inputMode="tel"
+        autoComplete="off"
+        value={value}
+        onChange={(e) => setValue(maskPhone(e.target.value))}
+        placeholder="(84) 90000-0000"
+      />
+    </Field>
   );
 }
 
