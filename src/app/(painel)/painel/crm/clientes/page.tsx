@@ -5,7 +5,7 @@ import { Table, Td, Th } from "@/components/painel/bits";
 import { SearchField } from "@/components/painel/search-field";
 import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { brl } from "@/lib/format";
+import { brl, formatPhone } from "@/lib/format";
 import { filterClients, listClients } from "@/lib/queries/crm";
 import { ClientRowMenu, NewClientButton } from "../crm-dialogs";
 import { formatDocument } from "../crm-options";
@@ -101,9 +101,9 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                   <Td className="text-ash">
                     {c.contactName || c.phone || c.email ? (
                       <>
-                        <span className="block">{c.contactName ?? c.phone ?? c.email}</span>
+                        <span className="block">{c.contactName ?? formatPhone(c.phone) ?? c.email}</span>
                         {c.contactName && (c.phone || c.email) ? (
-                          <span className="block text-[12px] text-mute">{c.phone ?? c.email}</span>
+                          <span className="block text-[12px] text-mute">{formatPhone(c.phone) ?? c.email}</span>
                         ) : null}
                       </>
                     ) : (

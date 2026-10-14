@@ -14,7 +14,7 @@ import {
   FUNNEL_PROJECT_TYPES,
   FUNNEL_VIDEOS,
 } from "@/lib/domain";
-import { whatsappDigits } from "@/lib/format";
+import { formatPhone, whatsappDigits } from "@/lib/format";
 import { buildLeadMessage } from "@/lib/lead-message";
 import { getSetting } from "@/lib/settings";
 
@@ -96,7 +96,7 @@ async function saveLead(data: z.infer<typeof LeadSchema>) {
       company: data.company,
       segment: data.segment,
       email: data.email,
-      phone: data.phone,
+      phone: formatPhone(data.phone) ?? undefined,
       projectType: data.projectType,
       idea: data.idea,
       timing: data.timing,

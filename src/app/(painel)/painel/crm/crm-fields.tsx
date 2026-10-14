@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FormSection, fieldError } from "@/components/painel/form";
 import { ImageField } from "@/components/painel/image-field";
+import { PhoneInput } from "@/components/painel/phone-input";
 import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import {
@@ -190,7 +191,7 @@ export function LeadFields({
             <Input id="l-company" name="company" defaultValue={d.company ?? ""} autoComplete="off" />
           </Field>
           <Field label="WhatsApp" htmlFor="l-phone" error={err("phone")}>
-            <Input id="l-phone" name="phone" inputMode="tel" defaultValue={d.phone ?? ""} placeholder="(84) 90000-0000" />
+            <PhoneInput id="l-phone" name="phone" defaultValue={d.phone} />
           </Field>
           <Field label="E-mail" htmlFor="l-email" error={err("email")}>
             <Input id="l-email" name="email" type="email" defaultValue={d.email ?? ""} />
@@ -391,7 +392,7 @@ export function ClientFields({ state, defaults = {} }: { state: ActionResult | n
             <Input id="c-contact" name="contactName" defaultValue={d.contactName ?? ""} autoComplete="off" />
           </Field>
           <Field label="WhatsApp" htmlFor="c-phone" error={err("phone")}>
-            <Input id="c-phone" name="phone" inputMode="tel" defaultValue={d.phone ?? ""} placeholder="(84) 90000-0000" />
+            <PhoneInput id="c-phone" name="phone" defaultValue={d.phone} />
           </Field>
           <Field label="E-mail" htmlFor="c-email" error={err("email")}>
             <Input id="c-email" name="email" type="email" defaultValue={d.email ?? ""} />
