@@ -226,8 +226,10 @@ export const EQUIPMENT_CATEGORIES = [
   { key: "estabilizacao", label: "Estabilização" },
   { key: "audio", label: "Áudio" },
   { key: "luz", label: "Luz" },
+  { key: "grip", label: "Maquinária e grip" },
   { key: "drone", label: "Drone" },
   { key: "monitor", label: "Monitor e vídeo" },
+  { key: "edicao", label: "Computador e edição" },
   { key: "acessorio", label: "Acessórios" },
   { key: "outro", label: "Outros" },
 ] as const;
@@ -235,11 +237,16 @@ export type EquipmentCategory = (typeof EQUIPMENT_CATEGORIES)[number]["key"];
 export const EQUIPMENT_NAME_MAX = 80;
 
 const EQUIPMENT_HINTS: [EquipmentCategory, RegExp][] = [
-  ["drone", /\bdrone|mavic|\bdji (mini|air|avata|fpv|inspire|neo)\b|\bavata\b|\bfpv\b/],
-  ["estabilizacao", /gimbal|ronin|\brs ?\d|weebill|\bcrane\b|zhiyun|\bmoza\b|steadicam|estabiliz|tripe|monope|slider|easyrig|cabeca fluida/],
-  ["audio", /microfone|\bmic\b|lapela|wireless|\brode\b|sennheiser|\bzoom h\d|tascam|gravador|\bboom\b|shotgun|\blark\b|deity|saramonic|audio|\bfone/],
-  ["monitor", /monitor|atomos|ninja|shinobi|smallhd|feelworld|portkeys|transmiss|hollyland mars|accsoon|teradek/],
-  ["luz", /\bluz\b|\bled\b|aputure|amaran|nanlite|godox|refletor|softbox|bastao|\btubo|painel|fresnel|sonaki|\d+ ?w\b|\bcob\b|rebatedor|difusor/],
+  // Nomes que confundiriam as regras gerais (adaptador de lente, câmera com "Ronin" no nome).
+  ["acessorio", /adaptador|claquete|limpeza|walkie|radio comunicador|dummy|power ?bank|top handle|focus pro|speed ?booster/],
+  ["camera", /ronin 4d|iphone|burano|raptor|z ?cam\b/],
+  ["edicao", /macbook|mac studio|mac mini|\bimac\b|notebook|\bpc\b|computador|speed editor|micro panel|mini panel|tangent|wacom|loupedeck|proart|monitor de referencia/],
+  ["grip", /c-?stand|difusao|extensoes|reguas|tripe de luz|saco de areia|sandbag|bandeira|\bflag\b|butterfly|\bframe \d|\bgrip\b|dolly|\bgrua\b|\bjib\b|trilho|travelling|\bclamp|garra|magic arm|braco articulado|apple ?box|extensao|regua eletrica|cabo de forca|gerador/],
+  ["drone", /\bdrone|dji flip|mavic|\bdji (mini|air|avata|fpv|inspire|neo)\b|\bavata\b|\bfpv\b/],
+  ["estabilizacao", /gimbal|rsc ?\d|osmo mobile|shoulder rig|car mount|ventosa|ronin|\brs ?\d|weebill|\bcrane\b|zhiyun|\bmoza\b|steadicam|estabiliz|tripe|monope|slider|easyrig|cabeca fluida/],
+  ["audio", /microfone|shure|comica|boya|\bzoom f\d|mixpre|sound devices|zeppelin|blimp|peludo|protetor de vento|\bmic\b|lapela|wireless|\brode\b|sennheiser|\bzoom h\d|tascam|gravador|\bboom\b|shotgun|\blark\b|deity|saramonic|audio|\bfone/],
+  ["monitor", /monitor|lilliput|cosmo c\d|video assist|\batem\b|cam link|teleprompter|atomos|ninja|shinobi|smallhd|feelworld|portkeys|transmiss|hollyland mars|accsoon|teradek/],
+  ["luz", /\bluz\b|skypanel|kino ?flo|ring ?light|gelatina|octabox|colmeia|\bled\b|aputure|amaran|nanlite|godox|refletor|softbox|bastao|\btubo|painel|fresnel|sonaki|\d+ ?w\b|\bcob\b|rebatedor|difusor/],
   ["lente", /\blente|objetiva|\bsigma\b|tamron|samyang|rokinon|viltrox|laowa|sirui|7artisans|tokina|zeiss|\b\d{1,3} ?- ?\d{1,3} ?mm|\b\d{2,3} ?mm\b|\bf\/? ?\d(\.\d)?\b|\b\d{1,3}-\d{1,3} \d\.\d\b/],
   ["camera", /camera|filmadora|\bsony (fx|a7|a6|zv|a1|a9)|\bfx ?\d|\ba7 ?(s|r|c|iv|iii)|\bcanon (eos|r\d|c\d)|\beos\b|blackmagic|bmpcc|pocket (4k|6k)|lumix|panasonic|\bgh\d|fujifilm|\bx-?(h|t)\d|komodo|\barri\b|gopro|\bosmo\b|insta360|nikon z/],
   ["acessorio", /bateria|cartao|\bssd\b|hd externo|carregador|v-?mount|\bnd\b|filtro|\bcage\b|follow focus|matte ?box|\bcase\b|bolsa|mochila|\bcabo|adaptador|speed ?booster/],

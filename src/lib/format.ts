@@ -174,6 +174,35 @@ export function whatsappDigits(phone: string | null | undefined) {
   return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
+/** CPF (11 dígitos) ou CNPJ (14) com máscara; outro formato volta como veio. */
+export function formatDocument(doc: string | null | undefined) {
+  if (!doc) return null;
+  const d = doc.replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  return doc;
+}
+
+/** Máscara enquanto digita: CPF até 11 dígitos, CNPJ a partir do 12º. */
+export function maskDocument(input: string) {
+  const d = input.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 11) return d.replace(/(\d{3})(?=\d)/, "$1.").replace(/(\d{3}\.\d{3})(?=\d)/, "$1.").replace(/(\d{3}\.\d{3}\.\d{3})(?=\d)/, "$1-");
+  return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, "$1.$2.$3/$4-$5");
+}
+
+/** CPF com os dígitos verificadores certos. */
+export function isValidCpf(value: string | null | undefined) {
+  const d = (value ?? "").replace(/\D/g, "");
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const check = (len: number) => {
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(d[i]) * (len + 1 - i);
+    const rest = (sum * 10) % 11;
+    return rest === 10 ? 0 : rest;
+  };
+  return check(9) === Number(d[9]) && check(10) === Number(d[10]);
+}
+
 /** "@zro", "instagram.com/zro/" ou "https://www.instagram.com/zro" → "zro". */
 export function instagramHandle(value: string | null | undefined) {
   return (
