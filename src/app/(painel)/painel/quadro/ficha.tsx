@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { CalendarDays, Check, Clock, Link2, MessageSquare, Pencil, Trash2, X } from "lucide-react";
+import { CalendarDays, Check, Clock, Link2, MessageCircle, MessageSquare, Pencil, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProximoPasso } from "./cartao";
 import { cc, useQ, type AbaFicha } from "./contexto";
-import { COLUNAS, clone, linkSeguro, novoId, quando, type Card, type ColKey, type Mensagem } from "./metodo";
+import { COLUNAS, clone, linkSeguro, novoId, quando, type Card, type ColKey, type Mensagem, type Metodo, type Pessoa } from "./metodo";
 
 /** Campos à espera de gravar ("card:campo" → timer). Fica fora da tela: fechar a ficha não perde o que foi digitado. */
 const espera = new Map<string, ReturnType<typeof setTimeout>>();
@@ -143,6 +143,49 @@ function ItemCk({ texto, onSalvar }: { texto: string; onSalvar: (t: string) => v
       }}
       onBlur={(e) => fim(e.currentTarget.value)}
     />
+  );
+}
+
+const dataBR = (iso?: string) => (iso ? iso.split("-").reverse().join("/") : "");
+const corta = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
+
+/** O card resumido para o freela: o que é, até quando, o que fazer e onde está o material. */
+function mensagemFreela(m: Metodo, c: Card, p: Pessoa) {
+  const l: string[] = [p.ola || `Oi, ${p.nome.split(" ")[0]}!`, "", `*${m.titulo(c)}*`];
+  if (c.prazo) l.push(`Entrega: ${dataBR(c.prazo)}${c.prazoHora ? ` às ${c.prazoHora}` : ""}`);
+  if (c.data && !m.interno(c)) l.push(`Vai ao ar: ${dataBR(c.data)}${c.hora ? ` às ${c.hora}` : ""}`);
+  if (c.briefing?.trim()) l.push("", "*Briefing*", corta(c.briefing.trim(), 900));
+  if (c.texto?.trim()) l.push("", "*Texto*", corta(c.texto.trim(), 600));
+  const ck = (Array.isArray(c.checklist) ? c.checklist : []).filter((x) => x && !x.ok);
+  if (ck.length) l.push("", "*Checklist*", ...ck.slice(0, 20).map((x) => `• ${x.t}`));
+  const links = (Array.isArray(c.links) ? c.links : []).map((x) => linkSeguro(x.url)).filter(Boolean);
+  if (links.length) l.push("", "*Links*", ...links.slice(0, 10));
+  return l.join("\n");
+}
+
+/** "Mandar para o freela": abre o WhatsApp dele com o card e anota o envio na conversa. */
+function MandarFreela({ c }: { c: Card }) {
+  const { cfg, m, store } = useQ();
+  const p = c.resp?.startsWith("f:") ? m.pessoa(c.resp) : null;
+  if (!p) return null;
+  const primeiro = p.nome.split(" ")[0];
+  if (!p.whats)
+    return (
+      <p className="q-mut" style={{ margin: 0, fontSize: 12.5 }}>
+        Sem WhatsApp no cadastro de {primeiro}. Cadastre em Freelas para mandar por aqui.
+      </p>
+    );
+  return (
+    <a
+      className="q-pil prim q-wa"
+      href={`https://wa.me/${p.whats}?text=${encodeURIComponent(mensagemFreela(m, c, p))}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-acao="mandar-freela"
+      onClick={() => store.mudar(c.id, { ["cm_" + novoId()]: { por: cfg.eu, em: Date.now(), txt: `Mandei o card para ${primeiro} no WhatsApp.` } })}
+    >
+      <MessageCircle size={14} aria-hidden /> Mandar para o freela
+    </a>
   );
 }
 
@@ -300,6 +343,7 @@ function FichaDentro({ c }: { c: Card }) {
             {c.resp && !m.pessoa(c.resp) ? <option value={c.resp}>Pessoa removida</option> : null}
           </select>
         </label>
+        <MandarFreela c={c} />
         <div className="q-grade2">
           <Quando c={c} k="prazo" rotulo="Entregar até" tipo="date" />
           <Quando c={c} k="prazoHora" rotulo="Hora" tipo="time" />

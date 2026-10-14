@@ -24,7 +24,15 @@ export const LIMITE = 10; // cards por coluna antes do "Mostrar mais"
 export const NAO_SALVO_APOS = 20000; // ms até o card aparecer no aviso "não salvos"
 export const REENVIAR_A_CADA = 15000; // ms entre novas tentativas de gravar
 
-export type Pessoa = { id: string; nome: string; revisor?: boolean; fotoId?: string | null };
+export type Pessoa = {
+  id: string;
+  nome: string;
+  revisor?: boolean;
+  fotoId?: string | null;
+  /** Freela: WhatsApp (só dígitos, com 55) e a mensagem de abertura do cadastro dele. */
+  whats?: string | null;
+  ola?: string;
+};
 export type Cliente = { id: string; nome: string; interno?: boolean };
 export type Config = { org: string; eu: string; pessoas: Pessoa[]; clientes: Cliente[]; formatos: string[]; nomePadrao: boolean };
 

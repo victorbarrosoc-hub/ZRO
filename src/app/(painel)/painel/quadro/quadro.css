@@ -39,6 +39,7 @@
 .q-pil.prim{ background:var(--q-acao); color:var(--q-acao-texto); font-weight:600 }
 .q-pil.perigo{ color:var(--q-perigo) }
 .q-pil span{ opacity:.7 }
+.q-wa{ align-self:flex-start; text-decoration:none }
 
 /* barra: COMO ver | o que FILTRA */
 .q-barra{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:6px 0 12px }
@@ -97,6 +98,13 @@
 .q-chip.atrasado em{ color:#fff }
 .q-chip.hoje{ color:var(--q-acao-texto); background:var(--q-alerta) }
 .q-chip.hoje em{ color:var(--q-acao-texto) }
+.q-prazo{ position:relative; display:inline-flex }
+button.q-chip{ border:0; cursor:pointer }
+button.q-chip:hover{ filter:brightness(1.25) }
+.q-chip.vazio{ background:none; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--q-texto-3) 55%, transparent); color:var(--q-texto-3) }
+.q-prazo-in{ position:absolute; left:0; bottom:0; width:1px; height:1px; opacity:0; pointer-events:none; border:0; padding:0 }
+.q-add-pz{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--q-texto-3) }
+.q-add-pz input{ flex:1 }
 .q-av{ margin-left:auto; width:24px; height:24px; border-radius:50%; display:inline-grid; place-items:center; font-size:10.5px; font-weight:700; background:var(--q-superficie-3); color:var(--q-texto); flex:none }
 .q-av{ overflow:hidden; position:relative }
 .q-av img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
@@ -134,24 +142,22 @@
   .q-col.recolhida.on{ display:flex }
 }
 
-/* computador e tablet: o quadro ocupa a tela toda, sem rolar para o lado.
-   Largo: as oito colunas numa fileira. Mais estreito: duas fileiras de quatro
-   (a ordem não muda: Pauta → Revisão em cima, Com o cliente → Publicado embaixo). */
+/* computador e tablet: as colunas dividem a largura toda, sem rolar para o lado.
+   Largo: as oito numa fileira. Mais estreito: duas fileiras de quatro (a ordem não muda:
+   Pauta → Revisão em cima, Com o cliente → Publicado embaixo). A altura acompanha os
+   cards; coluna muito cheia rola por dentro. */
 .q-linha{ display:contents }
 @media (min-width:761px){
-  .qz{ display:flex; flex-direction:column; height:calc(100dvh - 96px); min-height:600px }
-  .q-area{ flex:1; min-height:0; display:flex; flex-direction:column; container-type:inline-size }
-  .q-quadro{ flex:1; min-height:0; overflow:hidden; padding:0 0 4px; gap:8px; align-items:stretch; scroll-snap-type:none }
-  .q-col{ flex:1 1 0; min-width:0; max-height:none; min-height:0 }
+  .q-area{ container-type:inline-size }
+  .q-quadro{ overflow:visible; padding:0 0 24px; gap:8px; align-items:flex-start; scroll-snap-type:none }
+  .q-col{ flex:1 1 0; min-width:0; max-height:calc(100dvh - 180px) }
   .q-col.recolhida{ flex:0 0 52px }
   .q-col-corpo{ flex:1 1 auto; min-height:0 }
-  .q-porprazo{ flex:1; min-height:0; overflow-y:auto; padding-bottom:24px }
   @container (max-width:1359px){
-    .q-quadro{ flex-direction:column }
-    .q-linha{ display:flex; gap:8px; flex:1 1 0; min-height:0 }
+    .q-quadro{ flex-direction:column; align-items:stretch }
+    .q-linha{ display:flex; gap:8px; align-items:flex-start }
   }
 }
-@media (min-width:1024px){ .qz{ height:calc(100dvh - 48px) } }
 
 /* por prazo */
 .q-pzbase{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 0 10px }
