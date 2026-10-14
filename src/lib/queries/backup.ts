@@ -40,6 +40,8 @@ const TABLES = {
   projectChecklists: s.projectChecklists,
   callSheets: s.callSheets,
   scripts: s.scripts,
+  quadroCards: s.quadroCards,
+  quadroHistorico: s.quadroHistorico,
 } as const;
 
 /** Tudo o que a ZRO guardou, num objeto só (para baixar como .json). */

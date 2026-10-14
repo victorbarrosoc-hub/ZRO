@@ -39,6 +39,12 @@ src/app/(painel)/painel/<modulo>/
 src/lib/queries/<modulo>.ts   leituras (import "server-only")
 ```
 
+**Exceção: o Quadro** (`quadro/`). É o kanban da Maestro e segue as regras de `docs/quadro/PROMPT.md`:
+- grava por **campo** numa fila no navegador (`store.ts`), nunca o card inteiro; apagar é lápide (`apagadoEm`);
+- fala com o banco por `quadro/banco/route.ts` (endereço fixo, não Server Action: uma aba aberta antes de um deploy continua gravando);
+- `servidor.ts` confere a organização ("zro"), o formato do número do card e guarda o histórico de cada campo;
+- o método (colunas, próximo passo, filtros, prazos) está em `metodo.ts` e **não muda sem falar com o Victor**.
+
 ## Server Actions (padrão obrigatório)
 
 ```ts

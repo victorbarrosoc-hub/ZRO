@@ -44,6 +44,7 @@ const COUNTED = [
   { key: "projects", label: "projetos", table: s.projects },
   { key: "finance", label: "lançamentos", table: s.financeEntries },
   { key: "freelancers", label: "freelas", table: s.freelancers },
+  { key: "quadro", label: "cards do Quadro", table: s.quadroCards },
 ] as const satisfies readonly { key: string; label: string; table: PgTable }[];
 
 export type DatabaseSummary = {

@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quadro</title>
+<!--
+  QUADRO — esqueleto do kanban da Maestro, para outra plataforma.
+  Um arquivo só, sem dependências: abra no navegador e ele funciona (os dados
+  ficam no próprio navegador até você ligar o banco da sua plataforma).
+
+  O que trocar e onde:
+    1. IDENTIDADE VISUAL  → só os tokens do :root, logo abaixo.
+    2. CONFIGURAÇÃO       → objeto CONFIG no começo do <script> (pessoas,
+                            clientes, formatos, quem é "eu").
+    3. BANCO              → objeto Armazem no <script>: troque as cinco
+                            funções pelo banco da plataforma (ver o PROMPT).
+  O MÉTODO (as oito colunas, a ordem, o próximo passo de cada uma, prazos e
+  filtros) não se troca: é ele que está sendo levado da Maestro.
+-->
+<style>
+/* =====================================================================
+   1. IDENTIDADE VISUAL — troque SÓ estes tokens para a IDV da plataforma
+   ===================================================================== */
+:root{
+  --q-fonte: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --q-fundo: #1C1C1F;            /* fundo da página */
+  --q-superficie: #27272B;       /* coluna, ficha */
+  --q-superficie-2: #313136;     /* card, campo */
+  --q-superficie-3: #3A3A40;     /* card ao passar o mouse, botão secundário */
+  --q-borda: rgba(255,255,255,.08);
+  --q-texto: #F5F5F7;
+  --q-texto-2: #A1A1A6;          /* texto de apoio */
+  --q-texto-3: #6E6E73;          /* o mais apagado */
+  --q-acao: #FFC857;             /* cor de ação (botão principal, seleção) */
+  --q-acao-texto: #1C1C1F;       /* texto em cima da cor de ação */
+  --q-perigo: #FF5A5F;
+  --q-alerta: #FFB020;
+  --q-ok: #30D158;
+  --q-raio: 14px;
+  --q-raio-p: 10px;
+  --q-sombra: 0 12px 32px rgba(0,0,0,.35);
+  /* a cor de cada coluna — pode seguir a paleta da marca, mas cada coluna precisa
+     de uma cor própria: é por ela que a equipe se orienta no quadro */
+  --col-pauta: #8E8E93; --col-afazer: #5B8DEF; --col-fazendo: #2EC4B6; --col-revisao: #BF5AF2;
+  --col-cliente: #FF7A45; --col-aprovado: #30D158; --col-agendado: #8B7BF0; --col-publicado: #98989D;
+  color-scheme: dark;
+}
+/* Tema claro de exemplo (ligue com <html data-tema="claro">) */
+:root[data-tema="claro"]{
+  --q-fundo: #EFEEEA; --q-superficie: #F7F6F2; --q-superficie-2: #FFFFFF; --q-superficie-3: #ECEBE6;
+  --q-borda: rgba(0,0,0,.08); --q-texto: #1C1C1F; --q-texto-2: #5E5E63; --q-texto-3: #8A8A8F;
+  --q-sombra: 0 12px 32px rgba(0,0,0,.12); color-scheme: light;
+}
+
+/* ===================================================================== */
+*{ box-sizing:border-box }
+html,body{ margin:0; background:var(--q-fundo); color:var(--q-texto); font:14px/1.45 var(--q-fonte); -webkit-font-smoothing:antialiased }
+button,input,select,textarea{ font:inherit; color:inherit }
+button{ cursor:pointer }
+:focus-visible{ outline:2px solid var(--q-acao); outline-offset:2px }
+.q-topo{ display:flex; align-items:center; gap:12px; padding:16px 20px 8px }
+.q-topo h1{ margin:0; font-size:22px; font-weight:700; letter-spacing:-.01em }
+.q-topo .q-esp{ flex:1 }
+.q-pil{ border:0; border-radius:999px; padding:7px 14px; background:var(--q-superficie-3); display:inline-flex; align-items:center; gap:6px; font-weight:500; white-space:nowrap }
+.q-pil.prim{ background:var(--q-acao); color:var(--q-acao-texto); font-weight:600 }
+.q-pil.perigo{ color:var(--q-perigo) }
+.q-pil span{ opacity:.7 }
+
+/* barra: COMO ver | o que FILTRA */
+.q-barra{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:6px 20px 12px }
+.q-vista{ display:inline-flex; background:var(--q-superficie); border-radius:999px; padding:3px }
+.q-vista button{ border:0; background:none; border-radius:999px; padding:6px 14px; display:inline-flex; align-items:center; gap:6px; color:var(--q-texto-2); font-weight:500 }
+.q-vista button.on{ background:var(--q-superficie-3); color:var(--q-texto) }
+.q-filtros{ display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+.q-filtro{ display:inline-flex; align-items:center; gap:6px; background:var(--q-superficie); border-radius:999px; padding:4px 6px 4px 12px; font-size:13px }
+.q-filtro span{ color:var(--q-texto-3) }
+.q-filtro select{ border:0; background:transparent; padding:3px 4px; max-width:190px; font-weight:500 }
+.q-filtro select option, .q-filtro select optgroup{ background:var(--q-superficie); color:var(--q-texto) }
+.q-filtro.ligado{ background:color-mix(in srgb, var(--q-acao) 20%, var(--q-superficie)) }
+.q-limpar{ border:0; background:none; color:var(--q-texto-2); text-decoration:underline; text-underline-offset:3px }
+
+/* colunas */
+.q-quadro{ display:flex; gap:12px; padding:0 20px 120px; overflow-x:auto; align-items:flex-start; scroll-snap-type:x proximity }
+.q-col{ flex:0 0 288px; background:var(--q-superficie); border-radius:var(--q-raio); padding:10px; display:flex; flex-direction:column; gap:8px; max-height:calc(100vh - 150px); scroll-snap-align:start }
+.q-col-hd{ display:flex; align-items:center; gap:8px; padding:2px 4px }
+.q-col-hd i{ width:9px; height:9px; border-radius:50%; background:var(--cc); flex:none }
+.q-col-hd b{ font-weight:600 }
+.q-col-hd span{ color:var(--q-texto-3); font-variant-numeric:tabular-nums }
+.q-col-hd .q-recolhe{ margin-left:auto; border:0; background:none; color:var(--q-texto-3); padding:4px; border-radius:6px; transform:rotate(180deg) }
+.q-col-desc{ margin:0 4px; color:var(--q-texto-3); font-size:12.5px }
+.q-col-corpo{ display:flex; flex-direction:column; gap:8px; overflow-y:auto; min-height:40px; padding:2px; margin:-2px }
+.q-col.recolhida{ flex:0 0 52px; padding:6px; max-height:none }
+.q-faixa-rec{ border:0; background:none; display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; padding:8px 0; color:var(--q-texto) }
+.q-faixa-rec b{ writing-mode:vertical-rl; transform:rotate(180deg); font-weight:600 }
+.q-faixa-rec span{ color:var(--q-texto-3) }
+.q-faixa-rec::before{ content:''; width:9px; height:9px; border-radius:50%; background:var(--cc) }
+.q-vazio{ color:var(--q-texto-3); margin:6px 4px; font-size:13px }
+.q-mais{ border:0; background:none; color:var(--q-texto-2); padding:6px; border-radius:8px; font-weight:500 }
+.q-mais span{ color:var(--q-texto-3); font-weight:400 }
+.q-add-bt{ border:0; background:none; color:var(--q-texto-2); text-align:left; padding:8px 6px; border-radius:8px }
+.q-add-bt:hover{ background:var(--q-superficie-2) }
+.q-add{ display:flex; flex-direction:column; gap:6px; background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:8px }
+.q-add input, .q-add select{ width:100%; border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:8px; padding:7px 9px }
+.q-add .q-lin{ display:flex; gap:6px }
+.q-add .q-prev{ margin:0; color:var(--q-texto-3); font-size:12px }
+
+/* o card */
+.q-card{ position:relative; background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:10px 10px 10px 13px; display:flex; flex-direction:column; gap:6px; cursor:pointer;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; transition:transform .12s ease, background .12s ease }
+.q-card::before{ content:''; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:3px; background:var(--cc) }
+.q-card:hover{ background:var(--q-superficie-3) }
+.q-card:active{ transform:scale(.99) }
+.q-card.arrastando{ opacity:.35 }
+.q-card.importante .q-card-tit::after{ content:' ●'; color:var(--q-perigo); font-size:10px; vertical-align:middle }
+.q-card-topo{ display:flex; flex-wrap:wrap; gap:4px 8px; font-size:11.5px; color:var(--q-texto-3) }
+.q-card-topo .q-cli{ color:var(--q-texto-2); font-weight:500 }
+.q-colb{ border-radius:999px; padding:0 7px; background:color-mix(in srgb, var(--cc) 22%, transparent); color:var(--q-texto) }
+.q-card-tit{ margin:0; font-size:14px; font-weight:600; line-height:1.3; overflow-wrap:anywhere }
+.q-card-meta{ display:flex; flex-wrap:wrap; align-items:center; gap:6px }
+.q-chip{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; color:var(--q-texto-2); background:var(--q-superficie); border-radius:999px; padding:2px 8px }
+.q-chip em{ font-style:normal; color:var(--q-texto-3) }
+.q-chip.atrasado{ color:#fff; background:color-mix(in srgb, var(--q-perigo) 75%, transparent) }
+.q-chip.atrasado em{ color:#fff }
+.q-chip.hoje{ color:var(--q-acao-texto); background:var(--q-alerta) }
+.q-chip.hoje em{ color:var(--q-acao-texto) }
+.q-av{ margin-left:auto; width:24px; height:24px; border-radius:50%; display:inline-grid; place-items:center; font-size:10.5px; font-weight:700; background:var(--q-superficie-3); color:var(--q-texto); flex:none }
+.q-av.vazio{ border:1px dashed var(--q-texto-3); background:none; color:var(--q-texto-3) }
+.q-prox{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px }
+.q-prox button{ border:0; border-radius:999px; padding:5px 11px; font-size:12.5px; font-weight:600; background:color-mix(in srgb, var(--cc) 24%, var(--q-superficie)); color:var(--q-texto) }
+.q-prox button.sec{ background:none; color:var(--q-texto-2); font-weight:500; padding:5px 6px }
+.q-prox .info{ font-size:12px; color:var(--q-texto-2) }
+.q-revisa{ font-size:11.5px; color:var(--q-texto-3) }
+.q-lugar{ height:6px; border-radius:3px; background:var(--q-acao); margin:-1px 0 }
+
+/* celular: uma coluna por vez, com abas */
+.q-abas-col, .q-desc-m{ display:none }
+@media (max-width:760px){
+  .q-topo{ padding:12px 16px 4px }
+  .q-barra{ padding:6px 16px 10px }
+  /* os três filtros numa linha: no celular o rótulo sai, a opção já diz o que é */
+  .q-filtros{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); width:100%; gap:6px }
+  .q-filtro{ padding:4px 6px; min-width:0 }
+  .q-filtro span{ display:none }
+  .q-filtro select{ width:100%; max-width:none; font-size:12.5px }
+  .q-limpar{ grid-column:1 / -1; justify-self:start }
+  .q-abas-col{ display:flex; gap:6px; overflow-x:auto; padding:0 16px 6px; scrollbar-width:none; position:sticky; top:0; z-index:5; background:var(--q-fundo) }
+  .q-abas-col::-webkit-scrollbar{ display:none }
+  .q-aba-col{ flex:none; border:0; border-radius:999px; padding:6px 12px; background:var(--q-superficie); color:var(--q-texto-2); font-weight:500; white-space:nowrap }
+  .q-aba-col span{ color:var(--q-texto-3) }
+  .q-aba-col.on{ background:color-mix(in srgb, var(--cc) 30%, var(--q-superficie)); color:var(--q-texto) }
+  .q-desc-m{ display:block; margin:2px 16px 8px; color:var(--q-texto-3); font-size:12.5px }
+  .q-quadro{ display:block; padding:0 16px 120px; overflow:visible }
+  .q-col{ display:none; max-height:none; background:none; padding:0 }
+  .q-col.on{ display:flex }
+  .q-col .q-col-hd, .q-col .q-col-desc{ display:none }
+  .q-col-corpo{ overflow:visible }
+  .q-col.recolhida{ display:none }
+  .q-col.recolhida.on{ display:flex }
+}
+
+/* por prazo */
+.q-pzbase{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 20px 10px }
+.q-pzbase button{ border:0; border-radius:999px; padding:6px 14px; background:var(--q-superficie); color:var(--q-texto-2); font-weight:500 }
+.q-pzbase button.on{ background:var(--q-superficie-3); color:var(--q-texto) }
+.q-pzbase .q-mut{ color:var(--q-texto-3); font-size:12.5px }
+.q-porprazo{ padding:0 20px 120px; display:flex; flex-direction:column; gap:18px }
+.q-pz-hd{ display:flex; align-items:center; gap:8px; margin:0 0 8px }
+.q-pz-hd b{ font-size:15px }
+.q-pz-hd span{ color:var(--q-texto-3) }
+.q-pz-atrasados .q-pz-hd b{ color:var(--q-perigo) }
+.q-pz-grade{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:8px }
+@media (max-width:760px){ .q-pzbase, .q-porprazo{ padding-left:16px; padding-right:16px } .q-pz-grade{ grid-template-columns:1fr } }
+
+/* a ficha do card */
+#ficha{ position:fixed; inset:0 0 0 auto; width:min(460px, 100vw); z-index:40; pointer-events:none }
+#ficha.aberta{ pointer-events:auto }
+.q-ficha-in{ --px:18px; height:100%; overflow-y:auto; overflow-x:hidden; background:var(--q-superficie); box-shadow:var(--q-sombra); padding:14px var(--px) 40px; display:flex; flex-direction:column; gap:14px;
+  animation:q-entra .2s ease; overscroll-behavior:contain }
+.q-ficha-in > *{ flex-shrink:0 }   /* numa coluna que rola, nada encolhe até sumir */
+@keyframes q-entra{ from{ transform:translateX(24px); opacity:0 } }
+@media (max-width:760px){ #ficha{ width:100vw } .q-ficha-in{ --px:16px; padding:14px var(--px) calc(40px + env(safe-area-inset-bottom)) } @keyframes q-entra{ from{ transform:translateY(24px); opacity:0 } } }
+.q-ficha-topo{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; position:sticky; top:-14px; margin:-14px calc(-1 * var(--px)) 0; padding:12px var(--px) 10px; background:var(--q-superficie); z-index:2; border-bottom:1px solid var(--q-borda) }
+.q-ficha-topo select{ border:0; background:var(--q-superficie-2); border-radius:999px; padding:5px 10px; min-width:0; max-width:46% }
+.q-salvo{ font-size:12px; color:var(--q-texto-3); margin-left:auto }
+.q-salvo.erro{ color:var(--q-perigo) }
+.q-fechar{ border:0; background:var(--q-superficie-2); width:32px; height:32px; border-radius:50%; display:grid; place-items:center; flex:none }
+.q-troca{ background:color-mix(in srgb, var(--q-alerta) 18%, var(--q-superficie-2)); border-radius:var(--q-raio-p); padding:10px 12px; display:flex; flex-direction:column; gap:8px }
+.q-troca p{ margin:0 }
+.q-tit{ width:100%; border:0; background:none; font-size:20px; font-weight:700; padding:0; resize:none; line-height:1.25 }
+.q-prefixo{ color:var(--q-texto-3); font-size:12.5px; margin:-8px 0 0 }
+.q-bloco{ background:var(--q-superficie-2); border-radius:var(--q-raio-p); padding:12px; display:flex; flex-direction:column; gap:10px; border-left:3px solid var(--borda-bloco, transparent) }
+.q-bloco h4{ margin:0; font-size:13px; font-weight:600; display:flex; align-items:center; gap:6px }
+.q-bloco h4 span{ color:var(--q-texto-3); font-weight:400 }
+.q-grade2{ display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:8px }
+.q-campo{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--q-texto-2); min-width:0 }
+.q-in{ width:100%; min-width:0; border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:8px; padding:8px 10px; font-size:14px; color:var(--q-texto) }
+textarea.q-in{ resize:vertical; min-height:62px; line-height:1.45 }
+.q-in.pede{ outline:2px solid var(--q-alerta) }
+.q-abas{ display:flex; border-bottom:1px solid var(--q-borda) }
+.q-abas button{ flex:1; border:0; background:none; padding:9px 6px; color:var(--q-texto-2); font-weight:500; border-bottom:2px solid transparent }
+.q-abas button.on{ color:var(--q-texto); border-bottom-color:var(--q-acao) }
+.q-abas button em{ display:block; font-style:normal; font-size:11.5px; color:var(--q-texto-3) }
+.q-chips{ display:flex; flex-wrap:wrap; gap:6px }
+.q-chips button{ border:1px solid var(--q-borda); background:var(--q-superficie); border-radius:999px; padding:5px 11px; font-size:12.5px }
+.q-chips button.on{ background:var(--q-acao); color:var(--q-acao-texto); border-color:transparent; font-weight:600 }
+.q-ck{ display:flex; align-items:center; gap:8px }
+.q-ck button.tg{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--q-texto-3); background:none; display:grid; place-items:center; padding:0; flex:none }
+.q-ck.ok button.tg{ background:var(--q-ok); border-color:var(--q-ok); color:#fff }
+.q-ck.ok span{ text-decoration:line-through; color:var(--q-texto-3) }
+.q-ck span{ flex:1; overflow-wrap:anywhere }
+.q-x{ border:0; background:none; color:var(--q-texto-3); font-size:16px; line-height:1; padding:2px 6px; border-radius:6px }
+.q-link{ display:flex; align-items:center; gap:8px }
+.q-link a{ color:var(--q-texto); flex:1; overflow-wrap:anywhere }
+.q-msgs{ display:flex; flex-direction:column; gap:8px }
+.q-msg{ background:var(--q-superficie); border-radius:10px; padding:8px 10px }
+.q-msg small{ color:var(--q-texto-3) }
+.q-msg p{ margin:2px 0 0; white-space:pre-wrap; overflow-wrap:anywhere }
+.q-form-lin{ display:flex; gap:8px }
+.q-form-lin .q-in{ flex:1 }
+.q-pe{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:8px; border-top:1px solid var(--q-borda) }
+
+/* a faixa "soltar em" (arrastar) */
+#faixa{ position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:60; background:var(--q-superficie); border-radius:var(--q-raio); box-shadow:var(--q-sombra); padding:10px; display:flex; flex-direction:column; gap:8px }
+#faixa[hidden]{ display:none }
+#faixa > b{ font-size:12px; color:var(--q-texto-3); font-weight:500; padding-left:4px }
+.q-faixa-lin{ display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:6px }
+@media (max-width:760px){ .q-faixa-lin{ grid-template-columns:repeat(4, minmax(0,1fr)) } }
+.q-faixa-bt{ border:0; border-radius:10px; padding:10px 4px; background:color-mix(in srgb, var(--cc) 22%, var(--q-superficie-2)); font-size:12.5px; font-weight:600; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.q-faixa-bt.alvo{ outline:2px solid var(--q-acao); background:color-mix(in srgb, var(--cc) 45%, var(--q-superficie-2)) }
+.q-fantasma{ position:fixed; z-index:70; pointer-events:none; opacity:.92; transform:rotate(2deg); box-shadow:var(--q-sombra) }
+
+/* menu (atribuir) e painel (lixeira) */
+#menu{ position:fixed; z-index:80 }
+.q-menu{ background:var(--q-superficie); border-radius:12px; box-shadow:var(--q-sombra); padding:6px; min-width:200px; display:flex; flex-direction:column }
+.q-menu button{ border:0; background:none; text-align:left; padding:8px 10px; border-radius:8px; display:flex; align-items:center; gap:8px }
+.q-menu button:hover{ background:var(--q-superficie-2) }
+#painel{ position:fixed; inset:0; z-index:90; display:grid; place-items:center; background:rgba(0,0,0,.45); padding:16px }
+#painel[hidden]{ display:none }
+.q-painel-in{ background:var(--q-superficie); border-radius:var(--q-raio); width:min(520px, 100%); max-height:80vh; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:10px }
+.q-painel-in h3{ margin:0 }
+.q-lix{ display:flex; align-items:center; gap:8px; background:var(--q-superficie-2); border-radius:10px; padding:8px 10px }
+.q-lix span{ flex:1; overflow-wrap:anywhere }
+.q-lix small{ color:var(--q-texto-3) }
+
+/* "não salvos" — o que não chegou ao banco nunca é silencioso */
+#naoSalvos{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:95; display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:min(420px, calc(100vw - 32px)) }
+.q-ns-pil{ border:0; border-radius:999px; padding:9px 16px; background:var(--q-perigo); color:#fff; font-weight:600; box-shadow:var(--q-sombra) }
+.q-ns-painel{ background:var(--q-superficie); border-radius:var(--q-raio); padding:12px 14px; box-shadow:var(--q-sombra); display:flex; flex-direction:column; gap:8px }
+.q-ns-painel ul{ margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px }
+.q-ns-painel small{ color:var(--q-texto-3) }
+.q-mut{ color:var(--q-texto-3) }
+@media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important } }
+</style>
+</head>
+<body>
+<header class="q-topo">
+  <h1>Quadro</h1>
+  <span class="q-esp"></span>
+  <button type="button" class="q-pil" data-acao="lixeira">Lixeira <span id="nLix"></span></button>
+</header>
+<main id="quadro" aria-live="polite"></main>
+<aside id="ficha" aria-label="Ficha do card"></aside>
+<div id="faixa" hidden></div>
+<div id="menu"></div>
+<div id="painel" hidden></div>
+<div id="naoSalvos"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   2. CONFIGURAÇÃO — o que é da plataforma (pessoas, clientes, formatos)
+   ===================================================================== */
+const CONFIG = {
+  /* O MÉTODO: oito colunas, nesta ordem. Os nomes podem ser ajustados ao
+     vocabulário da plataforma, mas o significado e a ordem ficam. */
+  colunas: [
+    { k: 'pauta',     nome: 'Pauta',         desc: 'Ideias sem responsável. Escolha quem faz.' },
+    { k: 'afazer',    nome: 'A fazer',       desc: 'Tem dono e prazo. Ainda não começou.' },
+    { k: 'fazendo',   nome: 'Fazendo',       desc: 'Em produção agora.' },
+    { k: 'revisao',   nome: 'Revisão',       desc: 'Alguém da casa confere antes do cliente.' },
+    { k: 'cliente',   nome: 'Com o cliente', desc: 'Esperando a decisão do cliente.' },
+    { k: 'aprovado',  nome: 'Aprovado',      desc: 'O cliente aprovou. Falta agendar.' },
+    { k: 'agendado',  nome: 'Agendado',      desc: 'Programado para ir ao ar.' },
+    { k: 'publicado', nome: 'Publicado',     desc: 'No ar.' },
+  ],
+  formatos: ['Post', 'Carrossel', 'Reels', 'Story', 'Shorts', 'Vídeo', 'Artigo', 'Tarefa'],
+  limite: 10,                 // cards por coluna antes do "Mostrar mais"
+  nomePadrao: true,           // "Cliente · Formato · Tema"
+  naoSalvoApos: 20000,        // ms até o card aparecer no aviso "não salvos"
+  reenviarACada: 15000,       // ms entre novas tentativas de gravar
+  /* quem está usando: troque pelo usuário logado da plataforma */
+  eu: 'ana',
+  /* troque pelos dados reais da plataforma (equipe e clientes) */
+  pessoas: [
+    { id: 'ana',  nome: 'Ana Clara',  revisor: true },
+    { id: 'leo',  nome: 'Leo Souza' },
+    { id: 'gabi', nome: 'Gabi Lima',  revisor: true },
+  ],
+  clientes: [
+    { id: 'casa',   nome: 'Interno', interno: true },   // trabalho da casa: sem data de publicação
+    { id: 'aurora', nome: 'Aurora Café' },
+    { id: 'norte',  nome: 'Norte Advocacia' },
+  ],
+  chaveLocal: 'quadro-kanban',
+};
+
+/* =====================================================================
+   3. BANCO — o Armazem. Hoje grava no navegador (localStorage).
+   Para ligar o banco da plataforma, troque estas funções mantendo o
+   contrato (cada uma devolve uma Promise):
+     carregar()            → lista de cards (inclusive os apagados)
+     criar(card)           → grava um card novo inteiro
+     mudar(id, campos)     → grava SÓ os campos que mudaram (null = tirar)
+     ouvir(aoReceber)      → avisa quando outro aparelho mudou algo;
+                             aoReceber(listaDeCardsQueMudaram) — cards INTEIROS
+                             como estão no banco agora
+   Regra de ouro: nunca regravar o card inteiro nem a lista inteira.
+   ===================================================================== */
+const Armazem = {
+  /* aqui cada CAMPO de cada card é uma chave do navegador ("quadro-kanban:c:<id>:<campo>"):
+     duas abas mexendo em campos diferentes do mesmo card nunca se atropelam — o mesmo
+     comportamento que o banco da plataforma precisa ter */
+  pre: CONFIG.chaveLocal + ':c:',
+  chaveDe(id, k){ return this.pre + id + ':' + k; },
+  lerCard(id){
+    const c = {}; let tem = false;
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i); if(!k || !k.startsWith(this.pre + id + ':')) continue;
+      try{ c[k.slice((this.pre + id + ':').length)] = JSON.parse(localStorage.getItem(k)); tem = true; }catch(e){}
+    }
+    return tem && c.id ? c : null;
+  },
+  lerTudo(){
+    const ids = new Set();
+    for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.startsWith(this.pre) && k.endsWith(':id')) ids.add(k.slice(this.pre.length, -3)); }
+    return [...ids].map(id => this.lerCard(id)).filter(Boolean);
+  },
+  async carregar(){
+    const l = this.lerTudo(); if(l.length || localStorage.getItem(CONFIG.chaveLocal + ':semeado')) return l;
+    const ex = exemplo(); for(const c of ex) await this.criar(c);
+    localStorage.setItem(CONFIG.chaveLocal + ':semeado', '1');
+    return ex;
+  },
+  async criar(card){ for(const [k, v] of Object.entries(card)) if(v != null) localStorage.setItem(this.chaveDe(card.id, k), JSON.stringify(v)); },
+  async mudar(id, campos){
+    if(localStorage.getItem(this.chaveDe(id, 'id')) == null) throw new Error('o card não existe no banco');
+    for(const [k, v] of Object.entries(campos)){ if(k === 'id') continue; if(v === null) localStorage.removeItem(this.chaveDe(id, k)); else localStorage.setItem(this.chaveDe(id, k), JSON.stringify(v)); }
+  },
+  ouvir(aoReceber){
+    addEventListener('storage', e => {
+      if(!e.key || !e.key.startsWith(this.pre)) return;
+      const id = e.key.slice(this.pre.length).split(':')[0];
+      const c = this.lerCard(id); if(c) aoReceber([c]);
+    });
+  },
+};
+
+/* ---------------- utilidades ---------------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const linkSeguro = u => { try{ const x = new URL(String(u)); return /^https?:$/.test(x.protocol) ? x.href : ''; }catch(e){ return ''; } };
+const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+const igual = (a, b) => JSON.stringify(a == null ? null : a) === JSON.stringify(b == null ? null : b);
+const mobile = () => matchMedia('(max-width: 760px)').matches;
+const D2 = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${D2(d.getMonth() + 1)}-${D2(d.getDate())}`;
+const hoje = () => iso(new Date());
+const doISO = s => { const [a, m, d] = String(s).split('-').map(Number); return new Date(a, m - 1, d); };
+const soma = (s, n) => { const d = doISO(s); d.setDate(d.getDate() + n); return iso(d); };
+const segunda = s => soma(s, -((doISO(s).getDay() + 6) % 7));
+const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+function rotuloDia(s){
+  if(!s) return '';
+  const h = hoje();
+  if(s === h) return 'hoje';
+  if(s === soma(h, 1)) return 'amanhã';
+  if(s === soma(h, -1)) return 'ontem';
+  const dif = (doISO(s) - doISO(h)) / 864e5;
+  if(dif > 1 && dif < 7) return DIAS[doISO(s).getDay()];
+  return `${s.slice(8, 10)}/${s.slice(5, 7)}`;
+}
+/* o número do card sai do RELÓGIO + acaso — nunca "o maior + 1": duas pessoas
+   criando ao mesmo tempo chegariam ao mesmo número (custou caro na Maestro) */
+const novoId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const IC = {
+  relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  check: '<path d="M4 12l5 5L20 6"/>',
+  conversa: '<path d="M4 5h16v11H9l-5 4z"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  seta: '<path d="M9 6l6 6-6 6"/>',
+  lixo: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  colunas: '<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+};
+const ic = (n, t = 14) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n] || ''}</svg>`;
+
+/* ---------------- o método ---------------- */
+const COL = Object.fromEntries(CONFIG.colunas.map(c => [c.k, c]));
+const PENDENTES = ['pauta', 'afazer', 'fazendo'];
+const EM_TRABALHO = ['pauta', 'afazer', 'fazendo', 'revisao'];
+const pessoa = id => CONFIG.pessoas.find(p => p.id === id) || null;
+const cliente = id => CONFIG.clientes.find(c => c.id === id) || { id, nome: id || 'Sem cliente' };
+const interno = c => !c.cliente || !!cliente(c.cliente).interno;
+const formatos = c => (Array.isArray(c.formatos) && c.formatos.length) ? c.formatos : [interno(c) ? 'Tarefa' : 'Post'];
+const titulo = c => (CONFIG.nomePadrao && !interno(c)) ? `${cliente(c.cliente).nome} · ${formatos(c)[0]} · ${c.tema}` : c.tema;
+const iniciais = n => String(n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const revisores = () => CONFIG.pessoas.filter(p => p.revisor);
+function diasDesde(t){ if(!t) return null; const d = Math.floor((Date.now() - +t) / 864e5); return d < 0 ? 0 : d; }
+
+/* O PRÓXIMO PASSO de cada coluna. Não é trava: é atalho para mover;
+   arrastar continua valendo para qualquer coluna. */
+function proximo(c){
+  switch(c.coluna){
+    case 'pauta':    return { bts: [['atribuir', 'Atribuir']] };
+    case 'afazer':   return { bts: [['fazendo', 'Começar']] };
+    case 'fazendo':  return { bts: [['revisao', 'Mandar para revisão']] };
+    case 'revisao':  return { bts: interno(c) ? [['publicado', 'Concluir'], ['devolver', 'Devolver']] : [['cliente', 'Enviar ao cliente'], ['devolver', 'Devolver']] };
+    case 'cliente': { const d = diasDesde(c.colunaEm);
+      /* na Maestro a decisão chega pelo link do cliente; sem o link, a equipe registra */
+      return { info: 'Aguardando o cliente' + (d == null ? '' : d === 0 ? ' · desde hoje' : d === 1 ? ' · há 1 dia' : ` · há ${d} dias`),
+        bts: [['aprovado', 'Aprovou'], ['ajuste', 'Pediu ajuste']] }; }
+    case 'aprovado': return { bts: [['agendar', 'Agendar']] };
+    case 'agendado': return { bts: [['publicado', 'Publiquei']] };
+    default: return null;
+  }
+}
+
+/* ---------------- estado da tela ---------------- */
+const S = {
+  cards: [], vista: 'colunas', filtro: { pessoa: 'todos', cliente: 'todos', data: 'todos' },
+  colMovel: 'afazer', verMais: {}, recolhidas: new Set(['publicado']), ficha: null, abaFicha: 'conteudo',
+  baseAr: false, add: null, arraste: null, arrastou: 0, troca: null, apagando: false, nsAberto: false,
+};
+const PREFS = CONFIG.chaveLocal + ':prefs';
+function lerPrefs(){ try{ const p = JSON.parse(localStorage.getItem(PREFS) || '{}');
+  if(p.vista === 'prazo' || p.vista === 'colunas') S.vista = p.vista;
+  if(Array.isArray(p.recolhidas)) S.recolhidas = new Set(p.recolhidas); }catch(e){} }
+function gravarPrefs(){ try{ localStorage.setItem(PREFS, JSON.stringify({ vista: S.vista, recolhidas: [...S.recolhidas] })); }catch(e){} }
+const vivos = () => S.cards.filter(c => c && !c.apagadoEm);
+const achar = id => S.cards.find(c => c && c.id === id) || null;
+
+/* =====================================================================
+   A FILA — toda gravação passa por aqui. Aprendido na Maestro:
+   - grava por CAMPO; o que se escreve enquanto o banco responde fica para a
+     próxima volta (a base é o que FOI enviado, não o card de agora);
+   - um card recusado não segura os outros;
+   - o que não chegou ao banco em 20 s aparece num aviso, com o motivo.
+   ===================================================================== */
+const Fila = {
+  pend: new Map(),              // id -> { criar, campos, desde, erro, vezes }
+  indo: false, deNovo: false, ultimo: 0, t: 0,
+  criar(c){ this.pend.set(c.id, { criar: true, campos: {}, desde: Date.now() }); this.agendar(); },
+  mudar(id, campos){
+    const e = this.pend.get(id) || { criar: false, campos: {}, desde: Date.now() };
+    Object.assign(e.campos, clone(campos)); this.pend.set(id, e); this.agendar();
+  },
+  agendar(){ clearTimeout(this.t); this.t = setTimeout(() => this.enviar(), 250); },
+  async enviar(){
+    if(this.indo){ this.deNovo = true; return; }
+    this.indo = true; this.ultimo = Date.now();
+    for(const [id, e] of [...this.pend]){
+      const c = achar(id); if(!c){ this.pend.delete(id); continue; }
+      const enviado = e.criar ? clone(c) : clone(e.campos);
+      try{
+        if(e.criar) await Armazem.criar(enviado); else await Armazem.mudar(id, enviado);
+        const atual = this.pend.get(id); if(!atual) continue;
+        if(e.criar) atual.criar = false;
+        for(const k of Object.keys(atual.campos)) if(k in enviado && igual(atual.campos[k], enviado[k])) delete atual.campos[k];
+        if(!atual.criar && !Object.keys(atual.campos).length) this.pend.delete(id);
+        else { atual.erro = null; }
+      }catch(err){ e.erro = String((err && err.message) || err || 'erro'); e.vezes = (e.vezes || 0) + 1; }
+    }
+    this.indo = false;
+    statusFicha(); desenharNaoSalvos();
+    if(this.deNovo){ this.deNovo = false; this.agendar(); }
+  },
+};
+
+/* ---------------- gravar ---------------- */
+function criar(dados){
+  const col = COL[dados.coluna] ? dados.coluna : (dados.resp ? 'afazer' : 'pauta');
+  const c = { id: novoId(), tema: String(dados.tema || '').trim() || 'Sem título', coluna: col, ordem: ordemNoFim(col),
+    colunaEm: Date.now(), criadoEm: Date.now(), criadoPor: CONFIG.eu, mod: Date.now() };
+  if(dados.cliente) c.cliente = dados.cliente;
+  if(Array.isArray(dados.formatos) && dados.formatos.length) c.formatos = dados.formatos.slice();
+  if(dados.resp) c.resp = dados.resp;
+  if(dados.prazo) c.prazo = dados.prazo;
+  S.cards.push(c); Fila.criar(c);
+  return c;
+}
+function mudar(id, campos){
+  const c = achar(id); if(!c) return null;
+  const mud = {};
+  for(const [k, v0] of Object.entries(campos)){
+    const v = (v0 === '' || v0 === undefined) ? null : v0;
+    if(igual(c[k], v)) continue;
+    mud[k] = v; if(v === null) delete c[k]; else c[k] = clone(v);
+  }
+  if(!Object.keys(mud).length) return c;
+  c.mod = mud.mod = Date.now();
+  Fila.mudar(id, mud);
+  return c;
+}
+function mover(id, col, ordem){
+  const c = achar(id); if(!c || !COL[col]) return;
+  const de = c.coluna;
+  const campos = { coluna: col, ordem: typeof ordem === 'number' ? ordem : (de === col ? c.ordem : ordemNoFim(col, id)) };
+  if(de !== col) campos.colunaEm = Date.now();
+  /* quem fez e quando: ao sair do trabalho para revisão (ou concluir) */
+  if(PENDENTES.includes(de) && (col === 'revisao' || col === 'publicado') && c.resp){ campos.feitoEm = Date.now(); campos.feitoPor = c.resp; }
+  else if(PENDENTES.includes(col) && c.feitoEm){ campos.feitoEm = null; campos.feitoPor = null; }
+  mudar(id, campos);
+}
+function ordemNoFim(col, exceto){ let m = 0; for(const c of vivos()) if(c.coluna === col && c.id !== exceto) m = Math.max(m, +c.ordem || 0); return m + 1; }
+/* ordem entre os vizinhos: mover um card não regrava a coluna inteira */
+function ordemEntre(a, b){ if(a && b) return ((+a.ordem || 0) + (+b.ordem || 0)) / 2; if(a) return (+a.ordem || 0) + 1; if(b) return (+b.ordem || 0) - 1; return 1; }
+function executar(id, acao, bt){
+  const c = achar(id); if(!c) return;
+  if(acao === 'atribuir'){ menuPessoa(bt, id); return; }
+  if(acao === 'agendar' && !c.data && !interno(c)){ abrirFicha(id, 'data'); return; }
+  const destino = acao === 'devolver' || acao === 'ajuste' ? 'fazendo' : acao === 'agendar' ? 'agendado' : acao;
+  if(!COL[destino]) return;
+  mover(id, destino);
+  render(); desenharFicha(true);
+}
+
+/* ---------------- filtros e prazos ---------------- */
+const PRAZOS = [
+  ['atrasados', 'Entrega atrasada', 'Entrega'], ['hoje', 'Entrega hoje', 'Entrega'], ['semana', 'Entrega esta semana', 'Entrega'],
+  ['proxima', 'Entrega na próxima semana', 'Entrega'], ['sem', 'Sem data de entrega', 'Entrega'],
+  ['pub-hoje', 'Vai ao ar hoje', 'Postagem'], ['pub-semana', 'Vai ao ar esta semana', 'Postagem'], ['pub-proxima', 'Vai ao ar na próxima semana', 'Postagem'],
+  ['ord-entrega', 'Todos, por prazo de entrega', 'Ordem'], ['ord-ar', 'Todos, pela data em que vai ao ar', 'Ordem']];
+function passaData(c, f){
+  if(!f || f === 'todos' || f.startsWith('ord-')) return true;
+  const h = hoje(), ini = segunda(h);
+  const naSemana = (d, n) => d >= soma(ini, 7 * n) && d <= soma(ini, 7 * n + 6);
+  if(f.startsWith('pub-')){ if(interno(c) || !c.data) return false; return f === 'pub-hoje' ? c.data === h : naSemana(c.data, f === 'pub-semana' ? 0 : 1); }
+  /* entrega: só o que ainda é trabalho da equipe */
+  if(!EM_TRABALHO.includes(c.coluna)) return false;
+  const pz = c.prazo;
+  if(f === 'sem') return !pz;
+  if(!pz) return false;
+  if(f === 'atrasados') return pz < h;
+  if(f === 'hoje') return pz === h;
+  return naSemana(pz, f === 'semana' ? 0 : 1);
+}
+function passaPessoaCliente(c){
+  const f = S.filtro;
+  if(f.pessoa === 'meus' && c.resp !== CONFIG.eu) return false;
+  if(f.pessoa === 'ninguem' && c.resp) return false;
+  if(!['todos', 'meus', 'ninguem'].includes(f.pessoa) && c.resp !== f.pessoa) return false;
+  if(f.cliente !== 'todos' && (c.cliente || '') !== f.cliente) return false;
+  return true;
+}
+const filtrosLigados = () => ['pessoa', 'cliente', 'data'].filter(k => S.filtro[k] !== 'todos' && !(k === 'data' && S.vista === 'prazo')).length;
+function ordenar(l, k){
+  const fd = S.filtro.data;
+  const porData = campo => (a, b) => String(a[campo] || '9999').localeCompare(String(b[campo] || '9999')) || (+a.ordem || 0) - (+b.ordem || 0);
+  if(fd === 'ord-entrega') l.sort(porData('prazo'));
+  else if(fd === 'ord-ar') l.sort(porData('data'));
+  else if(k === 'publicado') l.sort((a, b) => (+b.colunaEm || 0) - (+a.colunaEm || 0));   // o mais recente primeiro
+  else l.sort((a, b) => (+a.ordem || 0) - (+b.ordem || 0));
+  return l;
+}
+const quantosVer = k => S.verMais[k] || CONFIG.limite;
+const recolhida = k => !mobile() && S.recolhidas.has(k);
+
+/* ---------------- desenho ---------------- */
+function avatar(id){
+  const p = pessoa(id);
+  return p ? `<span class="q-av" title="${esc(p.nome)}">${esc(iniciais(p.nome))}</span>` : `<span class="q-av vazio" title="Sem responsável">+</span>`;
+}
+function cartao(c, comColuna){
+  const pz = c.prazo, h = hoje();
+  const atrasado = pz && pz < h && EM_TRABALHO.includes(c.coluna);
+  const ck = Array.isArray(c.checklist) ? c.checklist : [];
+  const nMsg = Object.keys(c).filter(k => k.startsWith('cm_')).length;
+  const px = proximo(c);
+  const rev = c.coluna === 'revisao' && revisores().length ? `<span class="q-revisa">Revisa: ${esc(revisores().map(p => p.nome.split(' ')[0]).join(', '))}</span>` : '';
+  return `<article class="q-card${c.importante ? ' importante' : ''}" draggable="true" tabindex="0" data-card="${esc(c.id)}" style="--cc:var(--col-${esc(c.coluna)})" aria-label="${esc(titulo(c))}">
+    <div class="q-card-topo">${!interno(c) ? `<span class="q-cli">${esc(cliente(c.cliente).nome)}</span>` : `<span class="q-cli">${esc(cliente(c.cliente || 'casa').nome)}</span>`}<span>${esc(formatos(c).join(' + '))}</span>${comColuna ? `<span class="q-colb">${esc(COL[c.coluna].nome)}</span>` : ''}</div>
+    <h3 class="q-card-tit">${esc(c.tema)}</h3>
+    <div class="q-card-meta">
+      ${pz ? `<span class="q-chip${atrasado ? ' atrasado' : pz === h && EM_TRABALHO.includes(c.coluna) ? ' hoje' : ''}" title="A equipe entrega até">${ic('relogio', 11)}<em>Entrega</em> ${esc(rotuloDia(pz))}${c.prazoHora ? ' ' + esc(c.prazoHora) : ''}</span>` : ''}
+      ${c.data && !interno(c) ? `<span class="q-chip" title="Vai ao ar">${ic('calendario', 11)}<em>No ar</em> ${esc(rotuloDia(c.data))}${c.hora ? ' ' + esc(c.hora) : ''}</span>` : ''}
+      ${ck.length ? `<span class="q-chip">${ic('check', 11)} ${ck.filter(x => x && x.ok).length}/${ck.length}</span>` : ''}
+      ${nMsg ? `<span class="q-chip">${ic('conversa', 11)} ${nMsg}</span>` : ''}
+      ${avatar(c.resp)}
+    </div>
+    ${rev}
+    ${px ? `<div class="q-prox">${px.info ? `<span class="info">${esc(px.info)}</span>` : ''}${(px.bts || []).map(([a, r], i) => `<button type="button" class="${i || px.info ? 'sec' : ''}" data-acao="prox" data-id="${esc(c.id)}" data-passo="${a}">${esc(r)}${i || px.info ? '' : ' →'}</button>`).join('')}</div>` : ''}
+  </article>`;
+}
+function selFiltro(nome, rotulo, ops, v){
+  return `<label class="q-filtro${v !== 'todos' ? ' ligado' : ''}"><span>${rotulo}</span><select data-filtro="${nome}" aria-label="Filtrar por ${rotulo.toLowerCase()}">${ops.map(([k, n]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>`;
+}
+function barra(){
+  const f = S.filtro, nl = filtrosLigados();
+  const m = mobile();   /* no celular o rótulo sai: a primeira opção diz o que o filtro é */
+  const pesP = [['todos', m ? 'Pessoas' : 'Todas'], ['meus', 'Só os meus'], ['ninguem', 'Sem responsável'], ...CONFIG.pessoas.map(p => [p.id, p.nome])];
+  const cliP = [['todos', m ? 'Clientes' : 'Todos'], ...CONFIG.clientes.map(c => [c.id, c.nome])];
+  let selData = '';
+  if(S.vista !== 'prazo'){
+    const base = vivos().filter(passaPessoaCliente);
+    const op = ([k, n]) => `<option value="${k}"${f.data === k ? ' selected' : ''}>${esc(n)}${k.startsWith('ord-') ? '' : ` (${base.filter(c => passaData(c, k)).length})`}</option>`;
+    const GR = { Ordem: 'Ver todos, em ordem de prazo', Entrega: 'Entrega da equipe', Postagem: 'Postagem (vai ao ar)' };
+    selData = `<label class="q-filtro${f.data !== 'todos' ? ' ligado' : ''}"><span>Data</span><select data-filtro="data" aria-label="Filtrar por data"><option value="todos">${m ? 'Datas' : 'Qualquer data'}</option>
+      ${['Ordem', 'Entrega', 'Postagem'].map(g => `<optgroup label="${GR[g]}">${PRAZOS.filter(x => x[2] === g).map(op).join('')}</optgroup>`).join('')}</select></label>`;
+  }
+  const seg = (k, t, i) => `<button type="button" role="tab" aria-selected="${S.vista === k}" class="${S.vista === k ? 'on' : ''}" data-acao="vista" data-v="${k}">${ic(i, 13)}<span>${t}</span></button>`;
+  return `<div class="q-barra">
+    <div class="q-vista" role="tablist" aria-label="Como ver os cards">${seg('colunas', 'Colunas', 'colunas')}${seg('prazo', 'Por prazo', 'relogio')}</div>
+    <div class="q-filtros" role="group" aria-label="Filtros">${selFiltro('pessoa', 'Pessoa', pesP, f.pessoa)}${selFiltro('cliente', 'Cliente', cliP, f.cliente)}${selData}
+      ${nl ? `<button type="button" class="q-limpar" data-acao="limpar">Limpar filtros (${nl})</button>` : ''}</div>
+  </div>`;
+}
+function formAdd(k){
+  if(S.add !== k) return `<button type="button" class="q-add-bt" data-acao="add" data-col="${k}">+ Adicionar</button>`;
+  const cliIni = S.filtro.cliente !== 'todos' ? S.filtro.cliente : '';
+  return `<form class="q-add" data-form="add" data-col="${k}" autocomplete="off">
+    <input type="text" name="tema" placeholder="Tema do card" aria-label="Tema do card" maxlength="300">
+    <div class="q-lin"><select name="cliente" aria-label="Cliente"><option value="">Cliente…</option>${CONFIG.clientes.map(c => `<option value="${esc(c.id)}"${c.id === cliIni ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}</select>
+      <select name="formato" aria-label="Formato">${CONFIG.formatos.map(f => `<option>${esc(f)}</option>`).join('')}</select></div>
+    <p class="q-prev">Enter cria. O nome fica “Cliente · Formato · Tema”.</p>
+    <div class="q-lin"><button type="submit" class="q-pil prim">Criar</button><button type="button" class="q-pil" data-acao="add-fechar">Cancelar</button></div>
+  </form>`;
+}
+function vistaColunas(){
+  const por = Object.fromEntries(CONFIG.colunas.map(c => [c.k, []]));
+  for(const c of vivos()) if(passaPessoaCliente(c) && passaData(c, S.filtro.data)) (por[c.coluna] || por.pauta).push(c);
+  for(const k in por) ordenar(por[k], k);
+  if(!COL[S.colMovel]) S.colMovel = 'afazer';
+  const L = CONFIG.limite;
+  const abas = `<div class="q-abas-col" role="tablist" aria-label="Colunas">${CONFIG.colunas.map(c => `<button type="button" role="tab" class="q-aba-col${S.colMovel === c.k ? ' on' : ''}" aria-selected="${S.colMovel === c.k}" data-acao="col-movel" data-col="${c.k}" style="--cc:var(--col-${c.k})">${esc(c.nome)} <span>${por[c.k].length}</span></button>`).join('')}</div>
+    <p class="q-desc-m">${esc(COL[S.colMovel].desc)}</p>`;
+  const cols = CONFIG.colunas.map(c => {
+    const l = por[c.k], ver = quantosVer(c.k), resta = l.length - ver, on = S.colMovel === c.k ? ' on' : '';
+    if(recolhida(c.k)) return `<section class="q-col recolhida${on}" data-col="${c.k}" style="--cc:var(--col-${c.k})">
+      <button type="button" class="q-faixa-rec" data-acao="recolher" data-col="${c.k}" data-soltar-fim="${c.k}" aria-label="Abrir a coluna ${esc(c.nome)} (${l.length})"><b>${esc(c.nome)}</b><span>${l.length}</span></button></section>`;
+    return `<section class="q-col${on}" data-col="${c.k}" style="--cc:var(--col-${c.k})">
+      <header class="q-col-hd"><i></i><b>${esc(c.nome)}</b><span>${l.length}</span><button type="button" class="q-recolhe" data-acao="recolher" data-col="${c.k}" aria-label="Recolher a coluna ${esc(c.nome)}">${ic('seta', 12)}</button></header>
+      <p class="q-col-desc">${esc(c.desc)}</p>
+      <div class="q-col-corpo" data-soltar="${c.k}">${l.slice(0, ver).map(x => cartao(x)).join('') || `<p class="q-vazio">${c.k === 'pauta' ? 'Tudo distribuído.' : 'Nada aqui.'}</p>`}
+        ${resta > 0 ? `<button type="button" class="q-mais" data-acao="mais" data-chave="${c.k}">Mostrar mais ${Math.min(L, resta)} <span>· ${resta} ${resta === 1 ? 'escondido' : 'escondidos'}</span></button>` : ''}
+        ${ver > L ? `<button type="button" class="q-mais" data-acao="menos" data-chave="${c.k}">Mostrar só ${L}</button>` : ''}
+      </div>
+      ${formAdd(c.k)}
+    </section>`;
+  }).join('');
+  return abas + `<div class="q-quadro" data-colmovel="${S.colMovel}">${cols}</div>`;
+}
+/* POR PRAZO: os mesmos cards, em faixas de tempo. "Entrega da equipe" mostra só
+   o que ainda é trabalho da casa; "Vai ao ar" agrupa pela data de publicação. */
+function gruposPrazo(itens, ar){
+  const h = hoje(), am = soma(h, 1), ini = segunda(h), fimSem = soma(ini, 6), fimProx = soma(ini, 13);
+  const G = [['atrasados', ar ? 'Passou da data' : 'Atrasados'], ['hoje', 'Hoje'], ['amanha', 'Amanhã'], ['semana', 'Ainda esta semana'],
+    ['proxima', 'Próxima semana'], ['depois', 'Mais para a frente'], ['sem', ar ? 'Sem data de postagem' : 'Sem prazo']].map(([k, n]) => ({ k, n, l: [] }));
+  const g = Object.fromEntries(G.map(x => [x.k, x.l]));
+  const dia = c => ar ? c.data : c.prazo, hora = c => String((ar ? c.hora : c.prazoHora) || '99');
+  for(const c of itens){
+    const d = dia(c);
+    if(!d) g.sem.push(c); else if(d < h) g.atrasados.push(c); else if(d === h) g.hoje.push(c); else if(d === am) g.amanha.push(c);
+    else if(d <= fimSem) g.semana.push(c); else if(d <= fimProx) g.proxima.push(c); else g.depois.push(c);
+  }
+  G.forEach(x => x.l.sort((a, b) => String(dia(a) || '9999').localeCompare(String(dia(b) || '9999')) || hora(a).localeCompare(hora(b))
+    || (b.importante ? 1 : 0) - (a.importante ? 1 : 0) || (+a.ordem || 0) - (+b.ordem || 0)));
+  return G;
+}
+function vistaPorPrazo(){
+  const ar = S.baseAr, L = CONFIG.limite;
+  const base = vivos().filter(passaPessoaCliente);
+  const itens = ar ? base.filter(c => !interno(c) && c.coluna !== 'publicado') : base.filter(c => EM_TRABALHO.includes(c.coluna));
+  const fora = base.length - itens.length;
+  const secoes = gruposPrazo(itens, ar).filter(x => x.l.length).map(x => { const k = 'pz-' + x.k, ver = quantosVer(k), resta = x.l.length - ver;
+    return `<section class="q-pz q-pz-${x.k}" data-pz="${x.k}"><header class="q-pz-hd"><b>${x.n}</b><span>${x.l.length}</span></header>
+      <div class="q-pz-grade">${x.l.slice(0, ver).map(c => cartao(c, true)).join('')}</div>
+      ${resta > 0 ? `<button type="button" class="q-mais" data-acao="mais" data-chave="${k}">Mostrar mais ${Math.min(L, resta)} <span>· ${resta} ${resta === 1 ? 'escondido' : 'escondidos'}</span></button>` : ''}
+      ${ver > L ? `<button type="button" class="q-mais" data-acao="menos" data-chave="${k}">Mostrar só ${L}</button>` : ''}</section>`; }).join('');
+  return `<div class="q-pzbase" role="tablist" aria-label="Qual data">
+      <button type="button" role="tab" class="${!ar ? 'on' : ''}" aria-selected="${!ar}" data-acao="pz-base" data-v="entrega">Entrega da equipe</button>
+      <button type="button" role="tab" class="${ar ? 'on' : ''}" aria-selected="${ar}" data-acao="pz-base" data-v="ar">Vai ao ar</button>
+      <span class="q-mut">${itens.length} ${itens.length === 1 ? 'card' : 'cards'}${fora ? ` · ${fora} ${ar ? 'já no ar ou internos' : 'já saíram da equipe'}` : ''}</span></div>
+    <div class="q-porprazo">${secoes || `<p class="q-vazio">${ar ? 'Nenhum card esperando para ir ao ar' : 'Nada por fazer'}${filtrosLigados() ? ' com esses filtros' : ''}.</p>`}</div>`;
+}
+function render(){
+  const main = $('#quadro');
+  /* guarda a rolagem de cada coluna e do quadro: redesenhar não pode pular a tela */
+  const rol = {}; main.querySelectorAll('.q-col-corpo').forEach(el => { rol[el.dataset.soltar] = el.scrollTop; });
+  const rolX = (main.querySelector('.q-quadro') || {}).scrollLeft || 0;
+  const focoAdd = document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-form="add"]');
+  main.innerHTML = barra() + (S.vista === 'prazo' ? vistaPorPrazo() : vistaColunas());
+  main.querySelectorAll('.q-col-corpo').forEach(el => { if(rol[el.dataset.soltar]) el.scrollTop = rol[el.dataset.soltar]; });
+  const q = main.querySelector('.q-quadro'); if(q) q.scrollLeft = rolX;
+  if(S.add && (focoAdd || S.addFoco)){ const i = main.querySelector('[data-form="add"] input[name="tema"]'); if(i) i.focus(); S.addFoco = false; }
+  const nl = S.cards.filter(c => c.apagadoEm && !c.varridoEm).length;
+  $('#nLix').textContent = nl ? String(nl) : '';
+}
+
+/* ---------------- a ficha do card ---------------- */
+function abrirFicha(id, campoFoco){
+  S.ficha = id; S.troca = null; S.apagando = false;
+  desenharFicha(true);
+  if(campoFoco) setTimeout(() => { const el = $(`#ficha [data-campo="${campoFoco}"]`); if(el){ el.focus(); el.scrollIntoView({ block: 'center' }); el.classList.add('pede'); } }, 30);
+}
+function fecharFicha(){ S.ficha = null; desenharFicha(true); }
+function statusFicha(){
+  const el = $('#ficha .q-salvo'); if(!el || !S.ficha) return;
+  const e = Fila.pend.get(S.ficha);
+  el.className = 'q-salvo' + (e && e.erro ? ' erro' : '');
+  el.textContent = !e ? 'Tudo salvo' : e.erro ? 'Não salvo — tentando de novo' : 'Salvando…';
+}
+function campo(nome, rotulo, tipo, valor, extra){
+  return `<label class="q-campo">${rotulo}<input class="q-in" type="${tipo}" data-campo="${nome}" value="${esc(valor || '')}" ${extra || ''}></label>`;
+}
+function area(nome, rotulo, valor, ph){
+  return `<div class="q-bloco"><h4>${rotulo}</h4><textarea class="q-in" data-campo="${nome}" rows="3" placeholder="${esc(ph)}">${esc(valor || '')}</textarea></div>`;
+}
+function desenharFicha(forcar){
+  const el = $('#ficha'); const c = S.ficha && achar(S.ficha);
+  if(!c || c.apagadoEm){ S.ficha = null; el.innerHTML = ''; el.classList.remove('aberta'); return; }
+  /* quem está digitando não perde o cursor: sem redesenho enquanto há campo em foco */
+  const ativo = document.activeElement;
+  if(!forcar && ativo && el.contains(ativo) && /INPUT|TEXTAREA|SELECT/.test(ativo.tagName)){ statusFicha(); return; }
+  const rol = (el.querySelector('.q-ficha-in') || {}).scrollTop || 0;
+  const ck = Array.isArray(c.checklist) ? c.checklist : [];
+  const links = Array.isArray(c.links) ? c.links : [];
+  const msgs = Object.keys(c).filter(k => k.startsWith('cm_') && c[k]).map(k => ({ k, ...c[k] })).sort((a, b) => (+a.em || 0) - (+b.em || 0));
+  const aba = S.abaFicha;
+  const px = proximo(c);
+  const prefixo = CONFIG.nomePadrao && !interno(c) ? `${cliente(c.cliente).nome} · ${formatos(c)[0]} ·` : '';
+  el.classList.add('aberta');
+  el.innerHTML = `<div class="q-ficha-in" role="dialog" aria-label="${esc(titulo(c))}">
+    <div class="q-ficha-topo">
+      <select data-acao-mudar="cliente" aria-label="Cliente do card">${CONFIG.clientes.map(x => `<option value="${esc(x.id)}"${(c.cliente || '') === x.id ? ' selected' : ''}>${esc(x.nome)}</option>`).join('')}${c.cliente ? '' : '<option value="" selected>Sem cliente</option>'}</select>
+      <select data-acao-mudar="coluna" aria-label="Coluna" style="--cc:var(--col-${esc(c.coluna)})">${CONFIG.colunas.map(x => `<option value="${x.k}"${c.coluna === x.k ? ' selected' : ''}>${esc(x.nome)}</option>`).join('')}</select>
+      <span class="q-salvo">Tudo salvo</span>
+      <button type="button" class="q-fechar" data-acao="fechar-ficha" aria-label="Fechar">${ic('x', 14)}</button>
+    </div>
+    ${S.troca ? `<div class="q-troca"><p>Mover este card para <b>${esc(cliente(S.troca).nome)}</b>? Ele sai de <b>${esc(cliente(c.cliente).nome)}</b>.</p>
+      <div class="q-lin" style="display:flex;gap:8px"><button type="button" class="q-pil prim" data-acao="troca-sim">Mover para ${esc(cliente(S.troca).nome)}</button><button type="button" class="q-pil" data-acao="troca-nao">Cancelar</button></div></div>` : ''}
+    ${c.trocouDe ? `<p class="q-mut" style="margin:0">Veio de ${esc(cliente(c.trocouDe).nome)}${c.trocouEm ? ' em ' + esc(new Date(c.trocouEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })) : ''}</p>` : ''}
+    ${prefixo ? `<p class="q-prefixo" style="margin:0">${esc(prefixo)}</p>` : ''}
+    <textarea class="q-tit" data-campo="tema" rows="1" aria-label="Tema" maxlength="300">${esc(c.tema)}</textarea>
+    ${px ? `<div class="q-prox" style="--cc:var(--col-${esc(c.coluna)})">${px.info ? `<span class="info">${esc(px.info)}</span>` : ''}${(px.bts || []).map(([a, r], i) => `<button type="button" class="${i || px.info ? 'sec' : ''}" data-acao="prox" data-id="${esc(c.id)}" data-passo="${a}">${esc(r)}${i || px.info ? '' : ' →'}</button>`).join('')}</div>` : ''}
+    <div class="q-bloco" style="--borda-bloco:var(--col-fazendo)"><h4>${ic('relogio', 13)} Produção <span>quem faz e até quando</span></h4>
+      <label class="q-campo">Quem faz<select class="q-in" data-campo="resp"><option value="">Ninguém ainda</option>${CONFIG.pessoas.map(p => `<option value="${esc(p.id)}"${c.resp === p.id ? ' selected' : ''}>${esc(p.nome)}</option>`).join('')}</select></label>
+      <div class="q-grade2">${campo('prazo', 'Entregar até', 'date', c.prazo)}${campo('prazoHora', 'Hora', 'time', c.prazoHora)}</div>
+    </div>
+    ${interno(c) ? '' : `<div class="q-bloco" style="--borda-bloco:var(--q-acao)"><h4>${ic('calendario', 13)} Publicação <span>quando vai ao ar</span></h4>
+      <div class="q-grade2">${campo('data', 'Vai ao ar em', 'date', c.data)}${campo('hora', 'Às', 'time', c.hora)}</div></div>`}
+    <div class="q-abas" role="tablist" aria-label="Partes do card">
+      ${[['conteudo', 'Conteúdo', [c.briefing, c.texto, c.legenda].filter(Boolean).length + '/3'], ['peca', 'Peça', links.length ? links.length + (links.length === 1 ? ' link' : ' links') : 'nada'], ['detalhes', 'Detalhes', ck.length ? ck.filter(x => x.ok).length + '/' + ck.length : '—']]
+        .map(([k, n, e]) => `<button type="button" role="tab" class="${aba === k ? 'on' : ''}" aria-selected="${aba === k}" data-acao="aba-ficha" data-aba="${k}">${n}<em>${esc(e)}</em></button>`).join('')}
+    </div>
+    ${aba === 'conteudo' ? `${area('briefing', 'Briefing', c.briefing, 'O que o card precisa dizer, para quem, com que objetivo')}${area('texto', 'Texto', c.texto, 'O texto da peça')}${area('legenda', 'Legenda', c.legenda, 'O texto que vai publicado')}` : ''}
+    ${aba === 'peca' ? `<div class="q-bloco"><h4>${ic('link', 13)} Peça <span>${links.length || ''}</span></h4>
+      ${links.map((l, i) => { const u = linkSeguro(l.url); return `<div class="q-link">${u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(l.nome || u)}</a>` : `<span>${esc(l.nome || 'link')}</span>`}<button type="button" class="q-x" data-acao="link-x" data-i="${i}" aria-label="Tirar link">×</button></div>`; }).join('')}
+      <form class="q-form-lin" data-form="link" autocomplete="off"><input class="q-in" type="text" inputmode="url" placeholder="+ colar link da peça (Drive, YouTube, Figma…)" aria-label="Link da peça"></form>
+      <p class="q-mut" style="margin:0;font-size:12.5px">Subir arquivos entra quando a plataforma tiver onde guardá-los (ver o PROMPT: limite de tamanho e nada de endereço “blob:” no card).</p></div>` : ''}
+    ${aba === 'detalhes' ? `<div class="q-bloco"><h4>Formato <span>pode marcar mais de um; o primeiro dá o nome</span></h4>
+        <div class="q-chips">${CONFIG.formatos.map(f => `<button type="button" class="${formatos(c).includes(f) ? 'on' : ''}" data-acao="fmt" data-f="${esc(f)}" aria-pressed="${formatos(c).includes(f)}">${esc(f)}</button>`).join('')}</div>
+        <div class="q-chips"><button type="button" class="${c.importante ? 'on' : ''}" data-acao="importante" aria-pressed="${!!c.importante}">Importante</button></div></div>
+      <div class="q-bloco"><h4>${ic('check', 13)} Checklist <span>${ck.length ? ck.filter(x => x.ok).length + '/' + ck.length : ''}</span></h4>
+        ${ck.map((x, i) => `<div class="q-ck${x.ok ? ' ok' : ''}"><button type="button" class="tg" data-acao="ck" data-i="${i}" aria-label="${x.ok ? 'Desmarcar' : 'Marcar'}">${x.ok ? ic('check', 12) : ''}</button><span>${esc(x.t)}</span><button type="button" class="q-x" data-acao="ck-x" data-i="${i}" aria-label="Tirar item">×</button></div>`).join('')}
+        <form class="q-form-lin" data-form="ck" autocomplete="off"><input class="q-in" type="text" placeholder="+ item da checklist" aria-label="Novo item da checklist" maxlength="300"></form></div>` : ''}
+    <div class="q-bloco"><h4>${ic('conversa', 13)} Conversa do card</h4>
+      <div class="q-msgs">${msgs.length ? msgs.map(m => `<div class="q-msg"><small>${esc((pessoa(m.por) || {}).nome || m.por || '')} · ${esc(new Date(+m.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}</small><p>${esc(m.txt)}</p></div>`).join('') : '<p class="q-mut" style="margin:0">Ninguém escreveu ainda.</p>'}</div>
+      <form class="q-form-lin" data-form="msg" autocomplete="off"><input class="q-in" type="text" placeholder="Escreva para a equipe…" aria-label="Mensagem" maxlength="2000"><button type="submit" class="q-pil prim">Enviar</button></form>
+    </div>
+    <div class="q-pe">${S.apagando ? `<span>Mandar para a lixeira?</span><button type="button" class="q-pil" data-acao="apagar-nao">Não</button><button type="button" class="q-pil perigo" data-acao="apagar-sim">Sim, apagar</button>`
+      : `<button type="button" class="q-pil perigo" data-acao="apagar">${ic('lixo', 13)} Apagar</button>`}</div>
+  </div>`;
+  const inn = el.querySelector('.q-ficha-in'); if(inn) inn.scrollTop = rol;
+  el.querySelectorAll('textarea').forEach(crescer);
+  statusFicha();
+}
+function crescer(t){ const r = t.closest('.q-ficha-in'), s = r ? r.scrollTop : 0; t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; if(r) r.scrollTop = s; }
+
+/* ---------------- menu "Atribuir" ---------------- */
+function menuPessoa(bt, id){
+  const m = $('#menu'); const r = bt.getBoundingClientRect();
+  m.innerHTML = `<div class="q-menu" role="menu" aria-label="Quem faz">${CONFIG.pessoas.map(p => `<button type="button" role="menuitem" data-acao="dar" data-id="${esc(id)}" data-p="${esc(p.id)}">${avatar(p.id)} ${esc(p.nome)}</button>`).join('')}</div>`;
+  const w = 220, x = Math.min(r.left, innerWidth - w - 8), y = r.bottom + 6 + 200 > innerHeight ? Math.max(8, r.top - 6 - m.firstChild.offsetHeight) : r.bottom + 6;
+  m.style.left = x + 'px'; m.style.top = y + 'px';
+  const b = m.querySelector('button'); if(b) b.focus();
+}
+const fecharMenu = () => { $('#menu').innerHTML = ''; };
+
+/* ---------------- lixeira ---------------- */
+function abrirLixeira(){
+  const p = $('#painel'); const l = S.cards.filter(c => c.apagadoEm && !c.varridoEm).sort((a, b) => b.apagadoEm - a.apagadoEm);
+  p.hidden = false;
+  p.innerHTML = `<div class="q-painel-in" role="dialog" aria-label="Lixeira"><h3>Lixeira</h3>
+    ${l.length ? l.map(c => `<div class="q-lix"><span>${esc(titulo(c))}<br><small>apagado ${esc(new Date(c.apagadoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}</small></span>
+      <button type="button" class="q-pil" data-acao="restaurar" data-id="${esc(c.id)}">Restaurar</button><button type="button" class="q-pil perigo" data-acao="varrer" data-id="${esc(c.id)}">Apagar de vez</button></div>`).join('') : '<p class="q-mut">A lixeira está vazia.</p>'}
+    <div><button type="button" class="q-pil" data-acao="fechar-painel">Fechar</button></div></div>`;
+}
+
+/* ---------------- "não salvos" ---------------- */
+function desenharNaoSalvos(){
+  const el = $('#naoSalvos'); const agora = Date.now();
+  const l = [...Fila.pend].filter(([, e]) => agora - e.desde > CONFIG.naoSalvoApos).map(([id, e]) => ({ c: achar(id), e })).filter(x => x.c);
+  if(!l.length){ el.innerHTML = ''; S.nsAberto = false; return; }
+  const n = l.length;
+  el.innerHTML = `<button type="button" class="q-ns-pil" data-acao="ns-abre" aria-expanded="${S.nsAberto}">⚠ ${n === 1 ? '1 card não salvo' : n + ' cards não salvos'}</button>
+    ${S.nsAberto ? `<div class="q-ns-painel" role="dialog" aria-label="Cards não salvos"><b>${n === 1 ? 'Este card ainda não está' : 'Estes cards ainda não estão'} no banco — só neste aparelho</b>
+      <ul>${l.map(x => `<li>${esc(titulo(x.c))}<br><small>${x.e.criar ? 'criado' : 'mudado'} · ${esc(x.e.erro ? 'o banco recusou: ' + x.e.erro : 'ainda tentando enviar')}</small></li>`).join('')}</ul>
+      <small>Não feche esta aba até ${n === 1 ? 'ele subir' : 'eles subirem'}. A tentativa se repete sozinha.</small>
+      <div style="display:flex;gap:8px"><button type="button" class="q-pil prim" data-acao="ns-tentar">Tentar de novo agora</button><button type="button" class="q-pil" data-acao="ns-abre">Fechar</button></div></div>` : ''}`;
+}
+
+/* ---------------- o que chega de outro aparelho ---------------- */
+function receber(lista){
+  for(const r of lista || []){
+    if(!r || !r.id) continue;
+    const l = achar(r.id), pend = Fila.pend.get(r.id);
+    if(!l){ S.cards.push(clone(r)); continue; }
+    /* o que este aparelho ainda não enviou não é atropelado pelo que chegou */
+    for(const k of new Set([...Object.keys(l), ...Object.keys(r)])){
+      if(pend && (pend.criar || k in pend.campos)) continue;
+      if(k in r) l[k] = clone(r[k]); else delete l[k];
+    }
+  }
+  render(); desenharFicha(false);
+}
+
+/* ---------------- arrastar ---------------- */
+function mostrarFaixa(sim){
+  const f = $('#faixa');
+  if(!sim){ f.hidden = true; f.innerHTML = ''; return; }
+  f.innerHTML = `<b>Soltar em</b><div class="q-faixa-lin">${CONFIG.colunas.map(c => `<button type="button" class="q-faixa-bt" data-soltar-fim="${c.k}" style="--cc:var(--col-${c.k})">${esc(c.nome)}</button>`).join('')}</div>`;
+  f.hidden = false;
+}
+function tirarLugar(){ document.querySelectorAll('.q-lugar').forEach(x => x.remove()); document.querySelectorAll('.q-faixa-bt.alvo').forEach(x => x.classList.remove('alvo')); }
+function vizinhos(corpo, y, id){
+  const cards = [...corpo.querySelectorAll('.q-card')].filter(x => x.dataset.card !== id);
+  let i = cards.findIndex(x => { const r = x.getBoundingClientRect(); return y < r.top + r.height / 2; });
+  if(i < 0) i = cards.length;
+  return { antes: cards[i - 1] || null, depois: cards[i] || null, el: cards[i] || null };
+}
+function marcarAlvo(alvo, y){
+  tirarLugar();
+  if(alvo.dataset.soltarFim){ if(alvo.classList.contains('q-faixa-bt')) alvo.classList.add('alvo'); return; }
+  const v = vizinhos(alvo, y, S.arraste);
+  const lugar = document.createElement('div'); lugar.className = 'q-lugar';
+  if(v.el) alvo.insertBefore(lugar, v.el); else { const fim = alvo.querySelector('.q-mais'); fim ? alvo.insertBefore(lugar, fim) : alvo.appendChild(lugar); }
+}
+function soltar(alvo, y){
+  const id = S.arraste; if(!id) return;
+  if(alvo.dataset.soltarFim){ mover(id, alvo.dataset.soltarFim); }
+  else {
+    const col = alvo.dataset.soltar, v = vizinhos(alvo, y, id);
+    const a = v.antes && achar(v.antes.dataset.card), b = v.depois && achar(v.depois.dataset.card);
+    mover(id, col, ordemEntre(a, b));
+  }
+  S.arrastou = Date.now();
+}
+function fimArraste(){ S.arraste = null; tirarLugar(); mostrarFaixa(false); document.querySelectorAll('.q-card.arrastando').forEach(x => x.classList.remove('arrastando')); render(); }
+const alvoDe = el => el && el.closest && el.closest('[data-soltar], [data-soltar-fim]');
+/* computador: arrastar de verdade (e a faixa com as oito colunas embaixo) */
+document.addEventListener('dragstart', e => {
+  const card = e.target.closest && e.target.closest('.q-card'); if(!card) return;
+  S.arraste = card.dataset.card; e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', S.arraste); }catch(x){}
+  setTimeout(() => { card.classList.add('arrastando'); mostrarFaixa(true); }, 0);
+});
+document.addEventListener('dragover', e => { if(!S.arraste) return; const a = alvoDe(e.target); if(!a) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; marcarAlvo(a, e.clientY); });
+document.addEventListener('drop', e => { if(!S.arraste) return; const a = alvoDe(e.target); if(!a) return; e.preventDefault(); soltar(a, e.clientY); });
+document.addEventListener('dragend', () => { if(S.arraste) fimArraste(); });
+/* celular: segurar o card, arrastar até a faixa; deslizar para o lado troca de coluna */
+let toque = null;
+document.addEventListener('touchstart', e => {
+  if(e.touches.length > 1){ toque = null; return; }
+  const t = e.touches[0], card = e.target.closest && e.target.closest('.q-card');
+  const naFicha = e.target.closest && e.target.closest('#ficha, #painel, #menu, input, textarea, select, button');
+  toque = { x: t.clientX, y: t.clientY, em: Date.now(), card: naFicha ? null : card, ativo: false, deslize: !naFicha && mobile() && S.vista === 'colunas' && !!(e.target.closest && e.target.closest('.q-quadro')) };
+  if(toque.card) toque.timer = setTimeout(() => {
+    if(!toque || !toque.card) return;
+    toque.ativo = true; S.arraste = toque.card.dataset.card;
+    const r = toque.card.getBoundingClientRect(), g = toque.card.cloneNode(true);
+    g.classList.add('q-fantasma'); g.style.width = r.width + 'px'; g.style.left = r.left + 'px'; g.style.top = r.top + 'px';
+    toque.dx = toque.x - r.left; toque.dy = toque.y - r.top; toque.fantasma = g; document.body.appendChild(g);
+    toque.card.classList.add('arrastando'); mostrarFaixa(true);
+    try{ navigator.vibrate && navigator.vibrate(10); }catch(x){}
+  }, 380);
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if(!toque) return;
+  const t = e.touches[0];
+  if(!toque.ativo){ if(Math.hypot(t.clientX - toque.x, t.clientY - toque.y) > 10) clearTimeout(toque.timer); return; }
+  e.preventDefault();
+  toque.fantasma.style.left = (t.clientX - toque.dx) + 'px'; toque.fantasma.style.top = (t.clientY - toque.dy) + 'px';
+  const sob = document.elementFromPoint(t.clientX, t.clientY), a = alvoDe(sob);
+  toque.alvo = a; toque.ay = t.clientY;
+  if(a) marcarAlvo(a, t.clientY); else tirarLugar();
+}, { passive: false });
+document.addEventListener('touchend', e => {
+  if(!toque) return;
+  clearTimeout(toque.timer);
+  const t = e.changedTouches[0], tq = toque; toque = null;
+  if(tq.ativo){
+    e.preventDefault();
+    if(tq.fantasma) tq.fantasma.remove();
+    if(tq.alvo) soltar(tq.alvo, tq.ay);
+    S.arrastou = Date.now(); fimArraste(); return;
+  }
+  if(tq.deslize){
+    const dx = t.clientX - tq.x, dy = t.clientY - tq.y;
+    if(Math.abs(dx) > 60 && Math.abs(dy) < Math.abs(dx) * .6 && Date.now() - tq.em < 800){
+      const ks = CONFIG.colunas.map(c => c.k), i = ks.indexOf(S.colMovel), j = Math.max(0, Math.min(ks.length - 1, i + (dx < 0 ? 1 : -1)));
+      if(j !== i){ S.colMovel = ks[j]; render(); const aba = $('.q-aba-col.on'); if(aba) aba.scrollIntoView({ inline: 'center', block: 'nearest' }); }
+    }
+  }
+});
+document.addEventListener('touchcancel', () => { if(toque && toque.fantasma) toque.fantasma.remove(); if(toque && toque.ativo) fimArraste(); toque = null; });
+
+/* ---------------- cliques, campos e formulários ---------------- */
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-acao]');
+  if(!e.target.closest('#menu') && !(a && a.dataset.passo === 'atribuir')) fecharMenu();
+  if(!a){
+    const card = e.target.closest('.q-card');
+    if(card && Date.now() - S.arrastou > 400) abrirFicha(card.dataset.card);
+    else if(S.ficha && !e.target.closest('#ficha') && !e.target.closest('#painel, #naoSalvos, #menu') && !card) fecharFicha();
+    return;
+  }
+  const d = a.dataset, c = S.ficha && achar(S.ficha);
+  switch(d.acao){
+    case 'vista': S.vista = d.v; gravarPrefs(); render(); break;
+    case 'pz-base': S.baseAr = d.v === 'ar'; render(); break;
+    case 'col-movel': S.colMovel = d.col; render(); break;
+    case 'recolher': S.recolhidas.has(d.col) ? S.recolhidas.delete(d.col) : S.recolhidas.add(d.col); gravarPrefs(); render(); break;
+    case 'mais': S.verMais[d.chave] = quantosVer(d.chave) + CONFIG.limite; render(); break;
+    case 'menos': delete S.verMais[d.chave]; render(); break;
+    case 'limpar': S.filtro = { pessoa: 'todos', cliente: 'todos', data: 'todos' }; render(); break;
+    case 'add': S.add = d.col; S.addFoco = true; render(); break;
+    case 'add-fechar': S.add = null; render(); break;
+    case 'prox': executar(d.id, d.passo, a); break;
+    case 'dar': { const x = achar(d.id); if(x){ mudar(d.id, { resp: d.p }); if(x.coluna === 'pauta') mover(d.id, 'afazer'); } fecharMenu(); render(); desenharFicha(true); break; }
+    case 'fechar-ficha': fecharFicha(); break;
+    case 'aba-ficha': S.abaFicha = d.aba; desenharFicha(true); break;
+    case 'fmt': if(c){ const l = formatos(c).slice(), i = l.indexOf(d.f); if(i >= 0){ if(l.length > 1) l.splice(i, 1); } else l.push(d.f); mudar(c.id, { formatos: l }); render(); desenharFicha(true); } break;
+    case 'importante': if(c){ mudar(c.id, { importante: c.importante ? null : true }); render(); desenharFicha(true); } break;
+    case 'ck': if(c){ const l = clone(c.checklist || []); if(l[+d.i]){ l[+d.i].ok = !l[+d.i].ok; mudar(c.id, { checklist: l }); render(); desenharFicha(true); } } break;
+    case 'ck-x': if(c){ const l = clone(c.checklist || []); l.splice(+d.i, 1); mudar(c.id, { checklist: l.length ? l : null }); render(); desenharFicha(true); } break;
+    case 'link-x': if(c){ const l = clone(c.links || []); l.splice(+d.i, 1); mudar(c.id, { links: l.length ? l : null }); desenharFicha(true); } break;
+    case 'troca-sim': if(c && S.troca){ mudar(c.id, { cliente: S.troca, trocouDe: c.cliente || null, trocouEm: Date.now() }); S.troca = null; render(); desenharFicha(true); } break;
+    case 'troca-nao': S.troca = null; desenharFicha(true); break;
+    case 'apagar': S.apagando = true; desenharFicha(true); break;
+    case 'apagar-nao': S.apagando = false; desenharFicha(true); break;
+    /* apagar é LÁPIDE: o card fica guardado com a hora, e volta pela Lixeira */
+    case 'apagar-sim': if(c){ mudar(c.id, { apagadoEm: Date.now(), apagadoPor: CONFIG.eu }); fecharFicha(); render(); } break;
+    case 'lixeira': abrirLixeira(); break;
+    case 'restaurar': mudar(d.id, { apagadoEm: null, apagadoPor: null }); abrirLixeira(); render(); break;
+    case 'varrer': mudar(d.id, { varridoEm: Date.now() }); abrirLixeira(); render(); break;
+    case 'fechar-painel': $('#painel').hidden = true; $('#painel').innerHTML = ''; break;
+    case 'ns-abre': S.nsAberto = !S.nsAberto; desenharNaoSalvos(); break;
+    case 'ns-tentar': Fila.enviar(); break;
+  }
+});
+const espera = {};
+document.addEventListener('input', e => {
+  const el = e.target;
+  if(el.matches('textarea')) crescer(el);
+  if(el.validity && el.validity.customError) el.setCustomValidity('');
+  const k = el.dataset && el.dataset.campo; if(!k || !S.ficha || el.type === 'date' || el.type === 'time' || el.tagName === 'SELECT') return;
+  const id = S.ficha; clearTimeout(espera[k]);
+  /* cada campo grava sozinho, um pouco depois de a pessoa parar de digitar */
+  espera[k] = setTimeout(() => { mudar(id, { [k]: k === 'tema' ? (el.value.trim() || 'Sem título') : el.value }); render(); statusFicha(); }, 400);
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.dataset.filtro){ S.filtro[el.dataset.filtro] = el.value; S.verMais = {}; render(); return; }
+  if(!S.ficha) return;
+  const c = achar(S.ficha); if(!c) return;
+  if(el.dataset.acaoMudar === 'coluna'){ mover(c.id, el.value); render(); desenharFicha(true); return; }
+  if(el.dataset.acaoMudar === 'cliente'){ if(el.value !== (c.cliente || '')){ S.troca = el.value; } desenharFicha(true); return; }
+  const k = el.dataset.campo; if(!k) return;
+  if(el.tagName === 'SELECT' || el.type === 'date' || el.type === 'time'){
+    clearTimeout(espera[k]);
+    mudar(c.id, { [k]: el.value });
+    if(k === 'resp' && el.value && c.coluna === 'pauta') mover(c.id, 'afazer');
+    el.classList.remove('pede'); render(); statusFicha();
+  }
+});
+document.addEventListener('submit', e => {
+  const f = e.target; if(!f.dataset || !f.dataset.form) return;
+  e.preventDefault();
+  if(f.dataset.form === 'add'){
+    const tema = f.tema.value.trim(); if(!tema){ f.tema.focus(); return; }
+    criar({ tema, cliente: f.cliente.value || null, formatos: [f.formato.value], coluna: f.dataset.col,
+      resp: S.filtro.pessoa === 'meus' ? CONFIG.eu : (pessoa(S.filtro.pessoa) ? S.filtro.pessoa : null) });
+    S.addFoco = true; render();          /* o campo fica aberto para o próximo */
+    return;
+  }
+  const c = S.ficha && achar(S.ficha); if(!c) return;
+  const i = f.querySelector('input'); const v = (i.value || '').trim(); if(!v) return;
+  if(f.dataset.form === 'ck') mudar(c.id, { checklist: [...clone(c.checklist || []), { t: v.slice(0, 300), ok: false }] });
+  if(f.dataset.form === 'link'){
+    const u = linkSeguro(/^https?:\/\//i.test(v) ? v : 'https://' + v);
+    if(!u || !/^https?:\/\/[^\s/.]+\.[^\s]+/i.test(u)){ i.setCustomValidity('Isso não parece um link'); i.reportValidity(); setTimeout(() => i.setCustomValidity(''), 1500); return; }
+    mudar(c.id, { links: [...clone(c.links || []), { url: u, nome: u }] });
+  }
+  /* cada mensagem é um campo próprio do card (cm_<id>): duas pessoas escrevendo
+     ao mesmo tempo nunca apagam a mensagem uma da outra */
+  if(f.dataset.form === 'msg') mudar(c.id, { ['cm_' + novoId()]: { por: CONFIG.eu, em: Date.now(), txt: v.slice(0, 2000) } });
+  render(); desenharFicha(true);
+  const n = $(`#ficha [data-form="${f.dataset.form}"] input`); if(n) n.focus();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if($('#menu').innerHTML){ fecharMenu(); return; }
+    if(!$('#painel').hidden){ $('#painel').hidden = true; return; }
+    if(S.add){ S.add = null; render(); return; }
+    if(S.ficha){ fecharFicha(); return; }
+  }
+  if(e.key === 'Enter' && e.target.classList && e.target.classList.contains('q-card')) abrirFicha(e.target.dataset.card);
+});
+
+/* ---------------- exemplo (só na primeira abertura, sem dados) ---------------- */
+function exemplo(){
+  const h = hoje(), t = Date.now();
+  const L = [
+    ['Lançamento do cardápio de inverno', 'aurora', ['Carrossel'], 'pauta', null, null, null],
+    ['Dicas de LGPD para pequenas empresas', 'norte', ['Reels', 'Vídeo'], 'pauta', null, null, null],
+    ['Bastidores da torra', 'aurora', ['Reels'], 'afazer', 'leo', soma(h, 2), soma(h, 6)],
+    ['Planejamento do mês', 'casa', ['Tarefa'], 'afazer', 'ana', soma(h, -1), null],
+    ['Café da semana', 'aurora', ['Post'], 'fazendo', 'gabi', h, soma(h, 3)],
+    ['Direito do consumidor: trocas', 'norte', ['Carrossel'], 'revisao', 'leo', soma(h, -2), soma(h, 4)],
+    ['Depoimento de cliente', 'norte', ['Story'], 'cliente', 'ana', null, soma(h, 5)],
+    ['Promoção de aniversário', 'aurora', ['Post'], 'aprovado', 'gabi', null, soma(h, 7)],
+    ['Novo horário de funcionamento', 'aurora', ['Story'], 'agendado', 'leo', null, soma(h, 1)],
+    ['Equipe do escritório', 'norte', ['Post'], 'publicado', 'ana', null, soma(h, -3)],
+  ];
+  return L.map(([tema, cli, fmts, col, resp, prazo, data], i) => {
+    const c = { id: 'ex' + i + Math.random().toString(36).slice(2, 6), tema, cliente: cli, formatos: fmts, coluna: col, ordem: i + 1,
+      colunaEm: t - i * 36e5, criadoEm: t - 864e5, criadoPor: 'ana', mod: t };
+    if(resp) c.resp = resp; if(prazo) c.prazo = prazo; if(data && cli !== 'casa'){ c.data = data; c.hora = '18:30'; }
+    if(i === 4) c.checklist = [{ t: 'Foto do produto', ok: true }, { t: 'Texto aprovado', ok: false }];
+    return c;
+  });
+}
+
+/* ---------------- começar ---------------- */
+async function iniciar(){
+  lerPrefs();
+  try{ S.cards = (await Armazem.carregar()) || []; }
+  catch(e){ S.cards = []; $('#quadro').innerHTML = `<p class="q-vazio" style="padding:20px">Não consegui ler o banco: ${esc(e.message || e)}. <button class="q-pil" onclick="location.reload()">Tentar de novo</button></p>`; return; }
+  render();
+  Armazem.ouvir(receber);
+  setInterval(() => { desenharNaoSalvos(); if(Fila.pend.size && Date.now() - Fila.ultimo > CONFIG.reenviarACada) Fila.enviar(); }, 3000);
+  addEventListener('online', () => Fila.enviar());
+  let tr = 0; let eraMobile = mobile();
+  addEventListener('resize', () => { clearTimeout(tr); tr = setTimeout(() => { if(mobile() !== eraMobile){ eraMobile = mobile(); render(); } }, 150); });
+}
+/* para a plataforma (e para as provas) mexerem por fora */
+window.Quadro = { CONFIG, S, Armazem, Fila, criar, mudar, mover, render, abrirFicha, fecharFicha, receber, proximo, gruposPrazo };
+iniciar();
+})();
+</script>
+</body>
+</html>
+
