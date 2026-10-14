@@ -188,8 +188,8 @@ export async function setProjectStatus(_prev: ActionResult | null, fd: FormData)
 }
 
 /**
- * Muda a etapa do processo criativo. Trava da regra criativa (documento-mestre §34):
- * sem as 6 respostas, o projeto não avança além de Conceito.
+ * Muda a etapa do processo criativo, para qualquer etapa (o Victor pediu sem trava:
+ * nem todo projeto passa por todas). A regra criativa fica como lembrete, não impede.
  */
 export async function moveProjectStage(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   const user = await requireUser();
@@ -201,13 +201,6 @@ export async function moveProjectStage(_prev: ActionResult | null, fd: FormData)
   const from = Math.max(0, stageIdx(project.stage));
   const to = stageIdx(parsed.data);
   if (to === from) return ok();
-  const conceito = stageIdx("conceito");
-  if (to > from && to > conceito && !creativeRuleComplete(project.creativeRule)) {
-    const target = from <= conceito ? "Direção" : STAGES[to].label;
-    const message = `Responda a regra criativa antes de avançar para ${target}.`;
-    return fail(message, { creativeRule: [message] });
-  }
-
   await db.update(projects).set({ stage: parsed.data }).where(eq(projects.id, project.id));
   const s = STAGES[to];
   await logProjectActivity(project.id, "projeto", `${project.title} ${to > from ? "avançou" : "voltou"} para ${s.n} ${s.label}.`, user.id);
@@ -246,13 +239,7 @@ export async function saveCreativeRule(_prev: ActionResult | null, fd: FormData)
   }
   await db.update(projects).set({ creativeRule: answers }).where(eq(projects.id, project.id));
   touch(project.id);
-  if (creativeRuleComplete(answers)) {
-    return ok(
-      project.stage === "conceito" || project.stage === "origem"
-        ? "Regra criativa respondida. O projeto pode seguir para Direção."
-        : "Regra criativa respondida.",
-    );
-  }
+  if (creativeRuleComplete(answers)) return ok("Regra criativa respondida.");
   const n = CREATIVE_RULE.filter((q) => (answers[q.key] ?? "").trim().length >= 3).length;
   return ok(`Regra criativa salva: ${n} de 6 respondidas.`);
 }

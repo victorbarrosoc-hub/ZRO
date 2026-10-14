@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { ArrowLeft, ArrowRight, Check, LockKeyhole } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
@@ -16,7 +16,8 @@ const CONCEITO = STAGES.findIndex((s) => s.key === "conceito");
 
 /**
  * O processo criativo da ZRO (documento-mestre §18) em 7 etapas.
- * A etapa atual recebe a luz. Sem a regra criativa respondida, não passa de Conceito.
+ * A etapa atual recebe a luz. Sem trava: dá para ir a qualquer etapa (clicando nela),
+ * porque nem todo projeto passa por todas. A regra criativa fica como lembrete.
  */
 export function StageStepper({
   projectId,
@@ -35,7 +36,7 @@ export function StageStepper({
   const complete = creativeRuleComplete(answers);
   const answered = countAnswered(answers);
   const current = STAGES[idx];
-  const gated = !complete && idx <= CONCEITO;
+  const lembrar = !complete && idx <= CONCEITO;
 
   useEffect(() => {
     // No celular a trilha rola: mantém a etapa atual à vista.
@@ -47,16 +48,14 @@ export function StageStepper({
   }, [idx]);
 
   function move(to: number) {
-    if (to < 0 || to >= STAGES.length || pending) return;
-    const blocked = to > idx && to > CONCEITO && !complete;
+    if (to < 0 || to >= STAGES.length || to === idx || pending) return;
     startTransition(async () => {
-      if (!blocked) setIdx(to);
+      setIdx(to);
       const result = await callAction(moveProjectStage, { id: projectId, to: STAGES[to].key });
       if (result.ok) {
         if (result.message) toast.success(result.message);
       } else {
         toast.error(result.error);
-        if (result.fieldErrors?.creativeRule) setShowRule(true);
       }
     });
   }
@@ -88,7 +87,6 @@ export function StageStepper({
       >
         {STAGES.map((s, i) => {
           const state = i < idx ? "done" : i === idx ? "current" : "next";
-          const lockHere = i === CONCEITO && !complete;
           return (
             <li
               key={s.key}
@@ -96,62 +94,57 @@ export function StageStepper({
               className="flex min-w-[96px] flex-1 flex-col gap-3 last:min-w-[72px] last:flex-none"
             >
               <div className="flex items-center">
-                <span
+                <button
+                  type="button"
+                  onClick={() => move(i)}
+                  disabled={pending || state === "current"}
+                  title={state === "current" ? undefined : `Ir para ${s.label}`}
+                  aria-label={state === "current" ? `${s.label} (etapa atual)` : `Ir para ${s.n} ${s.label}`}
                   className={cn(
-                    "relative grid size-9 shrink-0 place-items-center rounded-full font-mono text-[11px] transition-[background-color,color,box-shadow,border-color] duration-500 ease-out-expo",
+                    "relative grid size-9 shrink-0 place-items-center rounded-full font-mono text-[11px] transition-[background-color,color,box-shadow,border-color] duration-500 ease-out-expo disabled:cursor-default",
                     state === "current" && "bg-white text-void shadow-[0_0_0_5px_rgb(255_255_255/0.07),0_0_32px_rgb(255_255_255/0.45)]",
-                    state === "done" && "border border-white/35 bg-white/[0.06] text-light",
-                    state === "next" && "border border-line-strong text-mute",
+                    state === "done" && "border border-white/35 bg-white/[0.06] text-light hover:border-white/70",
+                    state === "next" && "border border-line-strong text-mute hover:border-white/50 hover:text-light",
                   )}
                 >
                   {state === "done" ? <Check className="size-4" aria-hidden /> : s.n}
-                </span>
+                </button>
                 {i < STAGES.length - 1 ? (
-                  lockHere ? (
-                    <span className="mx-2 flex flex-1 items-center" title="Travado pela regra criativa">
-                      <span className="h-px flex-1 bg-line-strong" />
-                      <LockKeyhole className="mx-1.5 size-3.5 text-ash" aria-label="Travado pela regra criativa" />
-                      <span className="h-px flex-1 bg-line-strong" />
-                    </span>
-                  ) : (
-                    <span className={cn("mx-2 h-px flex-1", i < idx ? "bg-white/40" : "bg-line-strong")} aria-hidden />
-                  )
+                  <span className={cn("mx-2 h-px flex-1", i < idx ? "bg-white/40" : "bg-line-strong")} aria-hidden />
                 ) : null}
               </div>
-              <span
+              <button
+                type="button"
+                onClick={() => move(i)}
+                disabled={pending || state === "current"}
+                tabIndex={-1}
+                aria-hidden
                 className={cn(
-                  "text-[13px] whitespace-nowrap",
-                  state === "current" ? "font-medium text-white" : state === "done" ? "text-ash" : "text-mute",
+                  "w-fit text-left text-[13px] whitespace-nowrap disabled:cursor-default",
+                  state === "current" ? "font-medium text-white" : state === "done" ? "text-ash hover:text-light" : "text-mute hover:text-light",
                 )}
               >
                 {s.label}
-                <span className="sr-only">{state === "current" ? " (etapa atual)" : state === "done" ? " (concluída)" : ""}</span>
-              </span>
+              </button>
             </li>
           );
         })}
       </ol>
 
-      {gated ? (
-        <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-line-strong bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <LockKeyhole className="mt-0.5 size-4 shrink-0 text-ash" aria-hidden />
-            <div>
-              <p className="text-[14px] text-light">A regra criativa segura a passagem para Direção.</p>
-              <p className="mt-0.5 text-[13px] text-mute">
-                {answered} de 6 respondidas. Se não houver resposta clara, o projeto ainda não está pronto.
-              </p>
-            </div>
-          </div>
+      {lembrar ? (
+        <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-line bg-white/[0.02] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[13px] text-ash">
+            Regra criativa: {answered} de 6 respondidas. <span className="text-mute">É um lembrete, não trava o projeto.</span>
+          </p>
           {!showRule ? (
-            <Button variant="secondary" onClick={() => setShowRule(true)} aria-expanded={false} className="shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => setShowRule(true)} aria-expanded={false} className="shrink-0">
               Responder agora
             </Button>
           ) : null}
         </div>
-      ) : idx === CONCEITO ? (
+      ) : complete && idx === CONCEITO ? (
         <p className="mt-2 flex items-center gap-2 text-[13px] text-ok">
-          <Check className="size-4 shrink-0" aria-hidden /> Regra criativa respondida. O projeto pode avançar para Direção.
+          <Check className="size-4 shrink-0" aria-hidden /> Regra criativa respondida.
         </p>
       ) : null}
 

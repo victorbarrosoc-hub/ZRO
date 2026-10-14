@@ -22,7 +22,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
 
 /**
  * As 6 perguntas da regra criativa (documento-mestre §34), salvas juntas.
- * Aparece na visão geral e, quando a trava segura o avanço, dentro do stepper.
+ * Aparece na visão geral e, como lembrete, dentro do stepper.
  * `collapsible`: com as 6 respondidas, mostra as respostas em texto e edita sob demanda.
  */
 export function CreativeRuleForm({

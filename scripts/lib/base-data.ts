@@ -132,6 +132,84 @@ export async function ensureTemplates(db: DB) {
   await db.insert(s.projectTemplates).values(DEFAULT_TEMPLATES.map((t) => ({ ...t, tasks: [...t.tasks] })));
 }
 
+/*
+ * Pós-produção nos modelos (out/2026): troca, nos modelos que vieram de fábrica, a parte
+ * antiga (backup + etapas 05, 06 e 07) pela pós completa. Só mexe se essa parte estiver
+ * igual à de fábrica: modelo que o Victor editou nessas etapas fica como está.
+ */
+const POS_ANTIGA: Record<string, { stage: string; title: string }[]> = {
+  "Filme de marca": [
+    { stage: "producao", title: "Backup do material bruto em 2 lugares" },
+    { stage: "narrativa", title: "Seleção de material" },
+    { stage: "narrativa", title: "Primeiro corte" },
+    { stage: "narrativa", title: "Revisão interna" },
+    { stage: "narrativa", title: "Envio ao cliente (1ª rodada)" },
+    { stage: "finalizacao", title: "Color grading" },
+    { stage: "finalizacao", title: "Mixagem e trilha" },
+    { stage: "finalizacao", title: "Legendas e letterings" },
+    { stage: "finalizacao", title: "Versões de formato (16:9 e 9:16)" },
+    { stage: "entrega", title: "Conferir arquivos finais" },
+    { stage: "entrega", title: "Enviar a entrega" },
+    { stage: "entrega", title: "Arquivar projeto e material bruto" },
+    { stage: "entrega", title: "Pedir autorização para usar no portfólio" },
+  ],
+  "Conteúdo para redes": [
+    { stage: "producao", title: "Backup do material bruto em 2 lugares" },
+    { stage: "narrativa", title: "Edição dos vídeos" },
+    { stage: "narrativa", title: "Envio ao cliente para aprovação" },
+    { stage: "finalizacao", title: "Color, trilha e legendas" },
+    { stage: "finalizacao", title: 'Cortes em 15, 20, 30 e 45"' },
+    { stage: "entrega", title: "Entrega dos arquivos por vídeo" },
+    { stage: "entrega", title: "Controle de diárias usadas e restantes" },
+  ],
+  "Experiência (evento)": [
+    { stage: "producao", title: "Backup do material bruto em 2 lugares" },
+    { stage: "narrativa", title: "Sameday / cortes de tempo real" },
+    { stage: "narrativa", title: "Primeiro corte do aftermovie" },
+    { stage: "finalizacao", title: "Color, trilha e mixagem" },
+    { stage: "entrega", title: "Entrega do aftermovie e do material bruto" },
+  ],
+  Documental: [
+    { stage: "producao", title: "Backup do material bruto em 2 lugares" },
+    { stage: "narrativa", title: "Decupagem das entrevistas" },
+    { stage: "narrativa", title: "Montagem" },
+    { stage: "finalizacao", title: "Color, som e trilha" },
+    { stage: "finalizacao", title: "Legendas" },
+    { stage: "entrega", title: "Entrega e versões de divulgação" },
+  ],
+};
+const ETAPAS_POS = new Set(["narrativa", "finalizacao", "entrega"]);
+const daPos = (t: { stage: string; title: string }) =>
+  ETAPAS_POS.has(t.stage) || (t.stage === "producao" && t.title === "Backup do material bruto em 2 lugares");
+
+export async function upgradePostProduction(db: DB) {
+  const marker = "processos-pos:v1";
+  if (await db.query.settings.findFirst({ where: eq(s.settings.key, marker) })) return;
+  const templates = await db.select().from(s.projectTemplates);
+  for (const novo of DEFAULT_TEMPLATES) {
+    const antiga = POS_ANTIGA[novo.name];
+    const atual = templates.find((t) => t.name === novo.name);
+    if (!atual) {
+      // modelo novo de fábrica (ex.: Pós-produção da Absolute ZRO)
+      if (!antiga) await db.insert(s.projectTemplates).values({ ...novo, tasks: [...novo.tasks] });
+      continue;
+    }
+    if (!antiga) continue;
+    const chave = (l: readonly { stage: string; title: string }[]) => l.map((t) => `${t.stage}::${t.title}`).join("|");
+    const posAtual = atual.tasks.filter(daPos);
+    const posNova = novo.tasks.filter((t) => ETAPAS_POS.has(t.stage));
+    if (chave(posAtual) === chave(posNova)) continue; // já está na versão nova
+    if (chave(posAtual) !== chave(antiga)) {
+      console.log(`· Modelo "${atual.name}": pós-produção editada à mão, fica como está.`);
+      continue;
+    }
+    const tasks = [...atual.tasks.filter((t) => !daPos(t)), ...posNova];
+    await db.update(s.projectTemplates).set({ tasks }).where(eq(s.projectTemplates.id, atual.id));
+    console.log(`✓ Modelo "${atual.name}": pós-produção completa (${posAtual.length} → ${posNova.length} tarefas).`);
+  }
+  await db.insert(s.settings).values({ key: marker, value: new Date().toISOString() }).onConflictDoNothing();
+}
+
 export async function ensureKits(db: DB) {
   if (!(await isEmpty(db, s.equipmentKits))) return;
   await db.insert(s.equipmentKits).values(DEFAULT_KITS.map((k) => ({ ...k, items: [...k.items] })));
@@ -429,6 +507,7 @@ export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: bo
   await ensureSettings(db);
   await ensureCatalog(db);
   await ensureTemplates(db);
+  await upgradePostProduction(db);
   await ensureKits(db);
   await ensureFaqs(db);
   await ensureTeam(db);

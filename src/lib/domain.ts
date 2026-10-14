@@ -68,7 +68,7 @@ export function stageInfo(key: string | null | undefined) {
   return STAGES.find((s) => s.key === key) ?? STAGES[0];
 }
 
-/** Regra criativa (documento-mestre §34). Sem resposta, o projeto não passa de Conceito. */
+/** Regra criativa (documento-mestre §34). Lembrete no projeto: não trava a troca de etapa. */
 export const CREATIVE_RULE = [
   { key: "dizer", question: "O que estamos tentando dizer?" },
   { key: "porque", question: "Por que estamos contando essa história?" },
