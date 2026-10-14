@@ -444,7 +444,7 @@ export async function paidToFreelas(month: string) {
 export async function revenueInMonth(month: string) {
   const { start, end } = monthBounds(month);
   const [row] = await db
-    .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)` })
+    .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)`.mapWith(Number) })
     .from(financePayments)
     .innerJoin(financeEntries, eq(financePayments.entryId, financeEntries.id))
     .where(and(eq(financeEntries.kind, "entrada"), gte(financePayments.date, start), lte(financePayments.date, end)));
@@ -548,7 +548,7 @@ export async function taxOverview(year: string, today = todayISO()) {
       .where(and(eq(financeEntries.kind, "imposto"), sql`${financeEntries.amount} > ${financeEntries.paidAmount}`))
       .orderBy(asc(financeEntries.dueDate)),
     db
-      .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)` })
+      .select({ total: sql<number>`coalesce(sum(${financePayments.amount}), 0)`.mapWith(Number) })
       .from(financePayments)
       .innerJoin(financeEntries, eq(financePayments.entryId, financeEntries.id))
       .where(

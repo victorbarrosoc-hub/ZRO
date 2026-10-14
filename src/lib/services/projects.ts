@@ -62,7 +62,10 @@ export async function createProject(input: {
   let templateId = input.templateId ?? null;
   if (!templateId) {
     // Sem modelo escolhido: usa o primeiro modelo da mesma categoria, se existir.
-    const byCategory = await db.query.projectTemplates.findFirst({ where: eq(projectTemplates.category, input.category) });
+    const byCategory = await db.query.projectTemplates.findFirst({
+      where: eq(projectTemplates.category, input.category),
+      orderBy: (t, { asc }) => [asc(t.createdAt), asc(t.id)],
+    });
     templateId = byCategory?.id ?? null;
   }
   if (templateId) await applyTemplate(row.id, templateId);

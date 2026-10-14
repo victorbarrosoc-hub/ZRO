@@ -10,7 +10,7 @@ O módulo **Freelas** (`src/app/(painel)/painel/freelas/`) é a implementação 
   - Tipos globais: `PageProps<"/painel/freelas/[id]">`, `LayoutProps<...>`.
   - O antigo `middleware.ts` agora é `src/proxy.ts`.
 - **Tailwind 4** com os tokens em `src/app/globals.css` (fonte: `docs/marca/tokens.md`).
-- **Drizzle + SQLite/libSQL**. Schema em `src/lib/db/schema.ts`. Banco local em `data/zro.db`.
+- **Drizzle + Postgres** (Neon em produção; PGlite local em `data/pglite`, servido pelo `npm run dev`). Schema em `src/lib/db/schema.ts`. Várias escritas que valem juntas: `transact((t) => [...])`. Busca de texto com `ilike`.
 - **React 19**: `useActionState`, `useFormStatus`, Server Actions.
 
 ## Regras de dados

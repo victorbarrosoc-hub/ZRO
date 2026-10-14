@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createSession } from "@/lib/auth/session";
-import { db, schema } from "@/lib/db";
+import { db, schema, transact } from "@/lib/db";
 import { bool, fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATALOG_GROUPS, CATALOG_UNITS } from "@/lib/domain";
 import { saveSetting } from "@/lib/settings";
@@ -219,7 +219,7 @@ export async function createCatalogItem(_prev: ActionResult | null, fd: FormData
   await requireUser();
   const parsed = readCatalog(fd);
   if (!parsed.success) return fromZod(parsed.error);
-  const [row] = await db.select({ max: sql<number | null>`max(${catalogItems.sortOrder})` }).from(catalogItems);
+  const [row] = await db.select({ max: sql<number | null>`max(${catalogItems.sortOrder})`.mapWith(Number) }).from(catalogItems);
   await db.insert(catalogItems).values({
     ...parsed.data,
     description: parsed.data.description ?? null,
@@ -286,10 +286,7 @@ export async function moveCatalogItem(_prev: ActionResult | null, fd: FormData):
     }
     return list;
   });
-  const [head, ...tail] = ordered.map((item, n) =>
-    db.update(catalogItems).set({ sortOrder: n }).where(eq(catalogItems.id, item.id)),
-  );
-  if (head) await db.batch([head, ...tail]);
+  await transact((t) => ordered.map((item, n) => t.update(catalogItems).set({ sortOrder: n }).where(eq(catalogItems.id, item.id))));
   revalidateCatalog();
   return ok();
 }
@@ -321,7 +318,7 @@ export async function changePassword(_prev: ActionResult | null, fd: FormData): 
   // Mesmo freio do login: muitas senhas erradas seguidas travam por 15 minutos.
   const since = new Date(Date.now() - WINDOW_MIN * 60 * 1000);
   const [fails] = await db
-    .select({ n: sql<number>`count(*)` })
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
     .from(loginAttempts)
     .where(and(eq(loginAttempts.email, me.email), eq(loginAttempts.success, false), gte(loginAttempts.createdAt, since)));
   if (Number(fails?.n ?? 0) >= MAX_FAILS) {
@@ -350,11 +347,14 @@ export async function deleteDemoData(_prev: ActionResult | null, fd: FormData): 
   if ((str(fd, "confirm") ?? "").toUpperCase() !== "APAGAR") {
     return fail("Digite APAGAR para confirmar.", { confirm: ["Digite APAGAR para confirmar."] });
   }
-  const results = await db.$client.batch(
-    DEMO_CLEANUP.map((s) => s.sql),
-    "write",
-  );
-  const removed = results.reduce((sum, r, i) => sum + (DEMO_CLEANUP[i].table ? r.rowsAffected : 0), 0);
+  // Tudo numa transação: ou sai tudo, ou nada muda.
+  let removed = 0;
+  await db.transaction(async (t) => {
+    for (const step of DEMO_CLEANUP) {
+      const result = (await t.execute(sql.raw(step.sql))) as { count?: number; affectedRows?: number };
+      if (step.table) removed += Number(result.count ?? result.affectedRows ?? 0);
+    }
+  });
   revalidatePath("/painel", "layout");
   revalidatePath("/", "layout");
   return ok(removed ? `Dados de exemplo apagados: ${removed} registros.` : "Não havia dados de exemplo.");

@@ -1,59 +1,55 @@
 /**
- * Onde está o banco. Local: arquivo SQLite em ./data/zro.db.
- * Produção: Turso (libSQL). Aceita, nesta ordem:
- * - DATABASE_URL / DATABASE_AUTH_TOKEN (definidas à mão);
- * - TURSO_DATABASE_URL / TURSO_AUTH_TOKEN;
- * - o par que a integração da Turso na Vercel cria, com o prefixo escolhido
- *   na conexão (ex.: STORAGE_URL + STORAGE_AUTH_TOKEN).
+ * Onde está o banco.
+ * - Produção: Postgres no Neon (São Paulo), ligado pela integração Neon da Vercel,
+ *   que cria DATABASE_URL (com pooler) e POSTGRES_URL. Serve qualquer Postgres
+ *   com pooler (Supabase: "Transaction pooler", porta 6543).
+ * - Computador: PGlite (Postgres num arquivo) em ./data/pglite. Com `npm run dev`
+ *   ele roda como servidor local (scripts/dev.mjs) e o site conecta por ZRO_LOCAL_DB_URL;
+ *   os scripts de banco (migrate, seed) abrem o arquivo direto, com o site parado.
  * Sem "server-only" para os scripts e o drizzle.config poderem usar.
  */
-export const LOCAL_DATABASE_URL = "file:./data/zro.db";
+export const LOCAL_DATABASE_DIR = "./data/pglite";
 
-const isIntegrationUrl = (key: string, value: string | undefined) => key.endsWith("_URL") && !!value?.startsWith("libsql://");
-
-function fromVercelIntegration(env: NodeJS.ProcessEnv) {
-  const key = Object.keys(env)
-    .sort()
-    .find((k) => isIntegrationUrl(k, env[k]));
-  if (!key) return null;
-  const prefix = key.replace(/(_DATABASE)?_URL$/, "");
-  const authToken =
-    env[`${prefix}_AUTH_TOKEN`] || env[`${prefix}_DATABASE_AUTH_TOKEN`] || env[`${prefix}_TOKEN`] || undefined;
-  return { url: env[key]!, authToken };
-}
+const isPostgresUrl = (value: string | undefined) => !!value && /^postgres(ql)?:\/\//.test(value);
 
 export function databaseConfig() {
   const env = process.env;
-  const explicit = env.DATABASE_URL || env.TURSO_DATABASE_URL;
-  const found = explicit
-    ? { url: explicit, authToken: env.DATABASE_AUTH_TOKEN || env.TURSO_AUTH_TOKEN || undefined }
-    : fromVercelIntegration(env);
-  const url = found?.url ?? LOCAL_DATABASE_URL;
-  return { url, authToken: found?.authToken, local: url.startsWith("file:") };
+  const url = [env.DATABASE_URL, env.POSTGRES_URL].find(isPostgresUrl);
+  if (url) return { url, local: false as const, server: true as const };
+  const localServer = env.ZRO_LOCAL_DB_URL;
+  if (localServer) return { url: localServer, local: true as const, server: true as const };
+  return { url: `pglite:${LOCAL_DATABASE_DIR}`, local: true as const, server: false as const };
 }
 
 /**
- * Todos os bancos diferentes que o ambiente oferece, com os nomes das
- * variáveis (nunca os tokens). Mais de um = dois bancos ligados ao projeto,
+ * Todos os bancos Postgres diferentes que o ambiente oferece, com os nomes das
+ * variáveis (nunca as senhas). Mais de um = dois bancos ligados ao projeto,
  * e o site poderia ler um e gravar no outro de um deploy para o seguinte.
+ * O mesmo banco por endereços diferentes (pooler e conexão direta) conta uma vez.
  */
 export function databaseCandidates(env: NodeJS.ProcessEnv = process.env) {
-  const byUrl = new Map<string, string[]>();
-  for (const key of Object.keys(env).sort()) {
+  const byDatabase = new Map<string, string[]>();
+  for (const key of ["DATABASE_URL", "POSTGRES_URL"]) {
     const value = env[key];
-    const counts = key === "DATABASE_URL" || key === "TURSO_DATABASE_URL" ? !!value : isIntegrationUrl(key, value);
-    if (!counts || !value) continue;
-    byUrl.set(value, [...(byUrl.get(value) ?? []), key]);
+    if (!isPostgresUrl(value)) continue;
+    const label = databaseLabel(value!);
+    byDatabase.set(label, [...(byDatabase.get(label) ?? []), key]);
   }
-  return [...byUrl.entries()].map(([url, keys]) => ({ url, keys, label: databaseLabel(url) }));
+  return [...byDatabase.entries()].map(([label, keys]) => ({ label, keys }));
 }
 
-/** Nome curto e seguro do banco, para mostrar na tela e no log (sem token). */
+/** Nome curto e seguro do banco, para mostrar na tela e no log (sem senha). */
 export function databaseLabel(url: string) {
-  if (url.startsWith("file:")) return `arquivo local (${url.replace(/^file:(\.\/)?/, "")})`;
+  if (url.startsWith("pglite:") || url.includes("@127.0.0.1:")) return "arquivo local (data/pglite)";
   try {
-    const host = new URL(url).hostname;
-    return host.endsWith(".turso.io") ? `${host.split(".")[0]} (Turso)` : host;
+    const u = new URL(url);
+    // Supabase: "db.<ref>.supabase.co" (direto) ou usuário "postgres.<ref>" no pooler.
+    const ref = u.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/)?.[1] ?? decodeURIComponent(u.username).match(/^postgres\.([a-z0-9]+)$/)?.[1];
+    if (ref) return `${ref} (Supabase)`;
+    // Neon: o mesmo banco aparece com e sem "-pooler" no endereço.
+    const neon = u.hostname.match(/^(ep-[a-z0-9-]+?)(-pooler)?\.([a-z0-9-]+)\.aws\.neon\.tech$/);
+    if (neon) return `${neon[1]} (Neon, ${neon[3]})`;
+    return `${u.hostname}${u.pathname !== "/" ? u.pathname : ""}`;
   } catch {
     return "endereço inválido";
   }

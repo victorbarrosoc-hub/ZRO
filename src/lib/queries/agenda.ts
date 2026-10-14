@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "@/lib/db";
 
 const { events, eventCrew, freelancers, projects, callSheets } = schema;

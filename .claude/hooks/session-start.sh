@@ -13,8 +13,8 @@ export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 npm install --no-audit --no-fund
 
-# Banco local (SQLite em data/zro.db): migra sempre; dados de exemplo só na primeira vez.
-if [ -f data/zro.db ]; then
+# Banco local (Postgres via PGlite em data/pglite): migra sempre; dados de exemplo só na primeira vez.
+if [ -d data/pglite ]; then
   npm run db:migrate
 else
   npm run db:migrate

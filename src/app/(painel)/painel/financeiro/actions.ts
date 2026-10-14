@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
-import { db, schema } from "@/lib/db";
+import { db, schema, transact } from "@/lib/db";
 import { fail, fromZod, money, ok, str, type ActionResult } from "@/lib/actions";
 import { FINANCE_CATEGORIES, FINANCE_KINDS, PAYMENT_METHODS } from "@/lib/domain";
 import { brl, dateBR, monthLong } from "@/lib/format";
@@ -181,10 +181,10 @@ export async function deleteEntry(_prev: ActionResult | null, fd: FormData): Pro
   const id = str(fd, "id");
   const entry = id ? await db.query.financeEntries.findFirst({ where: eq(financeEntries.id, id) }) : undefined;
   if (!entry) return fail("Lançamento não encontrado.");
-  // As baixas saem junto (sem depender do ON DELETE CASCADE do SQLite).
-  await db.batch([
-    db.delete(financePayments).where(eq(financePayments.entryId, entry.id)),
-    db.delete(financeEntries).where(eq(financeEntries.id, entry.id)),
+  // As baixas saem junto (tudo ou nada).
+  await transact((t) => [
+    t.delete(financePayments).where(eq(financePayments.entryId, entry.id)),
+    t.delete(financeEntries).where(eq(financeEntries.id, entry.id)),
   ]);
   touch(entry);
   return ok("Lançamento excluído.");

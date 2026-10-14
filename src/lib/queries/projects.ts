@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db, schema } from "@/lib/db";
 import { STAGES } from "@/lib/domain";
@@ -46,7 +46,7 @@ export async function listProjects(filters: { q?: string; status?: ProjectStatus
   if (group) where.push(inArray(projects.status, group));
   if (filters.q) {
     const q = `%${filters.q}%`;
-    where.push(or(like(projects.title, q), like(projects.code, q), like(clients.name, q)));
+    where.push(or(ilike(projects.title, q), ilike(projects.code, q), ilike(clients.name, q)));
   }
 
   const rows = await db
@@ -83,8 +83,8 @@ export async function listProjects(filters: { q?: string; status?: ProjectStatus
     db
       .select({
         projectId: projectTasks.projectId,
-        total: sql<number>`count(*)`,
-        done: sql<number>`sum(case when ${projectTasks.done} = 1 then 1 else 0 end)`,
+        total: sql<number>`count(*)`.mapWith(Number),
+        done: sql<number>`sum(case when ${projectTasks.done} then 1 else 0 end)`.mapWith(Number),
       })
       .from(projectTasks)
       .where(inArray(projectTasks.projectId, ids))
@@ -92,8 +92,8 @@ export async function listProjects(filters: { q?: string; status?: ProjectStatus
     db
       .select({
         projectId: projectDeliverables.projectId,
-        total: sql<number>`count(*)`,
-        delivered: sql<number>`sum(case when ${projectDeliverables.status} = 'entregue' then 1 else 0 end)`,
+        total: sql<number>`count(*)`.mapWith(Number),
+        delivered: sql<number>`sum(case when ${projectDeliverables.status} = 'entregue' then 1 else 0 end)`.mapWith(Number),
       })
       .from(projectDeliverables)
       .where(inArray(projectDeliverables.projectId, ids))
@@ -135,7 +135,7 @@ export type ProjectListItem = Awaited<ReturnType<typeof listProjects>>[number];
 /** Quantos projetos há em cada filtro (para os chips da lista). */
 export async function countProjectsByFilter(): Promise<Record<ProjectStatusFilter, number>> {
   const rows = await db
-    .select({ status: projects.status, n: sql<number>`count(*)` })
+    .select({ status: projects.status, n: sql<number>`count(*)`.mapWith(Number) })
     .from(projects)
     .groupBy(projects.status);
   const by = (list: string[]) => rows.filter((r) => list.includes(r.status)).reduce((s, r) => s + Number(r.n), 0);
@@ -368,7 +368,7 @@ export async function getProjectFormOptions() {
     db
       .select({ id: projectTemplates.id, name: projectTemplates.name, category: projectTemplates.category, tasks: projectTemplates.tasks })
       .from(projectTemplates)
-      .orderBy(sql`rowid`),
+      .orderBy(asc(projectTemplates.createdAt), asc(projectTemplates.id)),
   ]);
   return {
     clients: clientRows,

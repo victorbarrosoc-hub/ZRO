@@ -1,12 +1,12 @@
 /**
  * Limpeza dos dados de exemplo (tudo com id começando com "demo-").
  *
- * SQL puro, sem "server-only", para poder ser testado com um script contra
- * uma cópia do banco. Roda num único batch (uma transação).
+ * SQL puro (Postgres), sem "server-only", para poder ser testado com um script
+ * contra uma cópia do banco. Roda numa transação só.
  *
  * 1. Registros de verdade que apontam para exemplos perdem o vínculo (o que o
- *    banco faria com ON DELETE SET NULL). Assim o resultado não depende de a
- *    conexão estar com PRAGMA foreign_keys ligado.
+ *    banco faria com ON DELETE SET NULL). Assim o resultado não depende das
+ *    regras de chave estrangeira do banco.
  * 2. Apaga dos filhos para os pais. Filhos de verdade pendurados num exemplo
  *    (ex.: tarefa criada num projeto de exemplo) saem junto, como no
  *    ON DELETE CASCADE.

@@ -293,7 +293,7 @@ export async function addTask(_prev: ActionResult | null, fd: FormData): Promise
     .safeParse({ stage: str(fd, "stage"), title: str(fd, "title") });
   if (!parsed.success) return fromZod(parsed.error);
   const [row] = await db
-    .select({ max: sql<number | null>`max(${projectTasks.sortOrder})` })
+    .select({ max: sql<number | null>`max(${projectTasks.sortOrder})`.mapWith(Number) })
     .from(projectTasks)
     .where(eq(projectTasks.projectId, project.id));
   await db.insert(projectTasks).values({
@@ -379,7 +379,7 @@ export async function createDeliverable(_prev: ActionResult | null, fd: FormData
   const parsed = readDeliverable(fd);
   if (!parsed.success) return fromZod(parsed.error);
   const [row] = await db
-    .select({ max: sql<number | null>`max(${projectDeliverables.sortOrder})` })
+    .select({ max: sql<number | null>`max(${projectDeliverables.sortOrder})`.mapWith(Number) })
     .from(projectDeliverables)
     .where(eq(projectDeliverables.projectId, project.id));
   const { link, revision, ...rest } = parsed.data;

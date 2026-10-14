@@ -25,11 +25,11 @@ const {
 export type TemplateTask = { stage: string; title: string };
 
 /**
- * Modelos na ordem em que foram criados (rowid): é a mesma ordem em que o
+ * Modelos na ordem em que foram criados: é a mesma ordem em que o
  * createProject acha "o primeiro modelo da categoria".
  */
 export async function listTemplates() {
-  const rows = await db.select().from(projectTemplates).orderBy(sql`rowid`);
+  const rows = await db.select().from(projectTemplates).orderBy(asc(projectTemplates.createdAt), asc(projectTemplates.id));
   return rows.map((t) => ({
     ...t,
     total: t.tasks.length,
@@ -42,14 +42,14 @@ export async function getTemplate(id: string) {
 }
 
 export async function listKits() {
-  const rows = await db.select().from(equipmentKits).orderBy(sql`rowid`);
+  const rows = await db.select().from(equipmentKits).orderBy(asc(equipmentKits.createdAt), asc(equipmentKits.id));
   return rows.map((k) => ({ ...k, pieces: k.items.reduce((s, i) => s + (Number(i.qty) || 0), 0) }));
 }
 
 export async function countProcessos() {
   const [[t], [k]] = await Promise.all([
-    db.select({ n: sql<number>`count(*)` }).from(projectTemplates),
-    db.select({ n: sql<number>`count(*)` }).from(equipmentKits),
+    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(projectTemplates),
+    db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(equipmentKits),
   ]);
   return { templates: Number(t?.n ?? 0), kits: Number(k?.n ?? 0) };
 }
@@ -86,7 +86,7 @@ export async function listCatalogAdmin() {
   const [items, usage] = await Promise.all([
     db.select().from(catalogItems).orderBy(asc(catalogItems.sortOrder), asc(catalogItems.createdAt)),
     db
-      .select({ id: quoteItems.catalogItemId, n: sql<number>`count(distinct ${quoteItems.quoteId})` })
+      .select({ id: quoteItems.catalogItemId, n: sql<number>`count(distinct ${quoteItems.quoteId})`.mapWith(Number) })
       .from(quoteItems)
       .where(sql`${quoteItems.catalogItemId} is not null`)
       .groupBy(quoteItems.catalogItemId),
@@ -142,7 +142,7 @@ export async function countDemoData() {
   ] as const;
   const counts = await Promise.all(
     tables.map(async (t) => {
-      const [row] = await db.select({ n: sql<number>`count(*)` }).from(t.table).where(like(t.id, "demo-%"));
+      const [row] = await db.select({ n: sql<number>`count(*)`.mapWith(Number) }).from(t.table).where(like(t.id, "demo-%"));
       const count = Number(row?.n ?? 0);
       return { label: count === 1 ? t.label[0] : t.label[1], count };
     }),

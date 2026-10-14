@@ -6,7 +6,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { count, eq, min } from "drizzle-orm";
-import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import type { PgTable } from "drizzle-orm/pg-core";
 import type { DB } from "./client";
 import * as s from "./schema";
 
@@ -44,7 +44,7 @@ const COUNTED = [
   { key: "projects", label: "projetos", table: s.projects },
   { key: "finance", label: "lançamentos", table: s.financeEntries },
   { key: "freelancers", label: "freelas", table: s.freelancers },
-] as const satisfies readonly { key: string; label: string; table: SQLiteTable }[];
+] as const satisfies readonly { key: string; label: string; table: PgTable }[];
 
 export type DatabaseSummary = {
   identity: DatabaseIdentity | null;

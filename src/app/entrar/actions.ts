@@ -35,7 +35,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
 
   const since = new Date(Date.now() - WINDOW_MIN * 60 * 1000);
   const [fails] = await db
-    .select({ n: sql<number>`count(*)` })
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
     .from(schema.loginAttempts)
     .where(
       and(

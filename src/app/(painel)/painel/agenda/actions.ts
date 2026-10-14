@@ -4,7 +4,7 @@ import { and, asc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
-import { db, schema } from "@/lib/db";
+import { db, schema, transact, type Tx } from "@/lib/db";
 import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
 import { EVENT_TYPES, FUNCTION_MAX } from "@/lib/domain";
 import { dateBR } from "@/lib/format";
@@ -120,8 +120,8 @@ async function conflictWarning(eventId: string, crewIds: string[], start: string
   return `Atenção: ${parts.join(" ")}`;
 }
 
-function insertCrew(eventId: string, crew: { freelancerId: string; function?: string }[]) {
-  return db.insert(eventCrew).values(crew.map((c) => ({ eventId, freelancerId: c.freelancerId, function: c.function ?? null })));
+function insertCrew(t: Tx, eventId: string, crew: { freelancerId: string; function?: string }[]) {
+  return t.insert(eventCrew).values(crew.map((c) => ({ eventId, freelancerId: c.freelancerId, function: c.function ?? null })));
 }
 
 function revalidateEvent(...projectIds: (string | null | undefined)[]) {
@@ -164,9 +164,10 @@ export async function createEvent(_prev: ActionResult | null, fd: FormData): Pro
   if ("error" in clean) return fail(clean.error ?? "Confira os campos.");
 
   const id = crypto.randomUUID();
-  const insertEvent = db.insert(events).values({ id, ...clean.values });
-  if (clean.crew.length) await db.batch([insertEvent, insertCrew(id, clean.crew)]);
-  else await insertEvent;
+  await transact((t) => [
+    t.insert(events).values({ id, ...clean.values }),
+    ...(clean.crew.length ? [insertCrew(t, id, clean.crew)] : []),
+  ]);
 
   const warning = await conflictWarning(
     id,
@@ -203,10 +204,11 @@ export async function updateEvent(_prev: ActionResult | null, fd: FormData): Pro
   if ("error" in clean) return fail(clean.error ?? "Confira os campos.");
 
   // Tudo ou nada: evento e equipe mudam juntos.
-  const updateRow = db.update(events).set(clean.values).where(eq(events.id, id));
-  const clearCrew = db.delete(eventCrew).where(eq(eventCrew.eventId, id));
-  if (clean.crew.length) await db.batch([updateRow, clearCrew, insertCrew(id, clean.crew)]);
-  else await db.batch([updateRow, clearCrew]);
+  await transact((t) => [
+    t.update(events).set(clean.values).where(eq(events.id, id)),
+    t.delete(eventCrew).where(eq(eventCrew.eventId, id)),
+    ...(clean.crew.length ? [insertCrew(t, id, clean.crew)] : []),
+  ]);
 
   const warning = await conflictWarning(
     id,
@@ -238,10 +240,10 @@ export async function deleteEvent(_prev: ActionResult | null, fd: FormData): Pro
     .where(eq(events.id, id))
     .limit(1);
   if (!current) return fail("Esse evento já foi excluído.");
-  await db.batch([
-    db.delete(eventCrew).where(eq(eventCrew.eventId, id)),
-    db.update(schema.callSheets).set({ eventId: null }).where(eq(schema.callSheets.eventId, id)),
-    db.delete(events).where(eq(events.id, id)),
+  await transact((t) => [
+    t.delete(eventCrew).where(eq(eventCrew.eventId, id)),
+    t.update(schema.callSheets).set({ eventId: null }).where(eq(schema.callSheets.eventId, id)),
+    t.delete(events).where(eq(events.id, id)),
   ]);
   const note = await syncTeams(current.projectId);
   if (current.type === "diaria") {
