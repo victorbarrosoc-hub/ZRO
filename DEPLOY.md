@@ -5,7 +5,7 @@ Endereço: **https://zrofilmes.vercel.app**
 ## O que o código já faz sozinho
 
 - **Build da Vercel** (`vercel.json` → `npm run vercel-build`): prepara o banco (migrações, contas dos sócios, configurações, catálogo, modelos, kits, FAQ, equipe e o filme manifesto) e depois roda o `next build`. Só cria o que falta: nunca apaga nada e nunca coloca dados de exemplo.
-- **Banco:** Postgres no **Supabase** (projeto `zro-filmes`, São Paulo), em `DATABASE_URL`. No computador, PGlite (o mesmo Postgres num arquivo) em `data/pglite`.
+- **Banco:** Postgres no **Neon** (São Paulo), ligado pela integração Neon da Vercel, em `DATABASE_URL`. No computador, PGlite (o mesmo Postgres num arquivo) em `data/pglite`.
 - **Google:** sitemap, robots (painel e login ficam fora da busca) e imagem de compartilhamento pra link no WhatsApp e no Instagram.
 - **Segurança:** cabeçalhos contra site falso em iframe e rastreio, sessão em cookie protegido, limite de tentativas no login.
 
@@ -33,10 +33,10 @@ A Vercel publica em produção o que está na `main`. Fazer o merge da branch `c
 
 5. **Deploy.** Esse primeiro deploy para com a mensagem **"Falta o banco de dados"**. É esperado: o passo 3 resolve.
 
-### 3. Conectar o banco (Supabase)
+### 3. Conectar o banco (Neon)
 
-1. No Supabase, projeto `zro-filmes` → botão **Connect** → aba **ORMs**/**Connection string** → **Transaction pooler** (porta **6543**). Copiar a URL e trocar `[YOUR-PASSWORD]` pela senha do banco.
-2. Na Vercel → Settings → **Environment Variables** → `DATABASE_URL` = essa URL, marcando **Production** e **Preview**, tipo **Sensitive**.
+1. Na Vercel, projeto **zrofilmes** → **Storage** → **Create Database** → **Neon**, região **São Paulo (sa-east-1)**, plano **Free** → **Connect** ao projeto. A integração cria `DATABASE_URL` (com pooler) e as variáveis `POSTGRES_*`/`PG*`.
+2. Outro Postgres serve (Supabase: **Transaction pooler**, porta 6543): basta pôr a URL em `DATABASE_URL`, tipo **Sensitive**.
 3. Na primeira publicação num banco novo, criar também `ZRO_ACEITAR_BANCO_NOVO` = `1` (a trava para deploy em banco vazio). Depois que publicar, apagar.
 4. **Deployments** → último deploy → `⋯` → **Redeploy**.
 5. As funções da Vercel ficam em São Paulo (**gru1**), junto do banco.
@@ -65,7 +65,7 @@ A Vercel publica em produção o que está na `main`. Fazer o merge da branch `c
 ## Custos
 
 - **Vercel:** o plano Hobby (grátis) é só pra uso pessoal e não comercial. Site de empresa, pelos termos da Vercel, pede o **Pro: US$ 20 por mês por membro** (um membro basta).
-- **Supabase:** plano Free (500 MB, sobra para a ZRO). Ele **pausa depois de 7 dias sem uso**: sem perder dados, mas o site fica sem banco até reativar no painel do Supabase. O Pro (US$ 25/mês) não pausa e tem backup diário.
+- **Neon:** plano Free (0,5 GB, sobra para a ZRO). Não pausa: depois de um tempo parado ele "dorme" e acorda sozinho no primeiro acesso (meio segundo a mais). O backup fica em **Ajustes → Dados e backup**. (O Supabase grátis não coube: limite de 2 projetos por conta, e ele pausa após 7 dias sem uso.)
 - **Higgsfield e geração de imagem:** não usados. Luz, grão e partículas do site são feitos em código.
 
 ## Rodar no computador

@@ -55,7 +55,7 @@ Antes de propor ou construir qualquer coisa, leia:
 ## Status
 
 - [x] Contexto, documento-mestre, identidade visual, briefing e referências de UI registrados
-- [x] Stack: Next.js 16 + Tailwind 4 + Drizzle/Postgres (PGlite local, Supabase em São Paulo na produção), login próprio com sessão assinada
+- [x] Stack: Next.js 16 + Tailwind 4 + Drizzle/Postgres (PGlite local, Neon em São Paulo na produção), login próprio com sessão assinada
 - [x] Site público (início, filmes, sobre, Absolute ZRO, privacidade) e funil de orçamento até o WhatsApp
 - [x] Área interna: painel, freelas; CRM, projetos, agenda e documentos, orçamentos com PDF, financeiro, processos, site e ajustes
 - [x] Pronto pra Vercel: `vercel.json`, banco preparado no build, sitemap, robots e imagem de compartilhamento (passo a passo no `DEPLOY.md`)
@@ -84,7 +84,7 @@ Antes de propor ou construir qualquer coisa, leia:
 ## Estrutura
 
 ```
-DEPLOY.md              como publicar na Vercel (Supabase, variáveis, primeiro acesso, custos)
+DEPLOY.md              como publicar na Vercel (Neon, variáveis, primeiro acesso, custos)
 brand/                 logo oficial e referências (filme manifesto, story, quadros)
 docs/
   briefing.md          escopo do site e da área interna

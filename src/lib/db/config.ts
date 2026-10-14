@@ -1,8 +1,8 @@
 /**
  * Onde está o banco.
- * - Produção: Postgres no Supabase, em DATABASE_URL (ou POSTGRES_URL, o nome
- *   que a integração Supabase da Vercel cria). Use a URL do pooler
- *   (porta 6543, "Transaction pooler") por causa das funções serverless.
+ * - Produção: Postgres no Neon (São Paulo), ligado pela integração Neon da Vercel,
+ *   que cria DATABASE_URL (com pooler) e POSTGRES_URL. Serve qualquer Postgres
+ *   com pooler (Supabase: "Transaction pooler", porta 6543).
  * - Computador: PGlite (Postgres num arquivo) em ./data/pglite. Com `npm run dev`
  *   ele roda como servidor local (scripts/dev.mjs) e o site conecta por ZRO_LOCAL_DB_URL;
  *   os scripts de banco (migrate, seed) abrem o arquivo direto, com o site parado.
@@ -46,6 +46,9 @@ export function databaseLabel(url: string) {
     // Supabase: "db.<ref>.supabase.co" (direto) ou usuário "postgres.<ref>" no pooler.
     const ref = u.hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/)?.[1] ?? decodeURIComponent(u.username).match(/^postgres\.([a-z0-9]+)$/)?.[1];
     if (ref) return `${ref} (Supabase)`;
+    // Neon: o mesmo banco aparece com e sem "-pooler" no endereço.
+    const neon = u.hostname.match(/^(ep-[a-z0-9-]+?)(-pooler)?\.([a-z0-9-]+)\.aws\.neon\.tech$/);
+    if (neon) return `${neon[1]} (Neon, ${neon[3]})`;
     return `${u.hostname}${u.pathname !== "/" ? u.pathname : ""}`;
   } catch {
     return "endereço inválido";

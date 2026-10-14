@@ -1,6 +1,6 @@
 /**
  * Conexão com o banco (endereço em ./config.ts).
- * Produção: Postgres do Supabase (postgres.js). Computador: PGlite em ./data/pglite.
+ * Produção: Postgres do Neon (postgres.js). Computador: PGlite em ./data/pglite.
  * Este arquivo não importa "server-only" para poder ser usado pelos scripts.
  */
 import { mkdirSync } from "node:fs";
@@ -25,13 +25,27 @@ function connect(): DB {
     // O PGlite fala o mesmo Postgres: as consultas são as mesmas da produção.
     return drizzlePglite(client, { schema, casing: "snake_case" }) as unknown as DB;
   }
-  // Pooler do Supabase (modo transação): sem prepared statements, poucas conexões por função.
+  // Pooler (modo transação, Neon ou Supabase): sem prepared statements, poucas conexões por função.
   // Local (servidor do PGlite): uma conexão só, que ele atende uma consulta por vez.
   const sql =
     globalForDb.zroSql ??
-    postgres(config.url, { prepare: false, max: config.local ? 1 : 5, idle_timeout: 20, connect_timeout: 15, onnotice: () => {} });
+    postgres(postgresUrl(config.url), { prepare: false, max: config.local ? 1 : 5, idle_timeout: 20, connect_timeout: 15, onnotice: () => {} });
   globalForDb.zroSql = sql;
   return drizzlePostgres(sql, { schema, casing: "snake_case" });
+}
+
+/**
+ * O postgres.js manda ao servidor, como configuração, todo parâmetro da URL que ele
+ * não conhece. O Neon põe "channel_binding=require" na URL e o Postgres recusaria.
+ */
+function postgresUrl(raw: string) {
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete("channel_binding");
+    return u.toString();
+  } catch {
+    return raw;
+  }
 }
 
 export const db = globalForDb.zroDb ?? connect();

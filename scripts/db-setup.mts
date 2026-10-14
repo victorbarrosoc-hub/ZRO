@@ -13,7 +13,7 @@ if (local && process.env.VERCEL) {
   // Na Vercel não existe disco para banco local: sem Postgres, o site sobe quebrado.
   console.error(
     "\n✖ Falta o banco de dados.\n" +
-      "  Defina DATABASE_URL (Postgres do Supabase, Transaction pooler) nas variáveis\n" +
+      "  Defina DATABASE_URL (Postgres com pooler, ex.: integração Neon) nas variáveis\n" +
       "  de ambiente da Vercel. Passo a passo no DEPLOY.md.\n",
   );
   process.exit(1);

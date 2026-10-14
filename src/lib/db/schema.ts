@@ -1,5 +1,5 @@
 /**
- * Banco da ZRO (Postgres no Supabase; PGlite no computador, via Drizzle).
+ * Banco da ZRO (Postgres no Neon; PGlite no computador, via Drizzle).
  * Dinheiro sempre em centavos (inteiro, bigint para não estourar). Datas de calendário em texto "AAAA-MM-DD".
  */
 import { relations } from "drizzle-orm";
