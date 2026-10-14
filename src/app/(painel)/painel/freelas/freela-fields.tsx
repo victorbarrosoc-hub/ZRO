@@ -9,6 +9,7 @@ import type { ActionResult } from "@/lib/actions";
 import { FUNCTION_MAX, functionOptions, normalizeFunction } from "@/lib/domain";
 import { instagramHandle, instagramUrl } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { EquipmentPicker, type EquipmentOption } from "./equipment-picker";
 
 export type FreelaDefaults = {
   id?: string;
@@ -19,7 +20,7 @@ export type FreelaDefaults = {
   instagram?: string | null;
   pixKey?: string | null;
   functions?: string[];
-  equipment?: string | null;
+  equipment?: EquipmentOption[];
   notes?: string | null;
   photoId?: string | null;
 };
@@ -29,11 +30,14 @@ export function FreelaFields({
   state,
   defaults = {},
   customFunctions = [],
+  equipmentCatalog = [],
 }: {
   state: ActionResult | null;
   defaults?: FreelaDefaults;
   /** Funções criadas em outros cadastros (aparecem para todos). */
   customFunctions?: string[];
+  /** Banco de equipamentos. */
+  equipmentCatalog?: EquipmentOption[];
 }) {
   return (
     <>
@@ -60,9 +64,7 @@ export function FreelaFields({
 
       <FunctionsField state={state} defaults={defaults.functions ?? []} customFunctions={customFunctions} />
 
-      <Field label="Equipamento próprio" htmlFor="f-eq">
-        <Textarea id="f-eq" name="equipment" rows={2} defaultValue={defaults.equipment ?? ""} placeholder="Ex.: câmera full frame, 2 lentes, gimbal" />
-      </Field>
+      <EquipmentPicker catalog={equipmentCatalog} defaults={defaults.equipment ?? []} />
       <Field label="Observações" htmlFor="f-notes">
         <Textarea id="f-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
       </Field>

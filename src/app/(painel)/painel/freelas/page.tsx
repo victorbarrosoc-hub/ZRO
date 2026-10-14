@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Camera } from "lucide-react";
 import { Avatar } from "@/components/painel/avatar";
 import { SearchField } from "@/components/painel/search-field";
+import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { RATE_UNITS, functionOptions, optionLabel } from "@/lib/domain";
 import { brl } from "@/lib/format";
-import { listCustomFunctions, listFreelancers } from "@/lib/queries/freelas";
+import { listCustomFunctions, listEquipmentCatalog, listFreelancers } from "@/lib/queries/freelas";
 import { cn } from "@/lib/utils";
 import { NewFreelaButton } from "./freela-dialogs";
 
@@ -18,7 +20,11 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
   const q = typeof sp.q === "string" ? sp.q : undefined;
   const funcao = typeof sp.funcao === "string" ? sp.funcao : undefined;
   const arquivados = sp.arquivados === "1";
-  const [freelas, customFunctions] = await Promise.all([listFreelancers({ q, funcao, ativos: !arquivados }), listCustomFunctions()]);
+  const [freelas, customFunctions, equipmentCatalog] = await Promise.all([
+    listFreelancers({ q, funcao, ativos: !arquivados }),
+    listCustomFunctions(),
+    listEquipmentCatalog(),
+  ]);
   const functions = functionOptions(customFunctions);
 
   const qs = (patch: Record<string, string | undefined>) => {
@@ -34,11 +40,18 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
       <PageHeader
         label="Banco de freelas"
         title="Freelas"
-        actions={<NewFreelaButton customFunctions={customFunctions} />}
+        actions={
+          <>
+            <ButtonLink href="/painel/freelas/equipamentos" variant="secondary">
+              <Camera /> Equipamentos
+            </ButtonLink>
+            <NewFreelaButton customFunctions={customFunctions} equipmentCatalog={equipmentCatalog} />
+          </>
+        }
       />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr] lg:items-center">
-        <SearchField placeholder="Buscar por nome ou cidade" />
+        <SearchField placeholder="Buscar por nome, cidade ou equipamento" />
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
           <FilterChip href={qs({ funcao: undefined })} active={!funcao}>
             Todas as funções
@@ -98,7 +111,7 @@ export default async function FreelasPage({ searchParams }: PageProps<"/painel/f
         <Card>
           <EmptyState
             title={q || funcao ? "Ninguém encontrado com esse filtro" : "Nenhum freela cadastrado"}
-            action={<NewFreelaButton customFunctions={customFunctions} />}
+            action={<NewFreelaButton customFunctions={customFunctions} equipmentCatalog={equipmentCatalog} />}
           />
         </Card>
       )}

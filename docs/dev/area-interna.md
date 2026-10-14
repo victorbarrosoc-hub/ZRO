@@ -75,6 +75,7 @@ export async function criarAlgo(_prev: ActionResult | null, fd: FormData): Promi
 - Escalar freela numa diária do projeto → entra na equipe com a diária do cadastro dele → pagamento a pagar no financeiro.
 - Equipe "por diária": valor = diária × dias escalados. "Valor fechado": o valor digitado.
 - Lançamento com baixa nunca é apagado nem reduzido abaixo do que já foi pago.
+- Equipamento de freela: banco único (`equipment`, categorias em `EQUIPMENT_CATEGORIES`) ligado ao freela por `freelancer_equipment`. No cadastro, `EquipmentPicker` manda `id:<id>` ou `novo:<categoria>|<nome>`; grave com `setFreelancerEquipment` (`src/lib/services/equipment.ts`). Página do banco em `/painel/freelas/equipamentos`. A busca de freelas também acha pelo equipamento.
 - Funções de freela: as padrão (`FUNCTIONS`) + as criadas no cadastro, cuja chave é o próprio nome. Liste com `functionOptions(...)` e normalize com `normalizeFunction`; `optionLabel(FUNCTIONS, chave)` já mostra o nome de uma função criada.
 - Páginas sem texto explicativo: título, números e ações. Nada de `description` em `PageHeader`.
 

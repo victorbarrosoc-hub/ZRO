@@ -10,8 +10,10 @@ import type { DB } from "../../src/lib/db/client";
 import * as s from "../../src/lib/db/schema";
 import { ensureDatabaseIdentity } from "../../src/lib/db/summary";
 import { hashPassword } from "../../src/lib/auth/password";
+import { cleanEquipmentName, guessEquipmentCategory } from "../../src/lib/domain";
 import {
   DEFAULT_CATALOG,
+  DEFAULT_EQUIPMENT,
   DEFAULT_FAQS,
   DEFAULT_KITS,
   DEFAULT_SETTINGS,
@@ -302,6 +304,56 @@ export async function ensureShowcaseClients(db: DB) {
   await db.insert(s.showcaseClients).values(SHOWCASE_CLIENTS.map((name, i) => ({ name, sortOrder: i })));
 }
 
+/**
+ * Banco de equipamentos: os modelos comuns entram uma vez (marcado em settings,
+ * para não voltar o que alguém apagou). Depois, o texto antigo de equipamento
+ * de cada freela vira itens do banco, um por linha, vírgula ou marcador.
+ */
+export async function ensureEquipment(db: DB) {
+  const marker = "equipamentos-base:v1";
+  const seeded = await db.query.settings.findFirst({ where: eq(s.settings.key, marker) });
+  if (!seeded) {
+    const rows = Object.entries(DEFAULT_EQUIPMENT).flatMap(([category, names]) => names.map((name) => ({ name, category })));
+    await db.insert(s.equipment).values(rows).onConflictDoNothing();
+    await db.insert(s.settings).values({ key: marker, value: new Date().toISOString() }).onConflictDoNothing();
+  }
+  await convertEquipmentText(db);
+}
+
+/** "Câmera Sony FX30" → "Sony FX30": tira a palavra da categoria quando o resto já é o modelo. */
+function modelName(piece: string) {
+  const name = cleanEquipmentName(piece);
+  if (!name) return null;
+  const m = name.match(/^(c[âa]mera|lente|gimbal|drone|monitor)\s+(.+)$/i);
+  return m && /^[A-Z0-9]/.test(m[2]) && /\d/.test(m[2]) ? m[2] : name;
+}
+
+async function convertEquipmentText(db: DB) {
+  const pending = await db
+    .select({ id: s.freelancers.id, equipment: s.freelancers.equipment })
+    .from(s.freelancers)
+    .where(sql`coalesce(trim(${s.freelancers.equipment}), '') <> ''`);
+  for (const f of pending) {
+    const names = [
+      ...new Set(
+        (f.equipment ?? "")
+          .split(/[\n•;,]+/)
+          .map(modelName)
+          .filter((n): n is string => Boolean(n)),
+      ),
+    ];
+    await db.transaction(async (t) => {
+      for (const name of names) {
+        let item = await t.query.equipment.findFirst({ where: sql`lower(${s.equipment.name}) = lower(${name})` });
+        if (!item) [item] = await t.insert(s.equipment).values({ name, category: guessEquipmentCategory(name) }).returning();
+        await t.insert(s.freelancerEquipment).values({ freelancerId: f.id, equipmentId: item.id }).onConflictDoNothing();
+      }
+      await t.update(s.freelancers).set({ equipment: null }).where(eq(s.freelancers.id, f.id));
+    });
+    console.log(`✓ Equipamento de um freela passou para o banco de equipamentos (${names.length} itens).`);
+  }
+}
+
 export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: boolean }) {
   await ensureUsers(db, { allowGenerated: opts.allowGeneratedPasswords });
   await ensureSettings(db);
@@ -312,5 +364,6 @@ export async function ensureBaseData(db: DB, opts: { allowGeneratedPasswords: bo
   await ensureTeam(db);
   await ensureFilms(db);
   await ensureShowcaseClients(db);
+  await ensureEquipment(db);
   await ensureDatabaseIdentity(db);
 }

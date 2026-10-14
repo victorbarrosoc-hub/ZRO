@@ -2,7 +2,7 @@
  * Banco da ZRO (Postgres no Neon; PGlite no computador, via Drizzle).
  * Dinheiro sempre em centavos (inteiro, bigint para não estourar). Datas de calendário em texto "AAAA-MM-DD".
  */
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { bigint, boolean, doublePrecision, index, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import type { CreativeRuleAnswers } from "@/lib/domain";
 
@@ -232,6 +232,38 @@ export const freelancerRates = pgTable(
     unit: text().notNull().default("diaria"),
   },
   (t) => [index("freelancer_rates_freelancer_idx").on(t.freelancerId)],
+);
+
+/** Banco de equipamentos: cada modelo uma vez só (o nome não repete, sem diferenciar maiúscula). */
+export const equipment = pgTable(
+  "equipment",
+  {
+    id: id(),
+    name: text().notNull(),
+    /** Chave de EQUIPMENT_CATEGORIES (camera, lente, audio...). */
+    category: text().notNull().default("outro"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("equipment_name_idx").on(sql`lower(${t.name})`), index("equipment_category_idx").on(t.category)],
+);
+
+/** Equipamento próprio de cada freela. */
+export const freelancerEquipment = pgTable(
+  "freelancer_equipment",
+  {
+    id: id(),
+    freelancerId: text()
+      .notNull()
+      .references(() => freelancers.id, { onDelete: "cascade" }),
+    equipmentId: text()
+      .notNull()
+      .references(() => equipment.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("freelancer_equipment_unique_idx").on(t.freelancerId, t.equipmentId),
+    index("freelancer_equipment_equipment_idx").on(t.equipmentId),
+  ],
 );
 
 /* ============================== Projetos ============================== */
@@ -592,6 +624,16 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
 export const freelancersRelations = relations(freelancers, ({ many }) => ({
   rates: many(freelancerRates),
   crew: many(projectCrew),
+  equipment: many(freelancerEquipment),
+}));
+
+export const equipmentRelations = relations(equipment, ({ many }) => ({
+  owners: many(freelancerEquipment),
+}));
+
+export const freelancerEquipmentRelations = relations(freelancerEquipment, ({ one }) => ({
+  freelancer: one(freelancers, { fields: [freelancerEquipment.freelancerId], references: [freelancers.id] }),
+  equipment: one(equipment, { fields: [freelancerEquipment.equipmentId], references: [equipment.id] }),
 }));
 
 export const freelancerRatesRelations = relations(freelancerRates, ({ one }) => ({

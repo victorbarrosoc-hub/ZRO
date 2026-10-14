@@ -24,6 +24,8 @@ const TABLES = {
   leads: s.leads,
   freelancers: s.freelancers,
   freelancerRates: s.freelancerRates,
+  equipment: s.equipment,
+  freelancerEquipment: s.freelancerEquipment,
   quotes: s.quotes,
   quoteItems: s.quoteItems,
   projects: s.projects,
