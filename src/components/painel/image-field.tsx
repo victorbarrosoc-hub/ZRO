@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Camera, ImagePlus, Trash2, Undo2 } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Camera, ClipboardPaste, ImagePlus, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "./avatar";
+
+const noSubscribe = () => () => {};
 
 /** Lado da imagem guardada: nítida até no maior avatar em tela de retina. */
 const OUT = 384;
@@ -134,6 +136,13 @@ export function ImageField({
   error?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Só no navegador (no servidor não existe área de transferência).
+  const canPaste = useSyncExternalStore(
+    noSubscribe,
+    () => typeof navigator.clipboard?.read === "function",
+    () => false,
+  );
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -142,6 +151,37 @@ export function ImageField({
   const removed = value === "remover";
   const has = isNew || (!removed && Boolean(currentId));
   const noun = kind === "foto" ? "foto" : "logo";
+
+  // Imagem copiada (Ctrl+V / Cmd+V) com o formulário aberto vira a foto.
+  // Texto colado num campo segue normal: só entra aqui quando o que foi copiado é imagem.
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const item = [...(e.clipboardData?.items ?? [])].find((i) => i.kind === "file" && i.type.startsWith("image/"));
+      const file = item?.getAsFile();
+      if (!file || !rootRef.current?.closest("form")?.contains(document.activeElement ?? document.body)) return;
+      e.preventDefault();
+      void onFile(file);
+    }
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  });
+
+  /** Botão "Colar foto": lê a imagem copiada (no iPhone, o sistema pergunta "Colar"). */
+  async function pasteFromClipboard() {
+    setProblem(null);
+    try {
+      for (const item of await navigator.clipboard.read()) {
+        const type = item.types.find((t) => t.startsWith("image/"));
+        if (type) {
+          const blob = await item.getType(type);
+          return onFile(new File([blob], "colada", { type }));
+        }
+      }
+      setProblem("Não achei imagem copiada. Copie a foto e toque em Colar de novo.");
+    } catch {
+      setProblem("Não deu para colar. Salve a foto e use Escolher.");
+    }
+  }
 
   async function onFile(file: File | undefined) {
     if (inputRef.current) inputRef.current.value = "";
@@ -166,7 +206,7 @@ export function ImageField({
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div ref={rootRef} className="flex items-center gap-4">
       <Avatar
         name={displayName}
         imageId={removed || isNew ? null : currentId}
@@ -181,6 +221,11 @@ export function ImageField({
             {kind === "foto" ? <Camera /> : <ImagePlus />}
             {busy ? "Preparando…" : has ? `Trocar ${noun}` : `Escolher ${noun}`}
           </Button>
+          {canPaste ? (
+            <Button size="sm" variant="ghost" onClick={pasteFromClipboard} disabled={busy}>
+              <ClipboardPaste /> Colar
+            </Button>
+          ) : null}
           {has ? (
             <Button size="sm" variant="ghost" onClick={() => setValue(currentId ? "remover" : "")} disabled={busy}>
               <Trash2 /> Remover
