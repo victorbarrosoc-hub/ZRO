@@ -10,7 +10,7 @@ import type { DB } from "../../src/lib/db/client";
 import * as s from "../../src/lib/db/schema";
 import { ensureDatabaseIdentity } from "../../src/lib/db/summary";
 import { hashPassword } from "../../src/lib/auth/password";
-import { cleanEquipmentName, guessEquipmentCategory } from "../../src/lib/domain";
+import { cleanEquipmentName, equipmentKey, guessEquipmentCategory } from "../../src/lib/domain";
 import { formatPhone } from "../../src/lib/format";
 import {
   DEFAULT_CATALOG,
@@ -324,6 +324,40 @@ export async function ensureEquipment(db: DB) {
     await db.insert(s.settings).values({ key: marker, value: new Date().toISOString() }).onConflictDoNothing();
   }
   await convertEquipmentText(db);
+  await mergeDuplicateEquipment(db);
+}
+
+/**
+ * Junta o mesmo modelo escrito de jeitos diferentes ("Sony A7IV" e "Sony A7 IV"):
+ * fica o nome do banco padrão (ou o mais antigo), e os freelas passam para ele.
+ */
+async function mergeDuplicateEquipment(db: DB) {
+  const standard = new Set(
+    [...Object.values(DEFAULT_EQUIPMENT), ...Object.values(DEFAULT_EQUIPMENT_MORE)].flat().map((n) => equipmentKey(n) + "|" + n),
+  );
+  const all = await db.select().from(s.equipment).orderBy(s.equipment.createdAt);
+  const groups = new Map<string, (typeof all)[number][]>();
+  for (const e of all) groups.set(equipmentKey(e.name), [...(groups.get(equipmentKey(e.name)) ?? []), e]);
+  for (const [key, items] of groups) {
+    if (items.length < 2) continue;
+    const keep = items.find((e) => standard.has(key + "|" + e.name)) ?? items[0];
+    for (const dup of items.filter((e) => e.id !== keep.id)) {
+      await db.transaction(async (t) => {
+        const owners = await t
+          .select({ freelancerId: s.freelancerEquipment.freelancerId })
+          .from(s.freelancerEquipment)
+          .where(eq(s.freelancerEquipment.equipmentId, dup.id));
+        if (owners.length) {
+          await t
+            .insert(s.freelancerEquipment)
+            .values(owners.map((o) => ({ freelancerId: o.freelancerId, equipmentId: keep.id })))
+            .onConflictDoNothing();
+        }
+        await t.delete(s.equipment).where(eq(s.equipment.id, dup.id));
+      });
+      console.log(`✓ Equipamento repetido "${dup.name}" juntado em "${keep.name}".`);
+    }
+  }
 }
 
 /** "Câmera Sony FX30" → "Sony FX30": tira a palavra da categoria quando o resto já é o modelo. */

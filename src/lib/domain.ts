@@ -261,6 +261,18 @@ export function guessEquipmentCategory(name: string): EquipmentCategory {
   return EQUIPMENT_HINTS.find(([, re]) => re.test(text))?.[0] ?? "outro";
 }
 
+/**
+ * Chave para achar o mesmo modelo escrito de outro jeito: sem acento, espaço,
+ * hífen ou maiúscula ("Sony A7IV" = "sony a7 iv" = "SONY A7-IV").
+ */
+export function equipmentKey(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9+]/g, "");
+}
+
 /** Nome limpo: sem marcador de lista, espaços sobrando ou ponto final. */
 export function cleanEquipmentName(input: string) {
   const text = input

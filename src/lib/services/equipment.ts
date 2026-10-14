@@ -1,7 +1,13 @@
 import "server-only";
 import { eq, inArray, sql } from "drizzle-orm";
 import { db, schema, transact } from "@/lib/db";
-import { EQUIPMENT_CATEGORIES, cleanEquipmentName, guessEquipmentCategory, type EquipmentCategory } from "@/lib/domain";
+import {
+  EQUIPMENT_CATEGORIES,
+  cleanEquipmentName,
+  equipmentKey,
+  guessEquipmentCategory,
+  type EquipmentCategory,
+} from "@/lib/domain";
 
 const { equipment, freelancerEquipment } = schema;
 
@@ -9,11 +15,18 @@ export function isEquipmentCategory(value: string | null | undefined): value is 
   return EQUIPMENT_CATEGORIES.some((c) => c.key === value);
 }
 
-/** Acha o modelo pelo nome (sem diferenciar maiúscula) ou cria no banco de equipamentos. */
+/** Item do banco com o mesmo modelo, mesmo escrito de outro jeito ("Sony A7IV" = "Sony A7 IV"). */
+export async function findEquipmentByName(name: string, exceptId?: string) {
+  const key = equipmentKey(name);
+  const all = await db.select().from(equipment);
+  return all.find((e) => e.id !== exceptId && equipmentKey(e.name) === key) ?? null;
+}
+
+/** Acha o modelo pelo nome ou cria no banco de equipamentos. */
 export async function findOrCreateEquipment(rawName: string, category?: string | null) {
   const name = cleanEquipmentName(rawName);
   if (!name) return null;
-  const found = await db.query.equipment.findFirst({ where: sql`lower(${equipment.name}) = lower(${name})` });
+  const found = await findEquipmentByName(name);
   if (found) return found;
   const [created] = await db
     .insert(equipment)
