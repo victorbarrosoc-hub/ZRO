@@ -11,6 +11,7 @@ import { CATEGORY_KEYS, FUNCTION_MAX, RATE_UNITS, normalizeFunction } from "@/li
 import { instagramHandle } from "@/lib/format";
 import { listCustomFunctions } from "@/lib/queries/freelas";
 import { registerPayment } from "@/lib/services/finance";
+import { setFreelancerEquipment } from "@/lib/services/equipment";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 
 const FreelaSchema = z.object({
@@ -24,7 +25,7 @@ const FreelaSchema = z.object({
     .array(z.string().max(FUNCTION_MAX, `Nome de função longo demais (até ${FUNCTION_MAX} letras).`))
     .min(1, "Marque pelo menos uma função.")
     .max(20, "No máximo 20 funções por freela."),
-  equipment: z.string().max(500).optional(),
+  equipment: z.array(z.string().max(120)).max(60, "No máximo 60 equipamentos por freela."),
   notes: z.string().max(2000).optional(),
 });
 
@@ -37,7 +38,7 @@ function readFreela(fd: FormData) {
     instagram: instagramHandle(str(fd, "instagram")),
     pixKey: str(fd, "pixKey"),
     functions: list(fd, "functions"),
-    equipment: str(fd, "equipment"),
+    equipment: list(fd, "equipment"),
     notes: str(fd, "notes"),
   });
 }
@@ -72,11 +73,14 @@ export async function createFreelancer(_prev: ActionResult | null, fd: FormData)
   const functions = await cleanFunctions(parsed.data.functions);
   if (!functions.length) return fail("Marque pelo menos uma função.", { functions: ["Marque pelo menos uma função."] });
   const photoId = await resolveImageField(photo, null);
+  const { equipment, ...data } = parsed.data;
   const [row] = await db
     .insert(schema.freelancers)
-    .values({ ...parsed.data, functions, photoId })
+    .values({ ...data, functions, photoId })
     .returning({ id: schema.freelancers.id });
+  await setFreelancerEquipment(row.id, equipment);
   revalidatePath("/painel/freelas");
+  revalidatePath("/painel/freelas/equipamentos");
   return ok("Freela cadastrado.", row.id);
 }
 
@@ -93,10 +97,13 @@ export async function updateFreelancer(_prev: ActionResult | null, fd: FormData)
   const functions = await cleanFunctions(parsed.data.functions);
   if (!functions.length) return fail("Marque pelo menos uma função.", { functions: ["Marque pelo menos uma função."] });
   const photoId = await resolveImageField(photo, current.photoId);
+  const { equipment, ...data } = parsed.data;
   await db
     .update(schema.freelancers)
-    .set({ ...parsed.data, functions, photoId, active: fd.get("active") !== "off" })
+    .set({ ...data, functions, photoId, active: fd.get("active") !== "off" })
     .where(eq(schema.freelancers.id, id));
+  await setFreelancerEquipment(id, equipment);
+  revalidatePath("/painel/freelas/equipamentos");
   if (current.photoId !== photoId) await deleteImages([current.photoId]);
   revalidateFreela(id);
   return ok("Dados atualizados.");

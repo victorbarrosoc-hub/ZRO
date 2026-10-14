@@ -1,15 +1,21 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { FUNCTIONS } from "@/lib/domain";
 
-const { freelancers, freelancerRates, projectCrew, projects, financeEntries } = schema;
+const { freelancers, freelancerRates, projectCrew, projects, financeEntries, equipment, freelancerEquipment } = schema;
 
 export async function listFreelancers(filters: { q?: string; funcao?: string; ativos?: boolean } = {}) {
   const where = [];
   if (filters.q) {
     const q = `%${filters.q}%`;
-    where.push(or(ilike(freelancers.name, q), ilike(freelancers.city, q)));
+    // Também acha pelo equipamento: "fx3", "drone", "lapela".
+    const byEquipment = db
+      .select({ id: freelancerEquipment.freelancerId })
+      .from(freelancerEquipment)
+      .innerJoin(equipment, eq(freelancerEquipment.equipmentId, equipment.id))
+      .where(ilike(equipment.name, q));
+    where.push(or(ilike(freelancers.name, q), ilike(freelancers.city, q), inArray(freelancers.id, byEquipment)));
   }
   if (filters.ativos !== false) where.push(eq(freelancers.active, true));
   const rows = await db
@@ -43,6 +49,49 @@ export async function listFreelancers(filters: { q?: string; funcao?: string; at
     openAmount: Number(open.find((o) => o.freelancerId === f.id)?.open ?? 0),
     jobs: Number(jobs.find((j) => j.freelancerId === f.id)?.n ?? 0),
   }));
+}
+
+export type EquipmentItem = { id: string; name: string; category: string };
+
+/** Banco de equipamentos inteiro (para o seletor do cadastro), em ordem alfabética. */
+export async function listEquipmentCatalog(): Promise<EquipmentItem[]> {
+  return db
+    .select({ id: equipment.id, name: equipment.name, category: equipment.category })
+    .from(equipment)
+    .orderBy(asc(sql`lower(${equipment.name})`));
+}
+
+/** Equipamento de um freela. */
+export async function listFreelancerEquipment(freelancerId: string): Promise<EquipmentItem[]> {
+  return db
+    .select({ id: equipment.id, name: equipment.name, category: equipment.category })
+    .from(freelancerEquipment)
+    .innerJoin(equipment, eq(freelancerEquipment.equipmentId, equipment.id))
+    .where(eq(freelancerEquipment.freelancerId, freelancerId))
+    .orderBy(asc(sql`lower(${equipment.name})`));
+}
+
+/** Banco de equipamentos com quem tem cada um (página Equipamentos). */
+export async function listEquipmentWithOwners(q?: string) {
+  const [items, links] = await Promise.all([
+    db
+      .select({ id: equipment.id, name: equipment.name, category: equipment.category })
+      .from(equipment)
+      .where(q ? ilike(equipment.name, `%${q}%`) : undefined)
+      .orderBy(asc(sql`lower(${equipment.name})`)),
+    db
+      .select({
+        equipmentId: freelancerEquipment.equipmentId,
+        id: freelancers.id,
+        name: freelancers.name,
+        photoId: freelancers.photoId,
+      })
+      .from(freelancerEquipment)
+      .innerJoin(freelancers, eq(freelancerEquipment.freelancerId, freelancers.id))
+      .where(eq(freelancers.active, true))
+      .orderBy(asc(freelancers.name)),
+  ]);
+  return items.map((item) => ({ ...item, owners: links.filter((l) => l.equipmentId === item.id) }));
 }
 
 /** Funções criadas nos cadastros dos freelas (fora da lista padrão), em ordem alfabética. */
@@ -80,7 +129,8 @@ export async function getFreelancer(id: string) {
       .where(eq(financeEntries.freelancerId, id))
       .orderBy(desc(financeEntries.dueDate)),
   ]);
-  return { ...freela, rates, crew, entries };
+  const gear = await listFreelancerEquipment(id);
+  return { ...freela, rates, crew, entries, gear };
 }
 
 /** Valor padrão de um freela para uma função (e tipo de job, se houver). */

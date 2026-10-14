@@ -218,6 +218,53 @@ export const RATE_UNITS = [
   { key: "video", label: "por vídeo" },
 ] as const;
 
+/* ---------- Equipamentos dos freelas ---------- */
+
+export const EQUIPMENT_CATEGORIES = [
+  { key: "camera", label: "Câmera" },
+  { key: "lente", label: "Lente" },
+  { key: "estabilizacao", label: "Estabilização" },
+  { key: "audio", label: "Áudio" },
+  { key: "luz", label: "Luz" },
+  { key: "drone", label: "Drone" },
+  { key: "monitor", label: "Monitor e vídeo" },
+  { key: "acessorio", label: "Acessórios" },
+  { key: "outro", label: "Outros" },
+] as const;
+export type EquipmentCategory = (typeof EQUIPMENT_CATEGORIES)[number]["key"];
+export const EQUIPMENT_NAME_MAX = 80;
+
+const EQUIPMENT_HINTS: [EquipmentCategory, RegExp][] = [
+  ["drone", /\bdrone|mavic|\bdji (mini|air|avata|fpv|inspire|neo)\b|\bavata\b|\bfpv\b/],
+  ["estabilizacao", /gimbal|ronin|\brs ?\d|weebill|\bcrane\b|zhiyun|\bmoza\b|steadicam|estabiliz|tripe|monope|slider|easyrig|cabeca fluida/],
+  ["audio", /microfone|\bmic\b|lapela|wireless|\brode\b|sennheiser|\bzoom h\d|tascam|gravador|\bboom\b|shotgun|\blark\b|deity|saramonic|audio|\bfone/],
+  ["monitor", /monitor|atomos|ninja|shinobi|smallhd|feelworld|portkeys|transmiss|hollyland mars|accsoon|teradek/],
+  ["luz", /\bluz\b|\bled\b|aputure|amaran|nanlite|godox|refletor|softbox|bastao|\btubo|painel|fresnel|sonaki|\d+ ?w\b|\bcob\b|rebatedor|difusor/],
+  ["lente", /\blente|objetiva|\bsigma\b|tamron|samyang|rokinon|viltrox|laowa|sirui|7artisans|tokina|zeiss|\b\d{1,3} ?- ?\d{1,3} ?mm|\b\d{2,3} ?mm\b|\bf\/? ?\d(\.\d)?\b|\b\d{1,3}-\d{1,3} \d\.\d\b/],
+  ["camera", /camera|filmadora|\bsony (fx|a7|a6|zv|a1|a9)|\bfx ?\d|\ba7 ?(s|r|c|iv|iii)|\bcanon (eos|r\d|c\d)|\beos\b|blackmagic|bmpcc|pocket (4k|6k)|lumix|panasonic|\bgh\d|fujifilm|\bx-?(h|t)\d|komodo|\barri\b|gopro|\bosmo\b|insta360|nikon z/],
+  ["acessorio", /bateria|cartao|\bssd\b|hd externo|carregador|v-?mount|\bnd\b|filtro|\bcage\b|follow focus|matte ?box|\bcase\b|bolsa|mochila|\bcabo|adaptador|speed ?booster/],
+];
+
+/** Categoria provável pelo nome ("Sony FX30" → câmera, "Sigma 17-40 1.8" → lente). */
+export function guessEquipmentCategory(name: string): EquipmentCategory {
+  const text = name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+  return EQUIPMENT_HINTS.find(([, re]) => re.test(text))?.[0] ?? "outro";
+}
+
+/** Nome limpo: sem marcador de lista, espaços sobrando ou ponto final. */
+export function cleanEquipmentName(input: string) {
+  const text = input
+    .replace(/^[\s•·\-–—*]+/, "")
+    .replace(/\s+/g, " ")
+    .replace(/[.;,]+$/, "")
+    .trim()
+    .slice(0, EQUIPMENT_NAME_MAX);
+  return text ? text.charAt(0).toLocaleUpperCase("pt-BR") + text.slice(1) : null;
+}
+
 /* ---------- Agenda ---------- */
 
 export const EVENT_TYPES = [

@@ -61,7 +61,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Pronto pra Vercel: `vercel.json`, banco preparado no build, sitemap, robots e imagem de compartilhamento (passo a passo no `DEPLOY.md`)
 - [x] Publicado em https://zrofilmes.vercel.app, com WhatsApp, e-mail e filmes do YouTube configurados
 - [x] Integração: diária na agenda → equipe do projeto (valor por diária) → pagamento no financeiro → histórico do cliente no CRM; dashboard com abas (Resumo, Projetos, Freelas a pagar, Fluxo)
-- [x] Orçamento com item avulso e pacote personalizado (opção de salvar no catálogo); freelas com foto e funções personalizadas; clientes do CRM com logo (imagens no banco, entram no backup)
+- [x] Orçamento com item avulso e pacote personalizado (opção de salvar no catálogo); freelas com foto, funções personalizadas e banco de equipamentos (busca, categorias, quem tem o quê); clientes do CRM com logo (imagens no banco, entram no backup)
 - [x] App no iPhone (Adicionar à Tela de Início) e imagem de compartilhamento para WhatsApp
 - [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, arte do board (eclipse e paisagem) em `public/media/absolute/`, sem mockups
 

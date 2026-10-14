@@ -15,9 +15,16 @@ import {
   toggleFreelancerActive,
   updateFreelancer,
 } from "./actions";
+import type { EquipmentOption } from "./equipment-picker";
 import { FreelaFields, type FreelaDefaults } from "./freela-fields";
 
-export function NewFreelaButton({ customFunctions = [] }: { customFunctions?: string[] }) {
+export function NewFreelaButton({
+  customFunctions = [],
+  equipmentCatalog = [],
+}: {
+  customFunctions?: string[];
+  equipmentCatalog?: EquipmentOption[];
+}) {
   return (
     <FormModal
       title="Novo freela"
@@ -31,12 +38,20 @@ export function NewFreelaButton({ customFunctions = [] }: { customFunctions?: st
         </Button>
       }
     >
-      {(state) => <FreelaFields state={state} customFunctions={customFunctions} />}
+      {(state) => <FreelaFields state={state} customFunctions={customFunctions} equipmentCatalog={equipmentCatalog} />}
     </FormModal>
   );
 }
 
-export function EditFreelaButton({ defaults, customFunctions = [] }: { defaults: FreelaDefaults; customFunctions?: string[] }) {
+export function EditFreelaButton({
+  defaults,
+  customFunctions = [],
+  equipmentCatalog = [],
+}: {
+  defaults: FreelaDefaults;
+  customFunctions?: string[];
+  equipmentCatalog?: EquipmentOption[];
+}) {
   return (
     <FormModal
       title="Editar freela"
@@ -48,7 +63,9 @@ export function EditFreelaButton({ defaults, customFunctions = [] }: { defaults:
         </Button>
       }
     >
-      {(state) => <FreelaFields state={state} defaults={defaults} customFunctions={customFunctions} />}
+      {(state) => (
+        <FreelaFields state={state} defaults={defaults} customFunctions={customFunctions} equipmentCatalog={equipmentCatalog} />
+      )}
     </FormModal>
   );
 }

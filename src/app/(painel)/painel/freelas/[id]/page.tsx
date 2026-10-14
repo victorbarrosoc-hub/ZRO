@@ -7,10 +7,10 @@ import { EntryStatusBadge, InfoList, TabLinks, Table, Td, Th, whatsappHref } fro
 import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
+import { CATEGORIES, EQUIPMENT_CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
 import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, instagramUrl, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
-import { getFreelancer, listCustomFunctions } from "@/lib/queries/freelas";
+import { getFreelancer, listCustomFunctions, listEquipmentCatalog } from "@/lib/queries/freelas";
 import {
   AddRateButton,
   ArchiveFreelaButton,
@@ -42,10 +42,14 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
   if (!f) notFound();
 
   const today = todayISO();
-  const [agenda, customFunctions] = await Promise.all([
+  const [agenda, customFunctions, equipmentCatalog] = await Promise.all([
     listEventsInRange({ start: today, end: addDaysISO(today, 120), freelancerId: f.id }),
     listCustomFunctions(),
+    listEquipmentCatalog(),
   ]);
+  const gearGroups = EQUIPMENT_CATEGORIES.map((c) => ({ ...c, items: f.gear.filter((g) => g.category === c.key) })).filter(
+    (g) => g.items.length,
+  );
   const late = f.entries.filter((e) => e.dueDate < today).reduce((s, e) => s + Math.max(0, e.amount - e.paidAmount), 0);
   const counts: Partial<Record<TabKey, number>> = { pagamentos: f.entries.length, jobs: f.crew.length };
   const totalPaid = f.entries.reduce((s, e) => s + e.paidAmount, 0);
@@ -103,11 +107,12 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
               instagram: f.instagram,
               pixKey: f.pixKey,
               functions: f.functions,
-              equipment: f.equipment,
+              equipment: f.gear,
               notes: f.notes,
               photoId: f.photoId,
             }}
             customFunctions={customFunctions}
+            equipmentCatalog={equipmentCatalog}
           />
           <ArchiveFreelaButton id={f.id} active={f.active} />
           <DeleteFreelaButton id={f.id} name={f.name} />
@@ -190,6 +195,41 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                     <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nenhum valor padrão ainda.</p>
                   )}
                 </Card>
+                <Card>
+                  <CardHeader
+                    title="Equipamento"
+                    action={
+                      <Link href="/painel/freelas/equipamentos" className="label text-mute hover:text-white">
+                        Banco de equipamentos
+                      </Link>
+                    }
+                  />
+                  {gearGroups.length ? (
+                    <div className="grid gap-4 px-5 pt-3 pb-5 sm:px-6">
+                      {gearGroups.map((g) => (
+                        <div key={g.key} className="grid gap-2">
+                          <p className="label text-mute">{g.label}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {g.items.map((item) => (
+                              <Link
+                                key={item.id}
+                                href={`/painel/freelas?q=${encodeURIComponent(item.name)}`}
+                                title={`Quem mais tem ${item.name}`}
+                                className="inline-flex h-8 items-center rounded-full border border-line-strong px-3 text-[13px] text-light transition-colors hover:border-white/40"
+                              >
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : f.equipment ? (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-ash sm:px-6">{f.equipment}</p>
+                  ) : (
+                    <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nenhum equipamento ainda.</p>
+                  )}
+                </Card>
               </div>
               <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-5">
                 <Card>
@@ -214,14 +254,8 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                       ]}
                     />
                   </div>
-                  {f.equipment || f.notes ? (
+                  {f.notes ? (
                     <div className="grid gap-4 border-t border-line px-5 py-5 text-[14px] sm:px-6">
-                      {f.equipment ? (
-                        <div>
-                          <p className="label mb-1.5 text-mute">Equipamento</p>
-                          <p className="text-ash">{f.equipment}</p>
-                        </div>
-                      ) : null}
                       {f.notes ? (
                         <div>
                           <p className="label mb-1.5 text-mute">Observações</p>

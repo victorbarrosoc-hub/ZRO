@@ -15,7 +15,7 @@ if (!local && process.env.ZRO_SEED_REMOTE !== "1") {
 }
 const { db, closeDatabase } = await import("../src/lib/db/client");
 const s = await import("../src/lib/db/schema");
-const { ensureBaseData } = await import("./lib/base-data");
+const { ensureBaseData, ensureEquipment } = await import("./lib/base-data");
 const { DEFAULT_TEMPLATES } = await import("../src/lib/db/defaults");
 
 await ensureBaseData(db, { allowGeneratedPasswords: true });
@@ -637,6 +637,9 @@ await db
     { id: "demo-a3", leadId: "demo-l4", type: "ligacao", content: "Pediu referências de filmes institucionais. Retornar com 3 exemplos." },
   ])
   .onConflictDoNothing();
+
+// Equipamento escrito nos freelas de exemplo vira itens do banco de equipamentos.
+await ensureEquipment(db);
 
 console.log("Dados de exemplo prontos.");
 await closeDatabase();
