@@ -134,6 +134,25 @@
   .q-col.recolhida.on{ display:flex }
 }
 
+/* computador e tablet: o quadro ocupa a tela toda, sem rolar para o lado.
+   Largo: as oito colunas numa fileira. Mais estreito: duas fileiras de quatro
+   (a ordem não muda: Pauta → Revisão em cima, Com o cliente → Publicado embaixo). */
+.q-linha{ display:contents }
+@media (min-width:761px){
+  .qz{ display:flex; flex-direction:column; height:calc(100dvh - 96px); min-height:600px }
+  .q-area{ flex:1; min-height:0; display:flex; flex-direction:column; container-type:inline-size }
+  .q-quadro{ flex:1; min-height:0; overflow:hidden; padding:0 0 4px; gap:8px; align-items:stretch; scroll-snap-type:none }
+  .q-col{ flex:1 1 0; min-width:0; max-height:none; min-height:0 }
+  .q-col.recolhida{ flex:0 0 52px }
+  .q-col-corpo{ flex:1 1 auto; min-height:0 }
+  .q-porprazo{ flex:1; min-height:0; overflow-y:auto; padding-bottom:24px }
+  @container (max-width:1359px){
+    .q-quadro{ flex-direction:column }
+    .q-linha{ display:flex; gap:8px; flex:1 1 0; min-height:0 }
+  }
+}
+@media (min-width:1024px){ .qz{ height:calc(100dvh - 48px) } }
+
 /* por prazo */
 .q-pzbase{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0 0 10px }
 .q-pzbase button{ border:0; border-radius:999px; padding:6px 14px; background:var(--q-superficie); color:var(--q-texto-2); font-weight:500 }
@@ -182,8 +201,9 @@ textarea.q-in{ resize:vertical; min-height:62px; line-height:1.45 }
 .q-ck{ display:flex; align-items:center; gap:8px }
 .q-ck button.tg{ width:20px; height:20px; border-radius:6px; border:1.5px solid var(--q-texto-3); background:none; display:grid; place-items:center; padding:0; flex:none }
 .q-ck.ok button.tg{ background:var(--q-ok); border-color:var(--q-ok); color:#fff }
-.q-ck.ok span{ text-decoration:line-through; color:var(--q-texto-3) }
-.q-ck span{ flex:1; overflow-wrap:anywhere }
+.q-ck.ok .q-ck-txt{ text-decoration:line-through; color:var(--q-texto-3) }
+.q-ck-txt{ flex:1; min-width:0; border:0; background:none; padding:2px 0; text-align:left; overflow-wrap:anywhere; cursor:text }
+.q-ck-in{ flex:1; padding:5px 8px }
 .q-x{ border:0; background:none; color:var(--q-texto-3); font-size:16px; line-height:1; padding:2px 6px; border-radius:6px }
 .q-link{ display:flex; align-items:center; gap:8px }
 .q-link a{ color:var(--q-texto); flex:1; overflow-wrap:anywhere }

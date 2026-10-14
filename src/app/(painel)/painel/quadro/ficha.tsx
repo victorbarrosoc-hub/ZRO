@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type FormEvent } from "react";
-import { CalendarDays, Check, Clock, Link2, MessageSquare, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CalendarDays, Check, Clock, Link2, MessageSquare, Pencil, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProximoPasso } from "./cartao";
 import { cc, useQ, type AbaFicha } from "./contexto";
@@ -82,6 +82,67 @@ function Quando({ c, k, rotulo, tipo }: { c: Card; k: "prazo" | "prazoHora" | "d
         }}
       />
     </label>
+  );
+}
+
+/** Item da checklist: tocar no texto (ou no lápis) edita; Enter ou sair do campo grava, Esc desiste. */
+function ItemCk({ texto, onSalvar }: { texto: string; onSalvar: (t: string) => void }) {
+  const [editando, setEditando] = useState(false);
+  const feito = useRef(false);
+  if (!editando)
+    return (
+      <>
+        <button
+          type="button"
+          className="q-ck-txt"
+          data-acao="ck-editar"
+          onClick={() => {
+            feito.current = false;
+            setEditando(true);
+          }}
+        >
+          {texto}
+        </button>
+        <button
+          type="button"
+          className="q-x"
+          data-acao="ck-editar"
+          aria-label="Editar item"
+          onClick={() => {
+            feito.current = false;
+            setEditando(true);
+          }}
+        >
+          <Pencil size={12} aria-hidden />
+        </button>
+      </>
+    );
+  const fim = (v: string | null) => {
+    if (feito.current) return;
+    feito.current = true;
+    const t = (v ?? "").trim().slice(0, 300);
+    if (v !== null && t) onSalvar(t);
+    setEditando(false);
+  };
+  return (
+    <input
+      className="q-in q-ck-in"
+      aria-label="Editar item da checklist"
+      defaultValue={texto}
+      maxLength={300}
+      autoFocus
+      onFocus={(e) => e.currentTarget.select()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          fim(e.currentTarget.value);
+        } else if (e.key === "Escape") {
+          e.preventDefault(); // Esc aqui desiste da edição, não fecha a ficha
+          fim(null);
+        }
+      }}
+      onBlur={(e) => fim(e.currentTarget.value)}
+    />
   );
 }
 
@@ -397,7 +458,16 @@ function FichaDentro({ c }: { c: Card }) {
                 >
                   {x.ok ? <Check size={12} aria-hidden /> : null}
                 </button>
-                <span>{x.t}</span>
+                <ItemCk
+                  texto={x.t}
+                  onSalvar={(t) => {
+                    const l = clone(ck);
+                    if (l[i] && l[i].t !== t) {
+                      l[i].t = t;
+                      mudar({ checklist: l });
+                    }
+                  }}
+                />
                 <button
                   type="button"
                   className="q-x"

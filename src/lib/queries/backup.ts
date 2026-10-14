@@ -57,6 +57,7 @@ export async function exportAll() {
       name: s.users.name,
       email: s.users.email,
       role: s.users.role,
+      photoId: s.users.photoId,
       lastLoginAt: s.users.lastLoginAt,
       createdAt: s.users.createdAt,
     })

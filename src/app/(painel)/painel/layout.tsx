@@ -14,5 +14,5 @@ export const dynamic = "force-dynamic";
 
 export default async function PainelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  return <PainelShell user={{ name: user.name, email: user.email }}>{children}</PainelShell>;
+  return <PainelShell user={{ name: user.name, email: user.email, photoId: user.photoId }}>{children}</PainelShell>;
 }

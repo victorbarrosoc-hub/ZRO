@@ -38,6 +38,8 @@ export const users = pgTable("users", {
   email: text().notNull().unique(),
   passwordHash: text().notNull(),
   role: text().notNull().default("socio"),
+  /** Foto do perfil (aparece no menu e nos cards da Pauta). */
+  photoId: text().references(() => images.id, { onDelete: "set null" }),
   lastLoginAt: timestamp({ mode: "date", withTimezone: true }),
   createdAt: createdAt(),
 });

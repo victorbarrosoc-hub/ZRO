@@ -15,10 +15,10 @@ export const getSessionUser = cache(async () => {
   if (!session) return null;
   const user = await db.query.users.findFirst({
     where: eq(schema.users.id, session.userId),
-    columns: { id: true, name: true, email: true, role: true, passwordHash: true },
+    columns: { id: true, name: true, email: true, role: true, photoId: true, passwordHash: true },
   });
   if (!user || passwordFingerprint(user.passwordHash) !== session.pv) return null;
-  return { id: user.id, name: user.name, email: user.email, role: user.role };
+  return { id: user.id, name: user.name, email: user.email, role: user.role, photoId: user.photoId };
 });
 
 /** Usuário logado (Victor ou Edu). Use em toda página e ação da área interna. */

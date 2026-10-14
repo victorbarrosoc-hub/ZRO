@@ -26,6 +26,8 @@ export const filtrosLigados = (ui: UI) =>
   (["pessoa", "cliente", "data"] as const).filter((k) => ui.filtro[k] !== "todos" && !(k === "data" && ui.vista === "prazo")).length;
 
 const quantosVer = (ui: UI, k: string) => ui.verMais[k] || LIMITE;
+/** Em tela mais estreita, as colunas vão em duas fileiras: o trabalho da equipe em cima, cliente e publicação embaixo. */
+const LINHAS = [COLUNAS.slice(0, 4), COLUNAS.slice(4)];
 
 /* ---------------- barra: COMO ver | o que FILTRA ---------------- */
 export function Barra() {
@@ -266,7 +268,9 @@ export function VistaColunas() {
       </div>
       <p className="q-desc-m">{COL[colMovel].desc}</p>
       <div className="q-quadro" data-colmovel={colMovel}>
-        {COLUNAS.map((c) => {
+        {LINHAS.map((linha, li) => (
+          <div key={li} className="q-linha">
+            {linha.map((c) => {
           const l = por[c.k];
           const ver = quantosVer(ui, c.k);
           const on = colMovel === c.k ? " on" : "";
@@ -319,7 +323,9 @@ export function VistaColunas() {
               <FormAdd k={c.k} />
             </section>
           );
-        })}
+            })}
+          </div>
+        ))}
       </div>
     </>
   );
