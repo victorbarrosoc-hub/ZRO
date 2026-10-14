@@ -8,7 +8,7 @@ import { StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { CATEGORIES, FUNCTIONS, RATE_UNITS, optionLabel } from "@/lib/domain";
-import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, todayISO } from "@/lib/format";
+import { addDaysISO, brl, brlCompact, dateBR, dateShort, entryStatus, instagramUrl, todayISO } from "@/lib/format";
 import { listEventsInRange } from "@/lib/queries/agenda";
 import { getFreelancer, listCustomFunctions } from "@/lib/queries/freelas";
 import {
@@ -199,7 +199,14 @@ export default async function FreelaPage({ params, searchParams }: PageProps<"/p
                       items={[
                         { label: "WhatsApp", value: f.phone },
                         { label: "E-mail", value: f.email },
-                        { label: "Instagram", value: f.instagram ? `@${f.instagram}` : null },
+                        {
+                          label: "Instagram",
+                          value: f.instagram ? (
+                            <a href={instagramUrl(f.instagram) ?? undefined} target="_blank" rel="noreferrer" className="hover:underline">
+                              @{f.instagram}
+                            </a>
+                          ) : null,
+                        },
                         {
                           label: "Chave Pix",
                           value: f.pixKey ? <span className="font-mono text-[13px] break-all">{f.pixKey}</span> : null,

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { fieldError } from "@/components/painel/form";
 import { ImageField } from "@/components/painel/image-field";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
 import { FUNCTION_MAX, functionOptions, normalizeFunction } from "@/lib/domain";
+import { instagramHandle, instagramUrl } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type FreelaDefaults = {
@@ -51,9 +52,7 @@ export function FreelaFields({
         <Field label="E-mail" htmlFor="f-email" error={fieldError(state, "email")}>
           <Input id="f-email" name="email" type="email" defaultValue={defaults.email ?? ""} />
         </Field>
-        <Field label="Instagram" htmlFor="f-ig">
-          <Input id="f-ig" name="instagram" defaultValue={defaults.instagram ?? ""} placeholder="usuario" />
-        </Field>
+        <InstagramField defaultValue={defaults.instagram ?? ""} />
         <Field label="Chave Pix" htmlFor="f-pix" className="sm:col-span-2" hint="Fica só aqui, para os pagamentos.">
           <Input id="f-pix" name="pixKey" defaultValue={defaults.pixKey ?? ""} />
         </Field>
@@ -68,6 +67,46 @@ export function FreelaFields({
         <Textarea id="f-notes" name="notes" rows={3} defaultValue={defaults.notes ?? ""} />
       </Field>
     </>
+  );
+}
+
+/**
+ * @ do Instagram com atalho para o perfil: dali dá para salvar a foto e
+ * escolher (ou colar) no campo de foto, sem sair do cadastro.
+ */
+function InstagramField({ defaultValue }: { defaultValue: string }) {
+  const [value, setValue] = useState(defaultValue);
+  const url = instagramUrl(value);
+  return (
+    <Field label="Instagram" htmlFor="f-ig" hint={url ? "Abra o perfil para salvar a foto e usar aqui em cima." : undefined}>
+      <div className="flex gap-2">
+        <div className="relative min-w-0 flex-1">
+          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[15px] text-mute">@</span>
+          <Input
+            id="f-ig"
+            name="instagram"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={() => setValue(instagramHandle(value) ?? "")}
+            className="pl-8"
+            placeholder="usuario"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+        </div>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-4 text-[13px] text-light transition-colors hover:border-white/60 hover:bg-white/[0.04]"
+          >
+            <ExternalLink className="size-3.5" aria-hidden /> Abrir perfil
+          </a>
+        ) : null}
+      </div>
+    </Field>
   );
 }
 

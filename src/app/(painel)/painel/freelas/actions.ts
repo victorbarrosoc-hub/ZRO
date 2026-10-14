@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
 import { CATEGORY_KEYS, FUNCTION_MAX, RATE_UNITS, normalizeFunction } from "@/lib/domain";
+import { instagramHandle } from "@/lib/format";
 import { listCustomFunctions } from "@/lib/queries/freelas";
 import { registerPayment } from "@/lib/services/finance";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
@@ -33,7 +34,7 @@ function readFreela(fd: FormData) {
     city: str(fd, "city"),
     phone: str(fd, "phone"),
     email: str(fd, "email"),
-    instagram: str(fd, "instagram")?.replace(/^@/, ""),
+    instagram: instagramHandle(str(fd, "instagram")),
     pixKey: str(fd, "pixKey"),
     functions: list(fd, "functions"),
     equipment: str(fd, "equipment"),

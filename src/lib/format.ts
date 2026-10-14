@@ -174,6 +174,25 @@ export function whatsappDigits(phone: string | null | undefined) {
   return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
+/** "@zro", "instagram.com/zro/" ou "https://www.instagram.com/zro" → "zro". */
+export function instagramHandle(value: string | null | undefined) {
+  return (
+    value
+      ?.trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^(www\.)?instagram\.com\//i, "")
+      .replace(/^@/, "")
+      .replace(/[/?#].*$/, "")
+      .trim() || undefined
+  );
+}
+
+/** Endereço do perfil, só para @ com cara de @ (letras, números, ponto e _). */
+export function instagramUrl(value: string | null | undefined) {
+  const handle = instagramHandle(value);
+  return handle && /^[A-Za-z0-9._]{1,30}$/.test(handle) ? `https://www.instagram.com/${handle}/` : null;
+}
+
 export function initials(name: string) {
   return name
     .split(/\s+/)

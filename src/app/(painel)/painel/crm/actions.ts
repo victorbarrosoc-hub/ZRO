@@ -17,6 +17,7 @@ import {
   LEAD_SOURCES,
   LEAD_STAGE_KEYS,
 } from "@/lib/domain";
+import { instagramHandle } from "@/lib/format";
 import { ensureClientForLead } from "@/lib/services/clients";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { ACTIVITY_TYPES, STAGE_ACTIVITY, keysOf, stageLabel } from "./crm-options";
@@ -365,18 +366,6 @@ const ClientSchema = z.object({
   source,
   notes: text(2000),
 });
-
-/** "@zro", "instagram.com/zro/" ou "https://www.instagram.com/zro" → "zro". */
-function instagramHandle(value: string | undefined) {
-  return (
-    value
-      ?.replace(/^https?:\/\//i, "")
-      .replace(/^(www\.)?instagram\.com\//i, "")
-      .replace(/^@/, "")
-      .replace(/[/?#].*$/, "")
-      .trim() || undefined
-  );
-}
 
 function readClient(fd: FormData) {
   return ClientSchema.safeParse({
