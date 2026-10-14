@@ -2,7 +2,6 @@
  * Pequenas peças compartilhadas da área interna: selos de status, tabela,
  * abas em link, campo de busca e bloco de "chave: valor".
  */
-import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/surface";
 import {
@@ -111,58 +110,8 @@ export function Td({ children, className, align = "left" }: { children?: React.R
 
 /* ---------------- Abas em link ---------------- */
 
-export function TabLinks({
-  tabs,
-  active,
-  className,
-}: {
-  tabs: { key: string; label: string; href: string; count?: number }[];
-  active: string;
-  className?: string;
-}) {
-  return (
-    // Abas de plataforma: linha de base de ponta a ponta e o traço branco na aba ativa.
-    <nav
-      className={cn(
-        "-mx-4 min-w-0 overflow-x-auto px-4 shadow-[inset_0_-1px_0_var(--color-line)] [scrollbar-width:none] sm:mx-0 sm:px-0",
-        className,
-      )}
-      aria-label="Seções"
-    >
-      <ul className="flex w-max gap-1 sm:gap-2 [&>li:first-child>a]:pl-0 [&>li:first-child>a]:after:left-0">
-        {tabs.map((t) => {
-          const on = t.key === active;
-          return (
-            <li key={t.key}>
-              <Link
-                href={t.href}
-                scroll={false}
-                aria-current={on ? "page" : undefined}
-                className={cn(
-                  "relative flex h-12 items-center gap-2 px-3 text-[14px] whitespace-nowrap transition-colors sm:px-3.5",
-                  "after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:transition-colors sm:after:inset-x-3.5",
-                  on ? "font-medium text-white after:bg-white" : "text-mute after:bg-transparent hover:text-light",
-                )}
-              >
-                {t.label}
-                {t.count != null ? (
-                  <span
-                    className={cn(
-                      "grid h-5 min-w-5 place-items-center rounded-full px-1.5 text-[11px] tabular-nums",
-                      on ? "bg-white text-void" : "bg-white/[0.07] text-ash",
-                    )}
-                  >
-                    {t.count}
-                  </span>
-                ) : null}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-}
+// O traço da aba ativa desliza: a parte que mexe fica num componente do navegador.
+export { TabLinks } from "./tab-links";
 
 /* ---------------- Chave: valor ---------------- */
 

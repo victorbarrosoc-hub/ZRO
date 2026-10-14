@@ -265,14 +265,21 @@ export function VistaColunas() {
             aria-selected={colMovel === c.k}
             data-acao="col-movel"
             style={cc(c.k)}
-            onClick={() => up({ colMovel: c.k })}
+            onClick={() =>
+              up((u) => ({
+                colMovel: c.k,
+                dirMovel: COLUNAS.findIndex((x) => x.k === c.k) >= COLUNAS.findIndex((x) => x.k === u.colMovel) ? 1 : -1,
+              }))
+            }
           >
             {c.nome} <span>{por[c.k].length}</span>
           </button>
         ))}
       </div>
-      <p className="q-desc-m">{COL[colMovel].desc}</p>
-      <div className="q-quadro" data-colmovel={colMovel}>
+      <p key={colMovel} className="q-desc-m">
+        {COL[colMovel].desc}
+      </p>
+      <div className="q-quadro" data-colmovel={colMovel} data-dir={ui.dirMovel}>
         {LINHAS.map((linha, li) => (
           <div key={li} className="q-linha">
             {linha.map((c) => {

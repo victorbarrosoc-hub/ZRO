@@ -78,7 +78,10 @@ export function PainelShell({ user, children }: { user: ShellUser; children: Rea
             telaCheia ? "pb-4 lg:px-8 lg:pt-8" : "max-w-[1480px] pb-24 lg:px-10 lg:pt-10",
           )}
         >
-          {children}
+          {/* Cada página nova entra com um leve movimento (a chave muda com o endereço) */}
+          <div key={pathname} className="zro-pagina">
+            {children}
+          </div>
         </main>
       </div>
     </div>

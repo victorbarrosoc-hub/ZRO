@@ -27,6 +27,10 @@ export type UI = {
   arraste: string | null;
   alvo: Alvo | null;
   pede: string | null;
+  /** A ficha que está fechando (sai com movimento antes de sumir). */
+  fichaSaindo: string | null;
+  /** Para que lado a coluna do celular entra: 1 = da direita, -1 = da esquerda. */
+  dirMovel: 1 | -1;
 };
 
 export type Q = {

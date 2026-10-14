@@ -325,3 +325,20 @@
     transform: none !important;
   }
 }
+
+/* Painel: cada página entra com um leve movimento (as abas animam em tab-links.tsx).
+   "backwards": o movimento some ao terminar (nada fica transformado). */
+@keyframes pagina-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.zro-pagina {
+  animation: pagina-in 380ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .zro-pagina {
+    animation: none;
+  }
+}
