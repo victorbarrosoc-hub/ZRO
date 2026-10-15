@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/painel/avatar";
 import { Table, Td, Th } from "@/components/painel/bits";
 import { SearchField } from "@/components/painel/search-field";
-import { Card, EmptyState, PageHeader } from "@/components/ui/surface";
+import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { brl, formatPhone } from "@/lib/format";
 import { filterClients, listClients } from "@/lib/queries/crm";
@@ -43,7 +43,10 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                 <span className="flex min-w-0 items-center gap-3">
                   <Avatar name={c.name} imageId={c.logoId} logo size="md" />
                   <span className="min-w-0">
-                    <span className="block truncate text-[15px] font-medium text-white">{c.name}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-[15px] font-medium text-white">{c.name}</span>
+                      {c.recurring ? <Badge tone="light">Recorrente</Badge> : null}
+                    </span>
                     <span className="block truncate text-[13px] text-mute">
                       {[c.segment, c.city].filter(Boolean).join(" · ") || "Sem segmento"}
                     </span>
@@ -87,9 +90,12 @@ export default async function ClientesPage({ searchParams }: PageProps<"/painel/
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar name={c.name} imageId={c.logoId} logo size="md" />
                       <div className="min-w-0">
-                        <Link href={`/painel/crm/clientes/${c.id}`} className="block truncate font-medium text-white hover:underline">
-                          {c.name}
-                        </Link>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Link href={`/painel/crm/clientes/${c.id}`} className="truncate font-medium text-white hover:underline">
+                            {c.name}
+                          </Link>
+                          {c.recurring ? <Badge tone="light">Recorrente</Badge> : null}
+                        </span>
                         {c.document ? (
                           <span className="block font-mono text-[11px] text-mute">{formatDocument(c.document)}</span>
                         ) : null}

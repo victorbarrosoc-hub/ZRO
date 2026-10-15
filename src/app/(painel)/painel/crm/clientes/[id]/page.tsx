@@ -21,9 +21,10 @@ import { StatTile } from "@/components/painel/stat";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
+import type { ClientRecurring } from "@/lib/db/schema";
 import { EVENT_TYPES, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
-import { brl, dateBR, dateShort, entryStatus, formatPhone, todayISO } from "@/lib/format";
-import { getClient } from "@/lib/queries/crm";
+import { brl, dateBR, dateShort, entryStatus, formatPhone, monthLong, monthShort, todayISO } from "@/lib/format";
+import { getClient, recurringMonth } from "@/lib/queries/crm";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
 import { ActivityTimeline } from "../../crm-ui";
@@ -60,6 +61,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
   const today = todayISO();
   const me = user.name.split(/\s+/)[0];
   const contactFirst = c.contactName?.split(/\s+/)[0];
+  const mesRec = c.recurring ? await recurringMonth(c.projects.map((p) => p.id), c.entries) : null;
   const wa = whatsappHref(c.phone, `Oi${contactFirst ? `, ${contactFirst}` : ""}! Aqui é o ${me}, da ZRO. Tudo bem?`);
   const activeProjects = c.projects.filter((p) => p.status === "ativo").length;
 
@@ -78,6 +80,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
               {[c.segment, c.city].filter(Boolean).join(" · ") || "Segmento e cidade não informados"}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {c.recurring ? <Badge tone="light">Recorrente</Badge> : null}
               <Badge>{optionLabel(LEAD_SOURCES, c.source)}</Badge>
               <span className="ml-1 text-[13px] text-mute">Cliente desde {dateBR(todayISO(c.createdAt))}</span>
             </div>
@@ -110,6 +113,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
               source: c.source,
               notes: c.notes,
               logoId: c.logoId,
+              recurring: c.recurring,
             }}
           />
           <DeleteClientButton id={c.id} name={c.name} />
@@ -129,6 +133,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
 
         {aba === "resumo" ? (
           <div className="grid grid-cols-1 gap-4">
+            {c.recurring && mesRec ? <RecurringCard r={c.recurring} mes={mesRec} /> : null}
             <section className="grid gap-4 sm:grid-cols-3" aria-label="Resumo financeiro">
               <StatTile
                 label="Recebido"
@@ -405,5 +410,70 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
         ) : null}
       </div>
     </div>
+  );
+}
+
+/** Projeto recorrente: o combinado de todo mês e como está o mês corrente. */
+function RecurringCard({
+  r,
+  mes,
+}: {
+  r: ClientRecurring;
+  mes: Awaited<ReturnType<typeof recurringMonth>>;
+}) {
+  const total = mes.feitas + mes.agendadas;
+  const pct = r.days ? Math.min(100, Math.round((mes.feitas / r.days) * 100)) : 0;
+  const pctAgenda = r.days ? Math.min(100 - pct, Math.round((mes.agendadas / r.days) * 100)) : 0;
+  const combinado = [
+    `${brl(r.value)} por mês`,
+    `${r.days} ${r.days === 1 ? "diária" : "diárias"} por mês`,
+    r.payDay ? `paga dia ${r.payDay}` : null,
+    r.startMonth ? `desde ${monthShort(r.startMonth)}/${r.startMonth.slice(0, 4)}` : null,
+  ].filter(Boolean);
+  return (
+    <Card>
+      <CardHeader className="flex-wrap gap-y-1" title="Projeto recorrente" description={combinado.join(" · ")} />
+      <div className="grid gap-5 px-5 pt-5 pb-5 sm:grid-cols-3 sm:px-6 sm:pb-6">
+        <p className="label -mb-2 text-mute sm:col-span-3">{monthLong(mes.mes)}</p>
+        <div className="grid content-start gap-2">
+          <p className="text-[13px] text-mute">Diárias de captação no mês</p>
+          <p className="text-[22px] leading-none font-semibold tracking-[-0.02em] text-white tabular-nums">
+            {mes.feitas} <span className="text-[15px] font-normal text-mute">de {r.days}</span>
+          </p>
+          <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.08]" aria-hidden>
+            <span className="h-full bg-white" style={{ width: `${pct}%` }} />
+            <span className="h-full bg-white/35" style={{ width: `${pctAgenda}%` }} />
+          </div>
+          <p className="text-[12px] text-mute">
+            {mes.agendadas ? `${mes.agendadas} ${mes.agendadas === 1 ? "agendada" : "agendadas"} até o fim do mês` : "Nenhuma diária agendada à frente"}
+            {total > r.days ? ` · ${total - r.days} além do combinado` : total < r.days ? ` · faltam ${r.days - total} para agendar` : ""}
+          </p>
+        </div>
+        <div className="grid content-start gap-2">
+          <p className="text-[13px] text-mute">Valor do mês</p>
+          <p className="text-[22px] leading-none font-semibold tracking-[-0.02em] text-white tabular-nums">
+            {brl(mes.recebido)} <span className="text-[15px] font-normal text-mute">de {brl(r.value)}</span>
+          </p>
+          <p className="text-[12px] text-mute">
+            {mes.lancado ? `Lançado no financeiro: ${brl(mes.lancado)}` : "Nada lançado no financeiro com vencimento neste mês"}
+          </p>
+        </div>
+        <div className="grid content-start gap-2">
+          <p className="text-[13px] text-mute">Entregas todo mês</p>
+          {r.deliverables.length ? (
+            <ul className="grid gap-1.5">
+              {r.deliverables.map((d, i) => (
+                <li key={i} className="flex items-baseline gap-2 text-[14px] text-light">
+                  <span className="min-w-6 font-semibold tabular-nums text-white">{d.qty}</span>
+                  <span className="min-w-0">{d.title}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[14px] text-mute">Nenhuma entrega fixa cadastrada.</p>
+          )}
+        </div>
+      </div>
+    </Card>
   );
 }
