@@ -10,9 +10,18 @@ import { Reveal } from "@/components/site/reveal";
 import { FRAMES } from "@/lib/frames";
 import { cn } from "@/lib/utils";
 
+const SHARE = {
+  title: "Absolute ZRO · Do bruto ao absoluto.",
+  description: "Color grading e finalização para publicidade, cinema e conteúdo.",
+};
+
+// O link da Absolute tem cartão próprio (título, descrição e a imagem opengraph-image.jpg desta pasta):
+// sem isso, herdaria o "ZRO Filmes" do site.
 export const metadata: Metadata = {
   title: "Absolute ZRO",
   description: "Color grading e finalização para publicidade, cinema e conteúdo. Do bruto ao absoluto.",
+  openGraph: { type: "website", locale: "pt_BR", siteName: "Absolute ZRO", url: "/absolute", ...SHARE },
+  twitter: { card: "summary_large_image", ...SHARE },
 };
 
 /*
