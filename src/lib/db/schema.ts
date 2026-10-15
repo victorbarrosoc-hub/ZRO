@@ -141,6 +141,19 @@ export const images = pgTable("images", {
 
 /* ============================== CRM ============================== */
 
+/**
+ * Projeto recorrente do cliente: o que se faz todo mês.
+ * days = diárias de captação por mês; value = valor fixo por mês (centavos);
+ * deliverables = entregas de todo mês; payDay = dia do pagamento; startMonth = "AAAA-MM".
+ */
+export type ClientRecurring = {
+  days: number;
+  value: number;
+  deliverables: { title: string; qty: number }[];
+  payDay?: number | null;
+  startMonth?: string | null;
+};
+
 export const clients = pgTable(
   "clients",
   {
@@ -156,6 +169,8 @@ export const clients = pgTable(
     source: text().notNull().default("outro"),
     notes: text(),
     logoId: text().references(() => images.id, { onDelete: "set null" }),
+    /** Projeto recorrente (contrato mensal). Vazio = cliente sem contrato fixo. */
+    recurring: jsonb().$type<ClientRecurring>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

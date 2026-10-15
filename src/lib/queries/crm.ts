@@ -1,10 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, desc, eq, gte, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 
-const { leads, clients, activities, users, quotes, quoteItems, projects, financeEntries } = schema;
+const { leads, clients, activities, users, quotes, quoteItems, projects, financeEntries, events } = schema;
 
 /* ---------------- Busca ---------------- */
 
@@ -274,3 +274,54 @@ async function projectsWhere(where: SQL | undefined) {
 }
 
 export type ProjectRow = Awaited<ReturnType<typeof projectsWhere>>[number];
+
+/* ---------------- Projeto recorrente ---------------- */
+
+const DIA_MS = 86_400_000;
+const diaUTC = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+
+/**
+ * O mês corrente do contrato recorrente: diárias de captação nos projetos do cliente
+ * (as que já passaram e as que ainda vêm, contando cada dia dentro do mês) e o que
+ * foi lançado e recebido de entrada do cliente com vencimento no mês.
+ */
+export async function recurringMonth(
+  projectIds: string[],
+  entries: { amount: number; paidAmount: number; dueDate: string }[],
+) {
+  const hoje = todayISO();
+  const mes = hoje.slice(0, 7);
+  const inicio = `${mes}-01`;
+  const fim = new Date(Date.UTC(+mes.slice(0, 4), +mes.slice(5, 7), 0)).toISOString().slice(0, 10);
+  const doMes = entries.filter((e) => e.dueDate.startsWith(mes));
+  let feitas = 0;
+  let agendadas = 0;
+  if (projectIds.length) {
+    const rows = await db
+      .select({ date: events.date, endDate: events.endDate })
+      .from(events)
+      .where(
+        and(
+          inArray(events.projectId, projectIds),
+          eq(events.type, "diaria"),
+          lte(events.date, fim),
+          sql`coalesce(${events.endDate}, ${events.date}) >= ${inicio}`,
+        ),
+      );
+    for (const r of rows) {
+      const de = Math.max(diaUTC(r.date), diaUTC(inicio));
+      const ate = Math.min(diaUTC(r.endDate ?? r.date), diaUTC(fim));
+      for (let d = de; d <= ate; d += DIA_MS) {
+        if (d <= diaUTC(hoje)) feitas++;
+        else agendadas++;
+      }
+    }
+  }
+  return {
+    mes,
+    feitas,
+    agendadas,
+    lancado: doMes.reduce((n, e) => n + e.amount, 0),
+    recebido: doMes.reduce((n, e) => n + e.paidAmount, 0),
+  };
+}

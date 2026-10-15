@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, X } from "lucide-react";
 import { FormSection, fieldError } from "@/components/painel/form";
 import { ImageField } from "@/components/painel/image-field";
 import { PhoneInput } from "@/components/painel/phone-input";
-import { Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { Checkbox, Field, Input, MoneyInput, Select, Textarea } from "@/components/ui/field";
+import type { ClientRecurring } from "@/lib/db/schema";
 import type { ActionResult } from "@/lib/actions";
 import {
   FUNNEL_BUDGETS,
@@ -17,6 +20,7 @@ import {
 } from "@/lib/domain";
 import { addDaysISO, centsToInput, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { IconButton } from "../site/_components/list-controls";
 import { LOST_REASONS } from "./crm-options";
 
 type Option = { key: string; label: string };
@@ -345,7 +349,104 @@ export type ClientDefaults = {
   source?: string | null;
   notes?: string | null;
   logoId?: string | null;
+  recurring?: ClientRecurring | null;
 };
+
+let chaveEntrega = 0;
+const novaEntrega = (title = "", qty = 1) => ({ key: `e${chaveEntrega++}`, title, qty });
+
+/**
+ * Projeto recorrente: o que o cliente contrata todo mês (diárias de captação,
+ * valor fixo e as entregas do mês). Desmarcado, o cliente fica sem contrato fixo.
+ */
+function RecurringFields({ value, err }: { value?: ClientRecurring | null; err: (name: string) => string | undefined }) {
+  const [on, setOn] = useState(!!value);
+  const [rows, setRows] = useState(() =>
+    value?.deliverables?.length ? value.deliverables.map((d) => novaEntrega(d.title, d.qty)) : [novaEntrega()],
+  );
+  const set = (key: string, patch: Partial<{ title: string; qty: number }>) =>
+    setRows((l) => l.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  const json = JSON.stringify(rows.filter((r) => r.title.trim()).map((r) => ({ title: r.title.trim(), qty: r.qty })));
+  return (
+    <FormSection title="Projeto recorrente">
+      <Checkbox
+        name="recurring"
+        checked={on}
+        onChange={(e) => setOn(e.currentTarget.checked)}
+        label="É recorrente: todo mês tem captação, valor fixo e entregas"
+      />
+      {on ? (
+        <div className="grid items-start gap-4 rounded-2xl border border-line bg-white/[0.02] p-4 sm:grid-cols-2">
+          <Field label="Diárias de captação por mês" htmlFor="c-rdays" error={err("recurringDays")}>
+            <Input
+              id="c-rdays"
+              name="recurringDays"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={31}
+              defaultValue={value?.days ?? ""}
+              placeholder="Ex.: 4"
+            />
+          </Field>
+          <Field label="Valor fixo por mês" htmlFor="c-rvalue" error={err("recurringValue")}>
+            <MoneyInput id="c-rvalue" name="recurringValue" defaultValue={centsToInput(value?.value)} placeholder="0,00" />
+          </Field>
+          <Field label="Dia do pagamento (opcional)" htmlFor="c-rpay" error={err("recurringPayDay")}>
+            <Input
+              id="c-rpay"
+              name="recurringPayDay"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={31}
+              defaultValue={value?.payDay ?? ""}
+              placeholder="Ex.: 10"
+            />
+          </Field>
+          <Field label="Começou em (opcional)" htmlFor="c-rstart" error={err("recurringStart")}>
+            <Input id="c-rstart" name="recurringStart" type="month" defaultValue={value?.startMonth ?? ""} />
+          </Field>
+          <div className="grid gap-2 sm:col-span-2">
+            <p className="text-[13px] font-medium text-ash">Entregas todo mês</p>
+            {rows.map((r) => (
+              <div key={r.key} className="flex items-center gap-2">
+                <Input
+                  aria-label="Quantidade"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={999}
+                  className="w-20 shrink-0 text-center"
+                  value={r.qty}
+                  onChange={(e) => set(r.key, { qty: Math.max(1, Math.min(999, Number(e.currentTarget.value) || 1)) })}
+                />
+                <Input
+                  aria-label="Entrega"
+                  placeholder="Ex.: Reels de 30s"
+                  maxLength={120}
+                  value={r.title}
+                  onChange={(e) => set(r.key, { title: e.currentTarget.value })}
+                />
+                <IconButton
+                  label="Tirar entrega"
+                  onClick={() => setRows((l) => (l.length > 1 ? l.filter((x) => x.key !== r.key) : [novaEntrega()]))}
+                >
+                  <X />
+                </IconButton>
+              </div>
+            ))}
+            {err("recurringDeliverables") ? <p className="text-[13px] text-danger">{err("recurringDeliverables")}</p> : null}
+            <Button type="button" variant="secondary" size="sm" className="w-fit" onClick={() => setRows((l) => [...l, novaEntrega()])}>
+              <Plus /> Adicionar entrega
+            </Button>
+            <input type="hidden" name="recurringDeliverables" value={json} />
+          </div>
+        </div>
+      ) : null}
+    </FormSection>
+  );
+}
 
 export function ClientFields({ state, defaults = {} }: { state: ActionResult | null; defaults?: ClientDefaults }) {
   const err = (name: string) => fieldError(state, name);
@@ -402,6 +503,8 @@ export function ClientFields({ state, defaults = {} }: { state: ActionResult | n
           </Field>
         </div>
       </FormSection>
+
+      <RecurringFields value={d.recurring} err={err} />
 
       <Field label="Observações" htmlFor="c-notes" error={err("notes")}>
         <Textarea id="c-notes" name="notes" rows={3} maxLength={2000} defaultValue={d.notes ?? ""} />

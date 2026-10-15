@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
-import { fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
+import { bool, fail, fromZod, list, money, ok, str, type ActionResult } from "@/lib/actions";
+import type { ClientRecurring } from "@/lib/db/schema";
 import {
   FUNNEL_BUDGETS,
   FUNNEL_DAYS,
@@ -382,16 +383,55 @@ function readClient(fd: FormData) {
   });
 }
 
+/**
+ * Projeto recorrente (contrato mensal). Caixa desmarcada = sem contrato fixo (null).
+ * Os campos chegam do formulário como texto; aqui viram números e a lista de entregas.
+ */
+function readRecurring(fd: FormData): { value: ClientRecurring | null } | { error: ActionResult } {
+  if (!bool(fd, "recurring")) return { value: null };
+  const inteiro = (k: string) => {
+    const v = str(fd, k);
+    return v === undefined ? undefined : Number(v);
+  };
+  const days = inteiro("recurringDays");
+  if (days === undefined || !Number.isInteger(days) || days < 0 || days > 31)
+    return { error: fail("Quantas diárias de captação por mês? (de 0 a 31)", { recurringDays: ["Diga quantas diárias por mês, de 0 a 31."] }) };
+  const value = money(fd, "recurringValue");
+  if (value === undefined || value < 0 || value > 100_000_000_000)
+    return { error: fail("Qual é o valor fixo por mês?", { recurringValue: ["Digite o valor fixo por mês."] }) };
+  const payDay = inteiro("recurringPayDay");
+  if (payDay !== undefined && (!Number.isInteger(payDay) || payDay < 1 || payDay > 31))
+    return { error: fail("O dia do pagamento vai de 1 a 31.", { recurringPayDay: ["Use um dia de 1 a 31."] }) };
+  const startMonth = str(fd, "recurringStart");
+  if (startMonth && !/^\d{4}-(0[1-9]|1[0-2])$/.test(startMonth))
+    return { error: fail("Confira o mês de início.", { recurringStart: ["Escolha o mês."] }) };
+  let lista: unknown = [];
+  try {
+    lista = JSON.parse(String(fd.get("recurringDeliverables") ?? "[]") || "[]");
+  } catch {
+    lista = null;
+  }
+  const entregas = z
+    .array(z.object({ title: z.string().trim().min(1).max(120), qty: z.number().int().min(1).max(999) }))
+    .max(30, "Até 30 entregas por mês.")
+    .safeParse(lista);
+  if (!entregas.success)
+    return { error: fail("Confira as entregas do mês.", { recurringDeliverables: ["Cada entrega precisa de nome e quantidade (até 30)."] }) };
+  return { value: { days, value, deliverables: entregas.data, payDay: payDay ?? null, startMonth: startMonth ?? null } };
+}
+
 export async function createClient(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   await requireUser();
   const parsed = readClient(fd);
   if (!parsed.success) return fromZod(parsed.error);
+  const recorrente = readRecurring(fd);
+  if ("error" in recorrente) return recorrente.error;
   const logo = readImageField(fd, "logo");
   if ("error" in logo) return fail(logo.error, { logo: [logo.error] });
   const logoId = await resolveImageField(logo, null);
   const [row] = await db
     .insert(clients)
-    .values({ ...parsed.data, logoId })
+    .values({ ...parsed.data, logoId, recurring: recorrente.value })
     .returning({ id: clients.id });
   revalidatePath("/painel/crm/clientes");
   return ok("Cliente cadastrado.", row.id);
@@ -403,6 +443,8 @@ export async function updateClient(_prev: ActionResult | null, fd: FormData): Pr
   if (!id) return fail("Cliente não encontrado.");
   const parsed = readClient(fd);
   if (!parsed.success) return fromZod(parsed.error);
+  const recorrente = readRecurring(fd);
+  if ("error" in recorrente) return recorrente.error;
   const logo = readImageField(fd, "logo");
   if ("error" in logo) return fail(logo.error, { logo: [logo.error] });
   const current = await db.query.clients.findFirst({ where: eq(clients.id, id), columns: { logoId: true } });
@@ -411,7 +453,7 @@ export async function updateClient(_prev: ActionResult | null, fd: FormData): Pr
   const { name, source: src, ...rest } = parsed.data;
   const [row] = await db
     .update(clients)
-    .set({ name, source: src, ...orNull(rest), logoId })
+    .set({ name, source: src, ...orNull(rest), logoId, recurring: recorrente.value })
     .where(eq(clients.id, id))
     .returning({ id: clients.id });
   if (!row) return fail("Cliente não encontrado.");
