@@ -20,6 +20,7 @@ import {
 } from "@/lib/domain";
 import { formatPhone, instagramHandle } from "@/lib/format";
 import { ensureClientForLead } from "@/lib/services/clients";
+import { gerarRecorrentes } from "@/lib/services/recurring";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { ACTIVITY_TYPES, STAGE_ACTIVITY, keysOf, stageLabel } from "./crm-options";
 
@@ -417,11 +418,45 @@ function readRecurring(fd: FormData): { value: ClientRecurring | null } | { erro
     .safeParse(lista);
   if (!entregas.success)
     return { error: fail("Confira as entregas do mês.", { recurringDeliverables: ["Cada entrega precisa de nome e quantidade (até 30)."] }) };
-  return { value: { days, value, deliverables: entregas.data, payDay: payDay ?? null, startMonth: startMonth ?? null } };
+  return {
+    value: {
+      days,
+      value,
+      deliverables: entregas.data,
+      payDay: payDay ?? null,
+      startMonth: startMonth ?? null,
+      autoFinance: bool(fd, "recurringAutoFinance"),
+      autoPauta: bool(fd, "recurringAutoPauta"),
+    },
+  };
+}
+
+/**
+ * Contrato recorrente salvo: gera já o que falta deste mês (cobrança e cards da Pauta).
+ * Se der errado, o cadastro continua salvo e o painel tenta de novo depois.
+ */
+async function gerarDoMes(userId: string, clientId: string, recorrente: ClientRecurring | null) {
+  if (!recorrente) return "";
+  try {
+    const r = await gerarRecorrentes(userId, { clientId });
+    if (r.cobrancas) {
+      revalidatePath("/painel/financeiro");
+      revalidatePath("/painel/financeiro/fluxo");
+    }
+    if (r.cards) revalidatePath("/painel/pauta");
+    const partes = [
+      r.cobrancas ? "a cobrança do mês foi para o Financeiro" : null,
+      r.cards ? `${r.cards} ${r.cards === 1 ? "card foi" : "cards foram"} para a Pauta` : null,
+    ].filter(Boolean);
+    return partes.length ? ` ${partes.join(" e ").replace(/^./, (c) => c.toUpperCase())}.` : "";
+  } catch (e) {
+    console.error("[recorrentes]", e);
+    return "";
+  }
 }
 
 export async function createClient(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const parsed = readClient(fd);
   if (!parsed.success) return fromZod(parsed.error);
   const recorrente = readRecurring(fd);
@@ -433,12 +468,14 @@ export async function createClient(_prev: ActionResult | null, fd: FormData): Pr
     .insert(clients)
     .values({ ...parsed.data, logoId, recurring: recorrente.value })
     .returning({ id: clients.id });
+  const gerado = await gerarDoMes(user.id, row.id, recorrente.value);
   revalidatePath("/painel/crm/clientes");
-  return ok("Cliente cadastrado.", row.id);
+  revalidatePath("/painel");
+  return ok(`Cliente cadastrado.${gerado}`, row.id);
 }
 
 export async function updateClient(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  await requireUser();
+  const user = await requireUser();
   const id = str(fd, "id");
   if (!id) return fail("Cliente não encontrado.");
   const parsed = readClient(fd);
@@ -458,8 +495,9 @@ export async function updateClient(_prev: ActionResult | null, fd: FormData): Pr
     .returning({ id: clients.id });
   if (!row) return fail("Cliente não encontrado.");
   if (current.logoId !== logoId) await deleteImages([current.logoId]);
+  const gerado = await gerarDoMes(user.id, id, recorrente.value);
   revalidateClient(id);
-  return ok("Cliente atualizado.");
+  return ok(`Cliente atualizado.${gerado}`);
 }
 
 export async function deleteClient(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {

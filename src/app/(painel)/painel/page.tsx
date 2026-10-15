@@ -9,9 +9,11 @@ import { HeroFigure, StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { EVENT_TYPES, LEAD_STAGES, STAGES, optionLabel, FUNNEL_PROJECT_TYPES, FUNNEL_BUDGETS } from "@/lib/domain";
-import { TIMEZONE, brl, brlCompact, dateShort, relativeDay, weekdayShort } from "@/lib/format";
+import { TIMEZONE, brl, brlCompact, dateShort, monthLong, relativeDay, weekdayShort } from "@/lib/format";
 import { getCashFlow, getDashboard, getFreelaPayables, getProjectsOverview, type FreelaPayables, type ProjectOverviewRow } from "@/lib/queries/dashboard";
+import { getRecurringOverview } from "@/lib/queries/crm";
 import { getTaxRate } from "@/lib/queries/projects";
+import { conferirRecorrentes } from "@/lib/services/recurring";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Visão geral" };
@@ -39,12 +41,15 @@ export default async function PainelPage({ searchParams }: PageProps<"/painel">)
   const user = await requireUser();
   const sp = await searchParams;
   const aba: TabKey = TABS.find((t) => t.key === sp.aba)?.key ?? "resumo";
+  // antes dos números: no começo do mês, a cobrança dos contratos recorrentes já entra no previsto
+  await conferirRecorrentes(user.id);
   const taxRate = await getTaxRate();
-  const [data, flow, overview, payables] = await Promise.all([
+  const [data, flow, overview, payables, recorrentes] = await Promise.all([
     getDashboard(),
     getCashFlow(),
     getProjectsOverview(taxRate),
     getFreelaPayables(),
+    getRecurringOverview(),
   ]);
   const firstName = user.name.split(" ")[0];
   const inProduction = data.activeProjects.filter((p) => ["producao", "narrativa", "finalizacao"].includes(p.stage)).length;
@@ -99,7 +104,7 @@ export default async function PainelPage({ searchParams }: PageProps<"/painel">)
           active={aba}
           tabs={TABS.map((t) => ({ key: t.key, label: t.label, count: counts[t.key], href: t.key === "resumo" ? "/painel" : `/painel?aba=${t.key}` }))}
         />
-        {aba === "resumo" ? <ResumoTab data={data} /> : null}
+        {aba === "resumo" ? <ResumoTab data={data} recorrentes={recorrentes} /> : null}
         {aba === "projetos" ? <ProjectsOverview rows={overview} today={data.today} /> : null}
         {aba === "freelas" ? <FreelaPayablesList payables={payables} today={data.today} /> : null}
         {aba === "caixa" ? (
@@ -123,8 +128,9 @@ export default async function PainelPage({ searchParams }: PageProps<"/painel">)
 }
 
 type Dashboard = Awaited<ReturnType<typeof getDashboard>>;
+type Recorrentes = Awaited<ReturnType<typeof getRecurringOverview>>;
 
-function ResumoTab({ data }: { data: Dashboard }) {
+function ResumoTab({ data, recorrentes }: { data: Dashboard; recorrentes: Recorrentes }) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
       <Card className="xl:col-span-7">
@@ -207,6 +213,8 @@ function ResumoTab({ data }: { data: Dashboard }) {
         )}
       </Card>
 
+      {recorrentes.clientes.length ? <RecurringContracts rec={recorrentes} /> : null}
+
       <Card className="xl:col-span-12">
         <CardHeader
           title="Projetos por etapa"
@@ -236,6 +244,90 @@ function ResumoTab({ data }: { data: Dashboard }) {
         </ol>
       </Card>
     </div>
+  );
+}
+
+/** Situação da cobrança do mês de um contrato recorrente. */
+function cobranca(c: Recorrentes["clientes"][number]) {
+  const m = c.mes;
+  if (!m.lancado) return { label: "Não lançada", tone: "neutral" as const };
+  if (!m.vence) return { label: "Recebida", tone: "ok" as const };
+  const dia = Number(m.vence.slice(8, 10));
+  if (m.vence < m.hoje) return { label: `Venceu dia ${dia}`, tone: "danger" as const };
+  return { label: `Vence dia ${dia}`, tone: "light" as const };
+}
+
+/** Contratos recorrentes: quanto rendem por mês e como está o mês de cada um. */
+function RecurringContracts({ rec }: { rec: Recorrentes }) {
+  const mes = rec.clientes[0].mes.mes;
+  const recebido = rec.clientes.reduce((n, c) => n + c.mes.recebido, 0);
+  const n = rec.clientes.length;
+  return (
+    <Card className="min-w-0 xl:col-span-12">
+      <CardHeader
+        title="Contratos recorrentes"
+        action={
+          <Link href="/painel/crm/clientes" className="flex items-center gap-1 text-[13px] text-ash hover:text-white">
+            Clientes <ArrowUpRight className="size-3.5" />
+          </Link>
+        }
+      />
+      <div className="grid gap-5 px-5 pt-4 pb-5 sm:px-6 sm:pb-6 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-8">
+        <div className="grid content-start gap-1.5">
+          <p className="label text-mute">Por mês</p>
+          <p className="text-[30px] leading-none font-semibold tracking-[-0.03em] text-white tabular-nums">{brl(rec.total)}</p>
+          <p className="text-[13px] text-mute">
+            {n} {n === 1 ? "contrato" : "contratos"} · {brl(recebido)} recebido em {monthLong(mes).split(" de ")[0]}
+          </p>
+        </div>
+        <ul className="-mx-3 grid min-w-0 content-start">
+          {rec.clientes.map((c) => {
+            const st = cobranca(c);
+            return (
+              <li key={c.id}>
+                <Link
+                  href={`/painel/crm/clientes/${c.id}`}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 rounded-2xl px-3 py-3 transition-colors hover:bg-white/[0.04] sm:grid-cols-[minmax(0,1fr)_6rem_6rem_7.5rem]"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Avatar name={c.name} imageId={c.logoId} logo size="sm" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] text-light">{c.name}</span>
+                      <span className="block truncate text-[12px] text-mute tabular-nums">{brl(c.r.value)} por mês</span>
+                    </span>
+                  </span>
+                  <span className="hidden text-[12px] text-mute sm:block">
+                    Diárias
+                    <span className="block text-[14px] text-light tabular-nums">
+                      {c.mes.feitas} de {c.r.days}
+                    </span>
+                  </span>
+                  <span className="hidden text-[12px] text-mute sm:block">
+                    Entregas
+                    <span className="block text-[14px] text-light tabular-nums">
+                      {c.mes.cards.total ? `${c.mes.cards.prontas} de ${c.mes.cards.total}` : "—"}
+                    </span>
+                  </span>
+                  <Badge tone={st.tone} dot={st.tone === "danger"} className="justify-self-end">
+                    {st.label}
+                  </Badge>
+                  <span className="col-span-2 flex gap-4 pl-11 text-[12px] text-mute tabular-nums sm:hidden">
+                    <span>
+                      Diárias {c.mes.feitas} de {c.r.days}
+                    </span>
+                    {c.mes.cards.total ? (
+                      <span>
+                        Entregas {c.mes.cards.prontas} de {c.mes.cards.total}
+                      </span>
+                    ) : null}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </Card>
   );
 }
 

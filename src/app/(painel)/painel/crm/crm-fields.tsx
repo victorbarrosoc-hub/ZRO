@@ -442,6 +442,19 @@ function RecurringFields({ value, err }: { value?: ClientRecurring | null; err: 
             </Button>
             <input type="hidden" name="recurringDeliverables" value={json} />
           </div>
+          <div className="grid gap-3 border-t border-line pt-4 sm:col-span-2">
+            <p className="text-[13px] font-medium text-ash">Todo mês, sozinho</p>
+            <Checkbox
+              name="recurringAutoFinance"
+              defaultChecked={value?.autoFinance !== false}
+              label="Gerar a cobrança do mês no Financeiro (vence no dia do pagamento)"
+            />
+            <Checkbox
+              name="recurringAutoPauta"
+              defaultChecked={value?.autoPauta !== false}
+              label="Criar os cards das entregas na Pauta (prazo: o fim do mês)"
+            />
+          </div>
         </div>
       ) : null}
     </FormSection>

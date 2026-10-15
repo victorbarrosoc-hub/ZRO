@@ -145,6 +145,7 @@ export const images = pgTable("images", {
  * Projeto recorrente do cliente: o que se faz todo mês.
  * days = diárias de captação por mês; value = valor fixo por mês (centavos);
  * deliverables = entregas de todo mês; payDay = dia do pagamento; startMonth = "AAAA-MM".
+ * autoFinance / autoPauta = gerar sozinho a cobrança e os cards do mês (vazio = sim).
  */
 export type ClientRecurring = {
   days: number;
@@ -152,6 +153,8 @@ export type ClientRecurring = {
   deliverables: { title: string; qty: number }[];
   payDay?: number | null;
   startMonth?: string | null;
+  autoFinance?: boolean;
+  autoPauta?: boolean;
 };
 
 export const clients = pgTable(
@@ -575,6 +578,27 @@ export const financePayments = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("finance_payments_entry_idx").on(t.entryId)],
+);
+
+/**
+ * O que o contrato recorrente já gerou em cada mês (cobrança e cards da Pauta).
+ * Uma linha por cliente e mês: é a trava que impede gerar duas vezes.
+ */
+export const recurringRuns = pgTable(
+  "recurring_runs",
+  {
+    clientId: text()
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    /** "AAAA-MM" */
+    month: text().notNull(),
+    financeAt: timestamp({ mode: "date", withTimezone: true }),
+    financeEntryId: text().references(() => financeEntries.id, { onDelete: "set null" }),
+    pautaAt: timestamp({ mode: "date", withTimezone: true }),
+    cards: integer().notNull().default(0),
+    createdAt: timestamp({ mode: "date", withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.clientId, t.month] })],
 );
 
 /* ============================== Processos ============================== */

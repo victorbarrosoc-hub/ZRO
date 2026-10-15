@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clapperboard, FileText, Mail } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Clapperboard, FileText, Mail } from "lucide-react";
 import {
   TabLinks,
   EntryStatusBadge,
@@ -25,6 +25,7 @@ import type { ClientRecurring } from "@/lib/db/schema";
 import { EVENT_TYPES, FUNNEL_PROJECT_TYPES, LEAD_SOURCES, optionLabel } from "@/lib/domain";
 import { brl, dateBR, dateShort, entryStatus, formatPhone, monthLong, monthShort, todayISO } from "@/lib/format";
 import { getClient, recurringMonth } from "@/lib/queries/crm";
+import { cn } from "@/lib/utils";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
 import { ActivityTimeline } from "../../crm-ui";
@@ -61,7 +62,7 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
   const today = todayISO();
   const me = user.name.split(/\s+/)[0];
   const contactFirst = c.contactName?.split(/\s+/)[0];
-  const mesRec = c.recurring ? await recurringMonth(c.projects.map((p) => p.id), c.entries) : null;
+  const mesRec = c.recurring ? await recurringMonth(c.id, c.projects.map((p) => p.id), c.entries) : null;
   const wa = whatsappHref(c.phone, `Oi${contactFirst ? `, ${contactFirst}` : ""}! Aqui é o ${me}, da ZRO. Tudo bem?`);
   const activeProjects = c.projects.filter((p) => p.status === "ativo").length;
 
@@ -454,8 +455,14 @@ function RecurringCard({
           <p className="text-[22px] leading-none font-semibold tracking-[-0.02em] text-white tabular-nums">
             {brl(mes.recebido)} <span className="text-[15px] font-normal text-mute">de {brl(r.value)}</span>
           </p>
-          <p className="text-[12px] text-mute">
-            {mes.lancado ? `Lançado no financeiro: ${brl(mes.lancado)}` : "Nada lançado no financeiro com vencimento neste mês"}
+          <p className={cn("text-[12px]", mes.vence && mes.vence < mes.hoje ? "text-danger" : "text-mute")}>
+            {!mes.lancado
+              ? r.autoFinance === false
+                ? "Nada lançado no financeiro com vencimento neste mês"
+                : "A cobrança entra sozinha no Financeiro"
+              : mes.vence
+                ? `${mes.vence < mes.hoje ? "Venceu" : "Vence"} dia ${Number(mes.vence.slice(8, 10))} · lançado ${brl(mes.lancado)}`
+                : `Recebido · lançado ${brl(mes.lancado)}`}
           </p>
         </div>
         <div className="grid content-start gap-2">
@@ -472,6 +479,13 @@ function RecurringCard({
           ) : (
             <p className="text-[14px] text-mute">Nenhuma entrega fixa cadastrada.</p>
           )}
+          {mes.cards.total ? (
+            <Link href="/painel/pauta" className="flex w-fit items-center gap-1 text-[12px] text-ash hover:text-white">
+              Na Pauta: {mes.cards.prontas} de {mes.cards.total} {mes.cards.prontas === 1 ? "pronta" : "prontas"} <ArrowUpRight className="size-3" />
+            </Link>
+          ) : r.deliverables.length && r.autoPauta !== false ? (
+            <p className="text-[12px] text-mute">Os cards entram sozinhos na Pauta</p>
+          ) : null}
         </div>
       </div>
     </Card>
