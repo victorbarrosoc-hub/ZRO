@@ -4,7 +4,7 @@ import { and, asc, desc, eq, gte, inArray, lte, or, sql, type SQL } from "drizzl
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
 
-const { leads, clients, activities, users, quotes, quoteItems, projects, financeEntries, events } = schema;
+const { leads, clients, activities, users, quotes, quoteItems, projects, financeEntries, events, quadroCards } = schema;
 
 /* ---------------- Busca ---------------- */
 
@@ -280,12 +280,17 @@ export type ProjectRow = Awaited<ReturnType<typeof projectsWhere>>[number];
 const DIA_MS = 86_400_000;
 const diaUTC = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
 
+/** Colunas da Pauta em que a entrega já está pronta (o cliente aprovou ou já saiu). */
+const PRONTAS = ["aprovado", "agendado", "publicado"];
+
 /**
  * O mês corrente do contrato recorrente: diárias de captação nos projetos do cliente
- * (as que já passaram e as que ainda vêm, contando cada dia dentro do mês) e o que
- * foi lançado e recebido de entrada do cliente com vencimento no mês.
+ * (as que já passaram e as que ainda vêm, contando cada dia dentro do mês), o que
+ * foi lançado e recebido de entrada do cliente com vencimento no mês e os cards
+ * que o contrato pôs na Pauta neste mês (quantos já estão prontos).
  */
 export async function recurringMonth(
+  clientId: string,
   projectIds: string[],
   entries: { amount: number; paidAmount: number; dueDate: string }[],
 ) {
@@ -296,32 +301,86 @@ export async function recurringMonth(
   const doMes = entries.filter((e) => e.dueDate.startsWith(mes));
   let feitas = 0;
   let agendadas = 0;
-  if (projectIds.length) {
-    const rows = await db
-      .select({ date: events.date, endDate: events.endDate })
-      .from(events)
+  const [diarias, cards] = await Promise.all([
+    projectIds.length
+      ? db
+          .select({ date: events.date, endDate: events.endDate })
+          .from(events)
+          .where(
+            and(
+              inArray(events.projectId, projectIds),
+              eq(events.type, "diaria"),
+              lte(events.date, fim),
+              sql`coalesce(${events.endDate}, ${events.date}) >= ${inicio}`,
+            ),
+          )
+      : Promise.resolve([]),
+    db
+      .select({ coluna: sql<string>`${quadroCards.dados}->>'coluna'` })
+      .from(quadroCards)
       .where(
         and(
-          inArray(events.projectId, projectIds),
-          eq(events.type, "diaria"),
-          lte(events.date, fim),
-          sql`coalesce(${events.endDate}, ${events.date}) >= ${inicio}`,
+          eq(quadroCards.org, "zro"),
+          sql`${quadroCards.dados}->>'recorrente' = ${mes}`,
+          sql`${quadroCards.dados}->>'cliente' = ${clientId}`,
+          sql`${quadroCards.dados}->'apagadoEm' is null`,
         ),
-      );
-    for (const r of rows) {
-      const de = Math.max(diaUTC(r.date), diaUTC(inicio));
-      const ate = Math.min(diaUTC(r.endDate ?? r.date), diaUTC(fim));
-      for (let d = de; d <= ate; d += DIA_MS) {
-        if (d <= diaUTC(hoje)) feitas++;
-        else agendadas++;
-      }
+      ),
+  ]);
+  for (const r of diarias) {
+    const de = Math.max(diaUTC(r.date), diaUTC(inicio));
+    const ate = Math.min(diaUTC(r.endDate ?? r.date), diaUTC(fim));
+    for (let d = de; d <= ate; d += DIA_MS) {
+      if (d <= diaUTC(hoje)) feitas++;
+      else agendadas++;
     }
   }
+  const emAberto = doMes.filter((e) => e.paidAmount < e.amount).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   return {
     mes,
+    hoje,
     feitas,
     agendadas,
     lancado: doMes.reduce((n, e) => n + e.amount, 0),
     recebido: doMes.reduce((n, e) => n + e.paidAmount, 0),
+    /** vencimento mais próximo do que ainda falta receber no mês */
+    vence: emAberto[0]?.dueDate ?? null,
+    cards: { total: cards.length, prontas: cards.filter((c) => PRONTAS.includes(c.coluna)).length },
   };
+}
+
+export type RecurringMonth = Awaited<ReturnType<typeof recurringMonth>>;
+
+/** Os contratos recorrentes em vigor, com o mês corrente de cada um (Visão geral). */
+export async function getRecurringOverview() {
+  const mes = todayISO().slice(0, 7);
+  const rows = await db
+    .select({ id: clients.id, name: clients.name, logoId: clients.logoId, recurring: clients.recurring })
+    .from(clients)
+    .where(sql`${clients.recurring} is not null`)
+    .orderBy(asc(clients.name));
+  const ativos = rows.filter((c) => c.recurring && !(c.recurring.startMonth && c.recurring.startMonth > mes));
+  if (!ativos.length) return { total: 0, clientes: [] };
+  const ids = ativos.map((c) => c.id);
+  const [projs, entradas] = await Promise.all([
+    db.select({ id: projects.id, clientId: projects.clientId }).from(projects).where(inArray(projects.clientId, ids)),
+    db
+      .select({ clientId: financeEntries.clientId, amount: financeEntries.amount, paidAmount: financeEntries.paidAmount, dueDate: financeEntries.dueDate })
+      .from(financeEntries)
+      .where(and(inArray(financeEntries.clientId, ids), eq(financeEntries.kind, "entrada"), sql`${financeEntries.dueDate} like ${`${mes}-%`}`)),
+  ]);
+  const clientes = await Promise.all(
+    ativos.map(async (c) => ({
+      id: c.id,
+      name: c.name,
+      logoId: c.logoId,
+      r: c.recurring!,
+      mes: await recurringMonth(
+        c.id,
+        projs.filter((p) => p.clientId === c.id).map((p) => p.id),
+        entradas.filter((e) => e.clientId === c.id),
+      ),
+    })),
+  );
+  return { total: clientes.reduce((n, c) => n + c.r.value, 0), clientes };
 }

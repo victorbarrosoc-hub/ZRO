@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { after } from "next/server";
 import { PainelShell } from "@/components/painel/shell";
 import { requireUser } from "@/lib/auth/dal";
+import { conferirRecorrentes } from "@/lib/services/recurring";
 
 export const metadata: Metadata = {
   title: { default: "Área interna", template: "%s · Área interna ZRO" },
@@ -21,5 +23,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PainelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  // virou o mês: a cobrança e os cards dos contratos recorrentes saem sozinhos (depois da resposta)
+  after(() => conferirRecorrentes(user.id));
   return <PainelShell user={{ name: user.name, email: user.email, photoId: user.photoId }}>{children}</PainelShell>;
 }

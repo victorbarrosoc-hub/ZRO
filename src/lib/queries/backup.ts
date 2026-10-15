@@ -37,6 +37,7 @@ const TABLES = {
   activities: s.activities,
   financeEntries: s.financeEntries,
   financePayments: s.financePayments,
+  recurringRuns: s.recurringRuns,
   projectChecklists: s.projectChecklists,
   callSheets: s.callSheets,
   scripts: s.scripts,
