@@ -187,10 +187,14 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
     return parar;
   }, [store, cfg]);
 
-  // no celular, a aba da coluna à vista fica centralizada
+  // no celular, a aba da coluna à vista fica centralizada: rola só a fileira de abas
+  // (scrollIntoView também empurrava a página para o lado no iPhone)
   useEffect(() => {
     if (!mobile) return;
-    document.querySelector(".q-aba-col.on")?.scrollIntoView({ inline: "center", block: "nearest" });
+    const aba = document.querySelector<HTMLElement>(".q-aba-col.on");
+    const fila = aba?.parentElement;
+    if (!aba || !fila) return;
+    fila.scrollTo({ left: aba.offsetLeft - (fila.clientWidth - aba.offsetWidth) / 2, behavior: "smooth" });
   }, [ui.colMovel, mobile]);
 
   /* ---------------- arrastar, tocar, clicar, teclar ---------------- */

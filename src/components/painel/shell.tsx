@@ -28,7 +28,8 @@ export function PainelShell({ user, children }: { user: ShellUser; children: Rea
   }
 
   return (
-    <div className="relative min-h-dvh">
+    // overflow-x-clip: nada no painel faz a página rolar para o lado (no iPhone ela escorregava)
+    <div className="relative min-h-dvh overflow-x-clip">
       <div className="zro-grain zro-grain--soft" aria-hidden />
       <div
         className="pointer-events-none fixed top-0 left-0 -z-0 h-[520px] w-[720px] bg-[radial-gradient(closest-side,rgb(255_255_255/0.035),transparent)]"
