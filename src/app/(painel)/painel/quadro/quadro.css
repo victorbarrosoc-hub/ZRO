@@ -133,7 +133,9 @@ button.q-chip:hover{ filter:brightness(1.25) }
   .q-aba-col span{ color:var(--q-texto-3) }
   .q-aba-col.on{ background:color-mix(in srgb, var(--cc) 30%, var(--q-superficie)); color:var(--q-texto) }
   .q-desc-m{ display:block; margin:2px 0 8px; color:var(--q-texto-3); font-size:12.5px }
-  .q-quadro{ display:block; padding:0 0 120px; overflow:visible }
+  /* a coluna que entra deslizando nunca alarga a página (senão o iPhone escorrega a tela para o lado);
+     deslize lateral fica com o Quadro, a rolagem vertical continua com o navegador */
+  .q-quadro{ display:block; padding:0 0 120px; overflow-x:hidden; overflow-x:clip; touch-action:pan-y }
   .q-col{ display:none; max-height:none; background:none; border:0; padding:0 }
   .q-col.on{ display:flex }
   .q-col .q-col-hd, .q-col .q-col-desc{ display:none }
