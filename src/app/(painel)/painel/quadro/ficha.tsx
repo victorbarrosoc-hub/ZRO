@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ProximoPasso } from "./cartao";
 import { cc, useQ, type AbaFicha } from "./contexto";
 import { COLUNAS, clone, linkSeguro, novoId, quando, type Card, type ColKey, type Mensagem, type Metodo, type Pessoa } from "./metodo";
+import { CampoProjeto, PastasDaPeca } from "./pastas-peca";
 import { PreviaLink } from "./previa-link";
 
 /** Campos à espera de gravar ("card:campo" → timer). Fica fora da tela: fechar a ficha não perde o que foi digitado. */
@@ -270,7 +271,8 @@ function FichaDentro({ c }: { c: Card }) {
           onChange={(ev) => {
             const v = ev.currentTarget.value;
             if (v === (c.cliente || "")) return;
-            if (!c.cliente) mudar({ cliente: v });
+            // o projeto é do cliente: trocar de cliente volta o projeto para o automático
+            if (!c.cliente) mudar({ cliente: v, projeto: null });
             else up({ troca: v });
           }}
         >
@@ -284,6 +286,8 @@ function FichaDentro({ c }: { c: Card }) {
         </select>
       </label>
 
+      <CampoProjeto c={c} />
+
       {ui.troca ? (
         <div className="q-troca">
           <p>
@@ -295,7 +299,7 @@ function FichaDentro({ c }: { c: Card }) {
               className="q-pil prim"
               data-acao="troca-sim"
               onClick={() => {
-                mudar({ cliente: ui.troca, trocouDe: c.cliente || null, trocouEm: Date.now() });
+                mudar({ cliente: ui.troca, trocouDe: c.cliente || null, trocouEm: Date.now(), projeto: null });
                 up({ troca: null });
               }}
             >
@@ -391,6 +395,7 @@ function FichaDentro({ c }: { c: Card }) {
         </>
       ) : null}
 
+      {aba === "peca" ? <PastasDaPeca c={c} /> : null}
       {aba === "peca" ? (
         <div className="q-bloco">
           <h4>
