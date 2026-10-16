@@ -19,7 +19,7 @@ export const MAX_TAMANHO = 5 * 1024 ** 4;
 export type FonteChave = "cam-a" | "cam-b" | "cam-c" | "drone" | "cam-e" | "foto" | "gravador";
 
 export type Destino =
-  | { tipo: "pasta"; pastaId: string } // painel
+  | { tipo: "pasta"; pastaId: string; cardId?: string } // painel (cardId: "Enviar aqui" da ficha da Pauta)
   | {
       tipo: "cartao";
       fonte: FonteChave;
@@ -29,7 +29,8 @@ export type Destino =
       decisao?: "continuar" | "novo";
       continuarLoteId?: string;
     } // freela
-  | { tipo: "cliente"; projetoId: string | null; assunto: string; consentimento: true }; // cliente
+  | { tipo: "cliente"; projetoId: string | null; assunto: string; consentimento: true } // cliente
+  | { tipo: "card"; pessoa: { freelancerId: string } | { nome: string } }; // freela, link de um card da Pauta (a pasta vem do link)
 
 export type PedidoLote = { op: "lote"; destino: Destino; arquivos: number; bytes: number; impressao: string };
 export type RespLote =
@@ -206,7 +207,7 @@ const idDrive = z.string().regex(/^(root|[A-Za-z0-9_-]{10,128})$/);
 const inteiro = (max: number) => z.number().int().min(0).max(max);
 
 const destino = z.discriminatedUnion("tipo", [
-  z.object({ tipo: z.literal("pasta"), pastaId: idDrive }).strict(),
+  z.object({ tipo: z.literal("pasta"), pastaId: idDrive, cardId: z.string().regex(/^[A-Za-z0-9_-]{4,64}$/).optional() }).strict(),
   z
     .object({
       tipo: z.literal("cartao"),
@@ -227,6 +228,15 @@ const destino = z.discriminatedUnion("tipo", [
       projetoId: z.string().min(1).max(64).nullable(),
       assunto: z.string().max(200),
       consentimento: z.literal(true),
+    })
+    .strict(),
+  z
+    .object({
+      tipo: z.literal("card"),
+      pessoa: z.union([
+        z.object({ freelancerId: z.string().min(1).max(64) }).strict(),
+        z.object({ nome: z.string().max(200) }).strict(),
+      ]),
     })
     .strict(),
 ]);

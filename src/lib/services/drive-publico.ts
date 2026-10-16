@@ -8,6 +8,7 @@ import { dateLong, monthLong, todayISO, weekdayShort } from "@/lib/format";
 import { contaAtual, driveConectado } from "@/lib/google/conexao";
 import { ehPrevia } from "@/lib/google/previa";
 import { getSetting } from "@/lib/settings";
+import { freelaDoCard, lerCard, tituloDoCard } from "./drive-card";
 import { entregasDoProjeto, type EntregaArquivo } from "./drive-entregas";
 import { areaPedeSenha, buscarLinkPorToken, estadoDoLink, type TipoLink } from "./drive-links";
 
@@ -40,10 +41,26 @@ export type DadosArea = {
   enviadoHoje: number;
 };
 
+/** Link de um card da Pauta: a peça final vai direto para a pasta do link. */
+export type DadosCard = {
+  cliente: string | null;
+  projeto: string | null;
+  /** O tema do card ("Verão em Pipa"). */
+  titulo: string;
+  /** Primeiro formato do card ("Reels"), quando tem. */
+  formato: string | null;
+  /** "06 Entregas / Redes" | "05 Render". */
+  destino: string;
+  /** O freela responsável pelo card, como a página mostra ("Rafael M."). */
+  responsavel: { id: string; rotulo: string } | null;
+  expiraEm: string | null;
+};
+
 export type LinkPublico =
   | { estado: "expirado" | "desativado" | "indisponivel"; whatsapp: string | null }
   | { estado: "senha"; linkId: string }
   | { estado: "ok"; tipo: "freela-diaria"; linkId: string; diaria: DadosDiaria }
+  | { estado: "ok"; tipo: "freela-card"; linkId: string; card: DadosCard }
   | { estado: "ok"; tipo: "cliente-area"; linkId: string; area: DadosArea };
 
 /** "Rafael Moura" → "Rafael M." */
@@ -62,14 +79,40 @@ function dataLonga(iso: string): string {
 }
 
 /** null = token fora do formato, não achado ou de outro tipo (a página dá 404). */
-export async function abrirLinkPublico(token: string, tipo: TipoLink): Promise<LinkPublico | null> {
+export async function abrirLinkPublico(token: string, tipos: TipoLink | readonly TipoLink[]): Promise<LinkPublico | null> {
   if (ehPrevia()) return null;
-  const link = await buscarLinkPorToken(token, tipo);
+  const link = await buscarLinkPorToken(token, tipos);
   if (!link) return null;
+  const tipo = link.tipo as TipoLink;
   const whatsapp = (await getSetting("whatsapp")).number || null;
   const estado = estadoDoLink(link);
   if (estado === "desativado") return { estado: "desativado", whatsapp };
   if (estado === "expirado") return { estado: "expirado", whatsapp };
+
+  if (tipo === "freela-card") {
+    const card = link.cardId ? await lerCard(link.cardId) : null;
+    if (!card || card.apagadoEm || !link.destinoPastaId || !(await driveConectado())) return { estado: "indisponivel", whatsapp };
+    const { tema, cliente } = await tituloDoCard(card);
+    const projeto = link.projectId
+      ? await db.query.projects.findFirst({ where: eq(projects.id, link.projectId), columns: { title: true } })
+      : undefined;
+    const f = await freelaDoCard(card);
+    const formatos = Array.isArray(card.formatos) ? card.formatos.filter((x): x is string => typeof x === "string") : [];
+    return {
+      estado: "ok",
+      tipo: "freela-card",
+      linkId: link.id,
+      card: {
+        cliente,
+        projeto: projeto?.title ?? null,
+        titulo: tema,
+        formato: cliente ? (formatos[0] ?? null) : null,
+        destino: link.destinoRotulo ?? "a pasta da ZRO",
+        responsavel: f ? { id: f.id, rotulo: nomeCurto(f.nome) } : null,
+        expiraEm: link.expiraEm ? link.expiraEm.toISOString() : null,
+      },
+    };
+  }
 
   if (tipo === "freela-diaria") {
     const evento = link.eventId ? await db.query.events.findFirst({ where: eq(events.id, link.eventId) }) : undefined;

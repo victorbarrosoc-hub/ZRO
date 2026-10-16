@@ -51,6 +51,7 @@ import {
 } from "@/lib/google/drive";
 import { GoogleError } from "@/lib/google/erros";
 import { logClientActivity, logProjectActivity } from "./activity";
+import { destinosDoProjeto, freelaDoCard, lerCard, projetoDoCard, registrarEnvioNoCard, tituloDoCard } from "./drive-card";
 import type { LinkLinha } from "./drive-links";
 import {
   diariaDoEvento,
@@ -74,7 +75,7 @@ const { driveLotes, driveEnvios, driveProjetos, driveDiarias, events, eventCrew,
 
 export type Escopo =
   | { origem: "painel"; userId: string }
-  | { origem: "freela"; link: LinkLinha } // tipo freela-diaria
+  | { origem: "freela"; link: LinkLinha } // tipo freela-diaria ou freela-card
   | { origem: "cliente"; link: LinkLinha; clientId: string }; // tipo cliente-area, cookie ok (se tiver senha)
 
 type Lote = typeof driveLotes.$inferSelect;
@@ -240,21 +241,47 @@ export async function abrirLote(p: PedidoLote, escopo: Escopo, origemNavegador: 
     /* ---------- painel: uma pasta do Drive ---------- */
     if (escopo.origem === "painel") {
       if (d.tipo !== "pasta" || !idDriveValido(d.pastaId)) return respErro("formato", v);
+      // "Enviar aqui" da ficha da Pauta: a pasta precisa ser uma das do projeto do card (o card recebe os links).
+      let doCard: { cardId: string; rotulo: string } | null = null;
+      if (d.cardId) {
+        const card = await lerCard(d.cardId);
+        const projeto = card && !card.apagadoEm ? await projetoDoCard(card) : null;
+        const destino = projeto ? (await destinosDoProjeto(projeto.id)).find((x) => x.pastaId === d.pastaId) : undefined;
+        if (!destino) return respErro("formato", v, "Esta pasta não é do projeto do card. Recarregue a Pauta.");
+        doCard = { cardId: d.cardId, rotulo: destino.rotulo };
+      }
       const a = await arquivoOuNull(d.pastaId);
       if (!a || !a.pasta || a.lixeira) return respErro("pasta", v);
       if (!a.podeAdicionar) return respErro("pasta", v, "A conta conectada não pode enviar para esta pasta.");
       const igual = await mesmoLote(eq(driveLotes.origem, "painel"), eq(driveLotes.pastaId, a.id), eq(driveLotes.impressao, p.impressao));
-      if (igual) return retomar(igual);
+      if (igual) {
+        if (doCard && !igual.cardId) await db.update(driveLotes).set({ cardId: doCard.cardId, rotulo: doCard.rotulo }).where(eq(driveLotes.id, igual.id));
+        return retomar(igual);
+      }
       const trilha = await caminhoDaPasta(a.id).catch(() => [{ id: a.id, nome: a.nome }]);
+      const quem = doCard ? await db.query.users.findFirst({ where: eq(schema.users.id, escopo.userId), columns: { name: true } }) : undefined;
       const [l] = await db
         .insert(driveLotes)
-        .values({ ...comum, origem: "painel", userId: escopo.userId, pastaId: a.id, rotulo: a.nome || "Meu Drive", caminho: trilha.map((t) => t.nome).join(" / ") })
+        .values({
+          ...comum,
+          origem: "painel",
+          userId: escopo.userId,
+          pastaId: a.id,
+          rotulo: doCard?.rotulo ?? (a.nome || "Meu Drive"),
+          caminho: trilha.map((t) => t.nome).join(" / "),
+          ...(doCard ? { cardId: doCard.cardId, pessoaNome: quem?.name ?? null } : {}),
+        })
         .returning();
       return lotePronto(l, false);
     }
 
     // Links públicos: cada lote cria pastas no Drive; um teto por hora segura quem abusar do link.
     if ((await lotesNaUltimaHora(escopo.link.id)) >= LOTES_POR_HORA) return respErro("muitas_tentativas", v);
+
+    /* ---------- freela: a peça final de um card da Pauta ---------- */
+    if (escopo.origem === "freela" && escopo.link.tipo === "freela-card") {
+      return await abrirLoteDoCard(p, escopo.link, comum, v, agora);
+    }
 
     /* ---------- freela: um cartão da diária ---------- */
     if (escopo.origem === "freela") {
@@ -471,6 +498,77 @@ export async function abrirLote(p: PedidoLote, escopo: Escopo, origemNavegador: 
     if (e instanceof GoogleError && e.motivo === "nao_encontrado" && escopo.origem === "freela") return respErro("link_inativo", v);
     return erroDe(e, v);
   }
+}
+
+/**
+ * Link de um card: sem rolo e sem pergunta de cartão. A pasta é a do link (06 Entregas/<seção> ou
+ * 05 Render, gravada pelo painel); nada do navegador escolhe pasta. Os arquivos entram com o nome
+ * original (uma pasta escolhida entra inteira, com a estrutura).
+ */
+async function abrirLoteDoCard(
+  p: PedidoLote,
+  link: LinkLinha,
+  comum: { impressao: string; arquivosPrevistos: number; bytesPrevistos: number; ultimoSinalEm: Date },
+  v: Voz,
+  agora: Date,
+): Promise<RespLote | RespErro> {
+  const d = p.destino;
+  if (d.tipo !== "card") return respErro("formato", v);
+  if (link.revogadoEm || (link.expiraEm && link.expiraEm <= agora)) return respErro("link_inativo", v);
+  if (!link.cardId || !link.destinoPastaId) return respErro("link_inativo", v);
+  const card = await lerCard(link.cardId);
+  if (!card || card.apagadoEm) return respErro("link_inativo", v);
+
+  // Quem é: o freela responsável pelo card, ou um nome digitado.
+  let freelancerId: string | null = null;
+  let pessoaNome: string;
+  if ("freelancerId" in d.pessoa) {
+    const f = await freelaDoCard(card);
+    if (!f || f.id !== d.pessoa.freelancerId) return respErro("formato", v, "Digite o seu nome.");
+    freelancerId = f.id;
+    pessoaNome = nomePasta(f.nome, 60);
+  } else {
+    const nome = d.pessoa.nome.trim();
+    if (nome.length < 2 || nome.length > 60) return respErro("formato", v, "Digite o seu nome.");
+    pessoaNome = nomePasta(nome, 60);
+  }
+
+  const a = await arquivoOuNull(link.destinoPastaId);
+  if (!a || !a.pasta || a.lixeira) return respErro("pasta", v);
+  const igual = await mesmoLote(
+    eq(driveLotes.origem, "freela"),
+    eq(driveLotes.linkId, link.id),
+    eq(driveLotes.pastaId, a.id),
+    eq(driveLotes.impressao, p.impressao),
+  );
+  if (igual) return retomar(igual);
+  if (link.limiteBytes != null) {
+    const usados = await bytesDoLink(link.id);
+    if (usados + p.bytes > link.limiteBytes) {
+      const cabem = Math.max(0, link.limiteBytes - usados);
+      return respErro("limite_link", v, textoLimiteLink(bytesBR(link.limiteBytes), bytesBR(cabem)), cabem);
+    }
+  }
+  const dp = link.projectId ? await driveProjetoAtual(link.projectId) : undefined;
+  const destino = link.destinoRotulo ?? a.nome;
+  const [l] = await db
+    .insert(driveLotes)
+    .values({
+      ...comum,
+      origem: "freela",
+      linkId: link.id,
+      cardId: link.cardId,
+      projectId: link.projectId,
+      clientId: link.clientId,
+      driveProjetoId: dp?.id ?? null,
+      freelancerId,
+      pessoaNome,
+      pastaId: a.id,
+      rotulo: `${destino} · ${pessoaNome}`,
+      caminho: [dp?.caminho, destino].filter(Boolean).join(" / "),
+    })
+    .returning();
+  return lotePronto(l, false);
 }
 
 /* ============================== iniciar ============================== */
@@ -797,6 +895,13 @@ function plural(n: number, um: string, varios: string) {
 /** Histórico do CRM (uma vez por lote, travado por avisadoEm). */
 async function gravarHistorico(l: Lote, arquivos: number, bytes: number, faltam: number) {
   const resumo = `${plural(arquivos, "arquivo", "arquivos")}, ${bytesBR(bytes)}${faltam > 0 ? ` (faltaram ${plural(faltam, "arquivo", "arquivos")})` : ""}.`;
+  if (l.origem === "freela" && l.cardId) {
+    const card = await lerCard(l.cardId);
+    const titulo = card ? (await tituloDoCard(card)).titulo : "um card da Pauta";
+    const destino = l.rotulo.split(" · ")[0];
+    await logProjectActivity(l.projectId, "arquivos", `${l.pessoaNome ?? "Freela"} enviou a peça de “${titulo}” para ${destino}: ${resumo}`);
+    return;
+  }
   if (l.origem === "freela") {
     const d = l.diariaId ? await db.query.driveDiarias.findFirst({ where: eq(driveDiarias.id, l.diariaId) }) : undefined;
     const diaria = d ? ` · ${rotuloDiaria(d.numero)}` : "";
@@ -849,6 +954,11 @@ async function fecharLoteInterno(loteId: string, cancelou = false): Promise<Resp
       .where(and(eq(driveLotes.id, loteId), isNull(driveLotes.avisadoEm)))
       .returning({ id: driveLotes.id });
     if (aviso) await gravarHistorico(l, concluidos, bytes, faltam).catch(() => {});
+  }
+  // Link de card: a conversa e os links do card (idempotente; roda a cada fechamento, então um
+  // arquivo que chegou depois de um "Tentar de novo" também entra).
+  if (l.cardId && estado !== "cancelado" && concluidos > 0) {
+    await registrarEnvioNoCard(l.id).catch((e) => console.error("[drive]", "card", e instanceof Error ? e.name : "erro"));
   }
   return { ok: true, estado, arquivos: concluidos, bytes, faltam };
 }

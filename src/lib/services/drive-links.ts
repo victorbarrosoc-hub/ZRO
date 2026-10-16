@@ -7,23 +7,32 @@ import { db, schema } from "@/lib/db";
 import { GB } from "@/lib/drive/bytes";
 import { rotuloDiaria } from "@/lib/drive/estrutura";
 import { ipDe, permitirIp } from "@/lib/drive/limites";
-import { addDaysISO, dateBR } from "@/lib/format";
+import { addDaysISO, dateBR, todayISO } from "@/lib/format";
 import { driveConectado } from "@/lib/google/conexao";
 import { abrir, ChaveErrada, chaveDerivada, FORMATO_TOKEN, hashToken, novoToken, selar } from "@/lib/google/cripto";
 import { GoogleError } from "@/lib/google/erros";
 import { SITE_URL } from "@/lib/site-url";
+import {
+  destinosDoProjeto,
+  freelaDoCard,
+  lerCard,
+  projetoDoCard,
+  tituloDoCard,
+  type ChaveDestino,
+} from "./drive-card";
 import { cancelarEnviosDoLink } from "./drive-envios";
 import { diariaDoEvento, type DiariaDTO } from "./drive-pastas";
 
 /**
- * Links públicos (docs/dev/drive.md §12.1): um por diária (freela) e um por cliente (área).
+ * Links públicos (docs/dev/drive.md §12.1 e §15): um por diária (freela), um por cliente (área) e um
+ * por card da Pauta (freela que sobe a peça final).
  * Token de 256 bits; o banco guarda o hash (busca) e a cifra (o painel mostra o link de novo).
  * Nunca apagados: desativar = revogadoEm.
  */
 
 const { driveLinks, driveLotes, driveDiarias, events, projects, clients, loginAttempts } = schema;
 
-export type TipoLink = "freela-diaria" | "cliente-area";
+export type TipoLink = "freela-diaria" | "cliente-area" | "freela-card";
 export type LinkLinha = typeof driveLinks.$inferSelect;
 
 export type LinkDTO = {
@@ -37,6 +46,9 @@ export type LinkDTO = {
   rotulo: string;
   criadoEm: Date;
   ultimoUsoEm: Date | null;
+  /** freela-card: o card e o destino ("06 Entregas / Redes"). */
+  cardId: string | null;
+  destinoRotulo: string | null;
 };
 
 /** Limite padrão da área do cliente: 50 GB por dia. */
@@ -53,7 +65,7 @@ function urlDoLink(l: LinkLinha): string | null {
   if (l.revogadoEm || !l.tokenEnc) return null;
   try {
     const token = abrir(l.tokenEnc, CONTEXTO_TOKEN(l.id));
-    return `${SITE_URL}/${l.tipo === "freela-diaria" ? "enviar" : "cliente"}/${token}`;
+    return `${SITE_URL}/${l.tipo === "cliente-area" ? "cliente" : "enviar"}/${token}`;
   } catch (e) {
     if (e instanceof ChaveErrada) return null; // chave trocada: "Trocar link" gera outro
     throw e;
@@ -72,16 +84,19 @@ export function paraDTO(l: LinkLinha): LinkDTO {
     rotulo: l.rotulo,
     criadoEm: l.criadoEm,
     ultimoUsoEm: l.ultimoUsoEm,
+    cardId: l.cardId,
+    destinoRotulo: l.destinoRotulo,
   };
 }
 
-/** Link pelo token (formato conferido antes). Só do tipo pedido. */
-export async function buscarLinkPorToken(token: string, tipo: TipoLink): Promise<LinkLinha | null> {
+/** Link pelo token (formato conferido antes). Só do tipo (ou dos tipos) pedido. */
+export async function buscarLinkPorToken(token: string, tipo: TipoLink | readonly TipoLink[]): Promise<LinkLinha | null> {
   if (!FORMATO_TOKEN.test(token)) return null;
+  const tipos = typeof tipo === "string" ? [tipo] : [...tipo];
   const [l] = await db
     .select()
     .from(driveLinks)
-    .where(and(eq(driveLinks.tokenHash, hashToken(token)), eq(driveLinks.tipo, tipo)))
+    .where(and(eq(driveLinks.tokenHash, hashToken(token)), inArray(driveLinks.tipo, tipos)))
     .limit(1);
   return l ?? null;
 }
@@ -207,6 +222,110 @@ export async function areaDoCliente(
   return { ok: true, link: link ? paraDTO(link) : null };
 }
 
+/* ============================== Card da Pauta (freela) ============================== */
+
+/** Validade padrão do link do card: 23:59:59 em Natal, 30 dias depois de hoje. */
+export function validadePadraoDoCard(hoje = todayISO()): Date {
+  return new Date(`${addDaysISO(hoje, 30)}T23:59:59-03:00`);
+}
+
+export type EstadoLinkCard = {
+  /** O mais recente do card (mesmo expirado ou desativado). */
+  link: LinkDTO | null;
+  /** O projeto do card agora (pode ser outro que o do link, se o card mudou). */
+  projeto: { id: string; titulo: string } | null;
+  /** Onde a peça pode cair, na pasta do projeto (vazio: sem pasta no Drive). */
+  destinos: { chave: ChaveDestino; rotulo: string }[];
+  /** "SERHS · Reels · Verão em Pipa". */
+  titulo: string;
+  /** O freela responsável pelo card (para o WhatsApp). */
+  freela: { nome: string; telefone: string | null } | null;
+};
+
+async function ultimoLinkDoCard(cardId: string): Promise<LinkLinha | undefined> {
+  const [l] = await db
+    .select()
+    .from(driveLinks)
+    .where(and(eq(driveLinks.cardId, cardId), eq(driveLinks.tipo, "freela-card")))
+    .orderBy(desc(driveLinks.criadoEm))
+    .limit(1);
+  return l;
+}
+
+/**
+ * O link de envio do card (o mais recente). `criar`: gera um ativo para o destino escolhido se não
+ * houver (ou se o último expirou ou foi desativado). A pasta vem da estrutura do projeto no banco,
+ * nunca do navegador. Um ativo por card (índice parcial); nunca apagado.
+ */
+export async function linkDoCard(
+  cardId: string,
+  o: { userId: string; criar?: { destino: ChaveDestino } },
+): Promise<({ ok: true } & EstadoLinkCard) | { ok: false; mensagem: string }> {
+  const card = await lerCard(cardId);
+  if (!card || card.apagadoEm) return { ok: false, mensagem: "Card não encontrado." };
+  const projeto = await projetoDoCard(card);
+  const destinos = projeto ? await destinosDoProjeto(projeto.id) : [];
+  const { titulo } = await tituloDoCard(card);
+  const f = await freelaDoCard(card);
+
+  let link = await ultimoLinkDoCard(cardId);
+  if (o.criar && (!link || estadoDoLink(link) !== "ativo")) {
+    if (!(await driveConectado())) return { ok: false, mensagem: "Conecte o Google Drive em Ajustes." };
+    if (!projeto) return { ok: false, mensagem: "Escolha o projeto do card." };
+    const destino = destinos.find((d) => d.chave === o.criar!.destino);
+    if (!destino) return { ok: false, mensagem: "Este projeto ainda não tem pasta no Drive." };
+    // Um expirado ainda ocupa a vaga de "ativo" no índice: sai antes do novo entrar.
+    if (link && !link.revogadoEm) {
+      await db.update(driveLinks).set({ revogadoEm: new Date(), revogadoPorId: o.userId }).where(eq(driveLinks.id, link.id));
+    }
+    try {
+      link = await inserirLink({
+        tipo: "freela-card",
+        cardId,
+        projectId: projeto.id,
+        clientId: projeto.clientId,
+        rotulo: titulo.slice(0, 300),
+        destinoPastaId: destino.pastaId,
+        destinoRotulo: destino.rotulo,
+        expiraEm: validadePadraoDoCard(),
+        limiteBytes: null,
+        criadoPorId: o.userId,
+      });
+    } catch {
+      link = await ultimoLinkDoCard(cardId); // dois cliques ao mesmo tempo: fica o que entrou primeiro
+    }
+  }
+  return {
+    ok: true,
+    link: link ? paraDTO(link) : null,
+    projeto: projeto ? { id: projeto.id, titulo: projeto.title } : null,
+    destinos: destinos.map((d) => ({ chave: d.chave, rotulo: d.rotulo })),
+    titulo,
+    freela: f ? { nome: f.nome, telefone: f.phone } : null,
+  };
+}
+
+/**
+ * "Trocar destino": o mesmo link (o freela não precisa de outro) passa a mandar para outra pasta do
+ * projeto do card. Lotes já abertos continuam onde estavam.
+ */
+export async function trocarDestinoDoCard(linkId: string, chave: ChaveDestino): Promise<{ ok: true } | { ok: false; mensagem: string }> {
+  const link = await db.query.driveLinks.findFirst({ where: eq(driveLinks.id, linkId) });
+  if (!link || link.tipo !== "freela-card" || !link.cardId) return { ok: false, mensagem: "Link não encontrado." };
+  if (link.revogadoEm) return { ok: false, mensagem: "Este link está desativado. Gere um novo." };
+  const card = await lerCard(link.cardId);
+  if (!card || card.apagadoEm) return { ok: false, mensagem: "Card não encontrado." };
+  const projeto = await projetoDoCard(card);
+  if (!projeto) return { ok: false, mensagem: "Escolha o projeto do card." };
+  const destino = (await destinosDoProjeto(projeto.id)).find((d) => d.chave === chave);
+  if (!destino) return { ok: false, mensagem: "Este projeto ainda não tem pasta no Drive." };
+  await db
+    .update(driveLinks)
+    .set({ destinoPastaId: destino.pastaId, destinoRotulo: destino.rotulo, projectId: projeto.id, clientId: projeto.clientId })
+    .where(and(eq(driveLinks.id, link.id), isNull(driveLinks.revogadoEm)));
+  return { ok: true };
+}
+
 /* ============================== Mudanças no link ============================== */
 
 /** Gera outro token: o link antigo para de funcionar (envios já iniciados terminam). */
@@ -218,7 +337,7 @@ export async function trocarLink(linkId: string, userId: string): Promise<LinkDT
   if (expiraEm && expiraEm <= new Date()) {
     const evento = antigo.eventId ? await db.query.events.findFirst({ where: eq(events.id, antigo.eventId) }) : undefined;
     const padrao = evento ? validadePadraoDaDiaria(evento) : null;
-    expiraEm = padrao && padrao > new Date() ? padrao : new Date(Date.now() + 30 * 24 * 60 * 60_000);
+    expiraEm = padrao && padrao > new Date() ? padrao : antigo.tipo === "freela-card" ? validadePadraoDoCard() : new Date(Date.now() + 30 * 24 * 60 * 60_000);
   }
   const id = crypto.randomUUID();
   const token = novoToken();
@@ -238,6 +357,9 @@ export async function trocarLink(linkId: string, userId: string): Promise<LinkDT
         projectId: antigo.projectId,
         clientId: antigo.clientId,
         rotulo: antigo.rotulo,
+        cardId: antigo.cardId,
+        destinoPastaId: antigo.destinoPastaId,
+        destinoRotulo: antigo.destinoRotulo,
         expiraEm,
         limiteBytes: antigo.limiteBytes,
         criadoPorId: userId,
@@ -306,6 +428,12 @@ export async function revogarLinksDe(ref: { projectId?: string; eventId?: string
 export function textoWhatsAppDiaria(i: { data: string; projeto: string; url: string }): string {
   const [, m, d] = i.data.slice(0, 10).split("-");
   return `Link para o material da diária de ${d}/${m} (${i.projeto}): ${i.url}. No computador, escolha o cartão inteiro. Um envio por cartão.`;
+}
+
+/** WhatsApp do link do card, para o freela responsável. */
+export function textoWhatsAppCard(i: { nome: string | null; titulo: string; url: string; destino: string | null }): string {
+  const nome = i.nome?.trim().split(/\s+/)[0];
+  return `Olá${nome ? `, ${nome}` : ""}. Link para subir a peça final de “${i.titulo}”: ${i.url}. Vai direto para ${i.destino ?? "a pasta da ZRO"}, com o nome original do arquivo.`;
 }
 
 /** WhatsApp da área do cliente. Com senha, uma segunda mensagem avisa que ela vai à parte. */

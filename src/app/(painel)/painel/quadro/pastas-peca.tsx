@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ExternalLink, FolderOpen, Upload } from "lucide-react";
+import { Check, Copy, ExternalLink, FolderOpen } from "lucide-react";
 import { useQ } from "./contexto";
+import { EnviarAqui, FilaDaPeca } from "./envio-peca";
+import { LinkParaFreela } from "./link-card";
 import type { Card, Config, PastaPauta, ProjetoPauta } from "./metodo";
 
 /**
- * O projeto do card e as pastas onde a peça final sobe (aba "Peça").
+ * O projeto do card e as pastas onde a peça final sobe (aba "Peça"), com o link de envio para o freela
+ * (link-card.tsx).
  * Card sem projeto escolhido usa o único projeto ativo do cliente, sem gravar nada.
  */
 
@@ -72,7 +75,7 @@ function secaoSugerida(c: Card): (typeof SECOES)[number] {
   return primeiro && DE_REDES.has(primeiro) ? "Redes" : "Master";
 }
 
-function Pasta({ pasta, nome, nota }: { pasta: PastaPauta; nome: string; nota: string }) {
+function Pasta({ cardId, pasta, nome, nota }: { cardId: string; pasta: PastaPauta; nome: string; nota: string }) {
   const [copiado, setCopiado] = useState(false);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -83,9 +86,7 @@ function Pasta({ pasta, nome, nota }: { pasta: PastaPauta; nome: string; nota: s
         </p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        <a className="q-pil prim" href={`/painel/arquivos?pasta=${encodeURIComponent(pasta.id)}`} data-acao="enviar-peca">
-          <Upload size={14} aria-hidden /> Enviar aqui
-        </a>
+        <EnviarAqui cardId={cardId} pasta={pasta} destino={nome} />
         <a className="q-pil" href={pasta.url} target="_blank" rel="noopener noreferrer" data-acao="abrir-pasta">
           <ExternalLink size={14} aria-hidden /> Abrir no Drive
         </a>
@@ -151,6 +152,7 @@ export function PastasDaPeca({ c }: { c: Card }) {
               ))}
             </div>
             <Pasta
+              cardId={c.id}
               pasta={entrega}
               nome={`06 Entregas / ${projeto.pastas.secoes[secao] ? secao : ""}`.replace(/ \/ $/, "")}
               nota={
@@ -162,8 +164,10 @@ export function PastasDaPeca({ c }: { c: Card }) {
           </>
         ) : null}
         {projeto.pastas.render ? (
-          <Pasta pasta={projeto.pastas.render} nome="05 Render" nota="Só a equipe vê. Cortes e versões antes da entrega." />
+          <Pasta cardId={c.id} pasta={projeto.pastas.render} nome="05 Render" nota="Só a equipe vê. Cortes e versões antes da entrega." />
         ) : null}
+        <FilaDaPeca cardId={c.id} />
+        <LinkParaFreela cardId={c.id} secao={secao} />
       </>
     );
   }

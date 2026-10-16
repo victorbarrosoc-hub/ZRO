@@ -823,7 +823,7 @@ export const driveLinks = pgTable(
   "drive_links",
   {
     id: id(),
-    /** "freela-diaria" | "cliente-area" */
+    /** "freela-diaria" | "cliente-area" | "freela-card" */
     tipo: text().notNull(),
     /** sha256 hex do token (fica no backup). */
     tokenHash: text().notNull(),
@@ -837,8 +837,14 @@ export const driveLinks = pgTable(
     diariaId: text().references(() => driveDiarias.id, { onDelete: "set null" }),
     projectId: text().references(() => projects.id, { onDelete: "set null" }),
     clientId: text().references(() => clients.id, { onDelete: "set null" }),
-    /** Cópia: "Verão Pipa · Diária 02 · 12/03/2026" | "SERHS". */
+    /** Cópia: "Verão Pipa · Diária 02 · 12/03/2026" | "SERHS" | "SERHS · Reels · Verão" (card). */
     rotulo: text().notNull(),
+    /** freela-card: o card da Pauta (quadro_cards.id, org "zro"). */
+    cardId: text(),
+    /** freela-card: a pasta onde a peça cai (06 Entregas/<seção> ou 05 Render). Vem do banco, nunca do navegador. */
+    destinoPastaId: text(),
+    /** freela-card: "06 Entregas / Redes" | "05 Render". */
+    destinoRotulo: text(),
     /** null = sem validade. */
     expiraEm: quando(),
     /** Freela: total do link; cliente: por dia. null = sem limite. */
@@ -858,6 +864,9 @@ export const driveLinks = pgTable(
     uniqueIndex("drive_links_area_ativa_idx")
       .on(t.clientId)
       .where(sql`${t.revogadoEm} is null and ${t.tipo} = 'cliente-area'`),
+    uniqueIndex("drive_links_card_ativo_idx")
+      .on(t.cardId)
+      .where(sql`${t.revogadoEm} is null and ${t.tipo} = 'freela-card'`),
     index("drive_links_projeto_idx").on(t.projectId),
   ],
 );
@@ -877,6 +886,8 @@ export const driveLotes = pgTable(
     diariaId: text().references(() => driveDiarias.id, { onDelete: "set null" }),
     driveProjetoId: text().references(() => driveProjetos.id, { onDelete: "set null" }),
     freelancerId: text().references(() => freelancers.id, { onDelete: "set null" }),
+    /** Link de um card da Pauta (freela-card): o card que recebe a mensagem e os links do que chegou. */
+    cardId: text(),
     /** Cópia do cadastro ("Rafael Moura") ou digitado. */
     pessoaNome: text(),
     /** "cam-a"…"foto" | "gravador" | null */
