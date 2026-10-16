@@ -12,7 +12,7 @@ import {
   rotuloRolo,
 } from "@/lib/drive/estrutura";
 import { arquivosNaUltimaHora, ARQUIVOS_POR_HORA, bytesDoLink, inicioDoDia, SINAL_ATIVO_MS } from "@/lib/drive/limites";
-import { idDriveValido, nomeDeArquivo, nomePasta, segmentosDoCaminho, tipoSeguro } from "@/lib/drive/nomes";
+import { idDriveValido, limparControles, nomeDeArquivo, nomePasta, segmentosDoCaminho, tipoSeguro } from "@/lib/drive/nomes";
 import {
   MENSAGENS,
   respErro,
@@ -192,6 +192,17 @@ export async function proximoRolo(driveProjetoId: string, letra: string): Promis
 
 /* ============================== lote ============================== */
 
+/** Lotes que um link público abre por hora (um cartão é um lote): acima disso é abuso, não trabalho. */
+const LOTES_POR_HORA = 300;
+
+async function lotesNaUltimaHora(linkId: string): Promise<number> {
+  const [r] = await db
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
+    .from(driveLotes)
+    .where(and(eq(driveLotes.linkId, linkId), gt(driveLotes.criadoEm, new Date(Date.now() - 60 * 60_000))));
+  return Number(r?.n ?? 0);
+}
+
 function lotePronto(l: Lote, retomado: boolean): RespLote {
   return { ok: true, loteId: l.id, rotulo: l.rotulo, caminho: l.caminho, retomado };
 }
@@ -241,6 +252,9 @@ export async function abrirLote(p: PedidoLote, escopo: Escopo, origemNavegador: 
         .returning();
       return lotePronto(l, false);
     }
+
+    // Links públicos: cada lote cria pastas no Drive; um teto por hora segura quem abusar do link.
+    if ((await lotesNaUltimaHora(escopo.link.id)) >= LOTES_POR_HORA) return respErro("muitas_tentativas", v);
 
     /* ---------- freela: um cartão da diária ---------- */
     if (escopo.origem === "freela") {
@@ -292,7 +306,7 @@ export async function abrirLote(p: PedidoLote, escopo: Escopo, origemNavegador: 
         freelancerId,
         pessoaNome,
         fonte: d.fonte,
-        cartaoNome: d.cartaoNome?.trim() ? d.cartaoNome.trim().slice(0, 255) : null,
+        cartaoNome: limparControles(d.cartaoNome ?? "").nome.trim().slice(0, 255) || null,
       };
       const limite = async (): Promise<RespErro | null> => {
         if (link.limiteBytes == null) return null;
@@ -966,8 +980,8 @@ export async function resumoDeEnvios(): Promise<{ bytes24h: number; emAndamento:
   const ativo = new Date(Date.now() - SINAL_ATIVO_MS);
   const [r] = await db
     .select({
-      bytes: sql<number>`coalesce(sum(${driveEnvios.tamanho}) filter (where ${driveEnvios.estado} = 'concluido' and ${driveEnvios.concluidoEm} > ${desde}), 0)`.mapWith(Number),
-      andamento: sql<number>`count(*) filter (where ${driveEnvios.estado} = 'enviando' and ${driveEnvios.ultimoSinalEm} > ${ativo})`.mapWith(Number),
+      bytes: sql<number>`coalesce(sum(${driveEnvios.tamanho}) filter (where ${driveEnvios.estado} = 'concluido' and ${driveEnvios.concluidoEm} > ${desde.toISOString()}::timestamptz), 0)`.mapWith(Number),
+      andamento: sql<number>`count(*) filter (where ${driveEnvios.estado} = 'enviando' and ${driveEnvios.ultimoSinalEm} > ${ativo.toISOString()}::timestamptz)`.mapWith(Number),
     })
     .from(driveEnvios)
     .where(or(gt(driveEnvios.concluidoEm, desde), eq(driveEnvios.estado, "enviando")));

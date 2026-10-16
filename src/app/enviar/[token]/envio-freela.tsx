@@ -226,7 +226,7 @@ export function EnvioFreela({ token, linkId, diaria }: { token: string; linkId: 
           <button type="button" className={estilos.principal} onClick={() => motor.responder(l.chave, "continuar")}>
             Entrar no {rolo}
           </button>
-          <button type="button" className={estilos.secundario} onClick={() => motor.responder(l.chave, "novo")}>
+          <button type="button" className={estilos.secundarioGrande} onClick={() => motor.responder(l.chave, "novo")}>
             Rolo novo
           </button>
         </div>
@@ -240,7 +240,8 @@ export function EnvioFreela({ token, linkId, diaria }: { token: string; linkId: 
 
   let destinoTexto: string | null = null;
   if (selecao && f && rotuloPessoa) {
-    if (f.chave === "gravador") destinoTexto = gravador.trim() ? `Vai para a pasta do ${gravador.trim()} · ${rotuloPessoa}.` : "Vai para a pasta do gravador.";
+    // "Rafael M." já termina em ponto: a frase não ganha outro.
+    if (f.chave === "gravador") destinoTexto = gravador.trim() ? `Vai para a pasta do ${gravador.trim()} · ${rotuloPessoa.replace(/\.$/, "")}.` : "Vai para a pasta do gravador.";
     else if (retomando) {
       const rolo = roloDe(retomando.rotulo);
       destinoTexto = rolo ? `Continua o rolo ${rolo} de onde parou.` : "Continua o envio de onde parou.";
@@ -416,7 +417,7 @@ export function EnvioFreela({ token, linkId, diaria }: { token: string; linkId: 
                   </button>
                   <button
                     type="button"
-                    className={estilos.secundario}
+                    className={estilos.secundarioGrande}
                     onClick={() => {
                       setSelecao(null);
                       setErro(null);

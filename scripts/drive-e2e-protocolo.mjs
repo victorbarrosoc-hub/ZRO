@@ -377,6 +377,9 @@ try {
   await passo("área: senha errada 6× → muitas tentativas; senha certa → cookie; lote ok", async () => {
     const r = await fetch(`${SITE}/cliente/${T.area}`);
     if (r.status === 404) return "pulado"; // a página é do bloco PÚBLICO
+    // Um IP só deste passo: o limite de senhas por IP (20 por hora, em memória) não mistura com outros testes.
+    const ip = `10.99.${(Math.random() * 255) | 0}.${1 + ((Math.random() * 250) | 0)}`;
+    await page.context().route(`${SITE}/cliente/**`, (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }));
     const senha = page.locator('input[type="password"]');
     for (let i = 0; i < 6; i++) {
       await page.goto(`${SITE}/cliente/${T.area}`, { waitUntil: "networkidle" });
@@ -389,7 +392,7 @@ try {
     await page.goto(`${SITE}/cliente/${T.area}`, { waitUntil: "networkidle" });
     await senha.fill("senha-certa");
     await page.locator('button[type="submit"]').click();
-    await page.waitForLoadState("networkidle");
+    await page.getByRole("heading", { name: "Arquivos finais" }).waitFor({ timeout: 15000 }); // a área abriu (o cookie já veio)
     const cookies = await page.context().cookies(`${SITE}/cliente/${T.area}`);
     const area = cookies.find((c) => c.name === "zro_area");
     assert.ok(area, "cookie da área");

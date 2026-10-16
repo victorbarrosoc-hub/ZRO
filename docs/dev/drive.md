@@ -1650,3 +1650,13 @@ Conferir: nada passa da largura a 390 px, alvos ≥ 40 px (44 px no público), `
 | P2-36 `beforeunload` no iOS | 6 (`pagehide` + retomada) |
 | P2-37 `ZRO_GOOGLE_API_BASE` | 4 (exige fora da Vercel e fora de produção) |
 | P2-38 "Oi!" | 7.2/7.4 (textos sem exclamação) |
+
+---
+
+## Registro (verificação, 2026-10-16, Google falso)
+
+- **Estático:** `npm run typecheck` e `npm run lint` limpos; `npm run build` limpo numa cópia isolada com `db:reset` (0000 → 0008, semeadura e "Apagar dados de exemplo" com as tabelas novas: exemplos somem, link que apontava para exemplo fica revogado e com o vínculo nulo). Migração 0008: só `CREATE` e `ALTER TABLE "drive_…" ADD CONSTRAINT`.
+- **Testes puros e de serviço:** 62 de 62 (`scripts/tests/drive-*.test.mts`).
+- **E2E do protocolo** (`scripts/drive-e2e-protocolo.mjs`): 20 de 20.
+- **E2E das telas** (`scripts/drive-e2e-telas.mjs`, 1440 e 390): 21 de 21. Árvore com os nomes exatos; "Criar pastas" em projeto antigo; Arquivos (arquivos, pasta, 0 byte, Baixar = `webContentLink`, Nova pasta); link da diária na aba Drive e na agenda; cartão com subpastas (estrutura preservada, sem o nome do cartão e sem `.DS_Store`) → A001, A002, mesmo cartão → pergunta, Drone → D001; quedas de conexão (`dropUploadProb 0.9`) e recarga no meio (mesmo rolo, 1 sessão, menos de 1,6× os bytes); MD5 igual no Google falso em todos os arquivos; Liberar entregas (permissão só em 06 Entregas, e-mail do Google contado); área com senha (errada, certa, 6 erros → bloqueio, senha trocada no meio do envio → janela e continua); cliente só vê 06 Entregas, projeto de outro cliente → 404; envio para `03 Assets/Do cliente/<data> · <assunto>`; sessão do painel expirada no meio → Entrar e Continuar; links desativado, expirado e indisponível; backup com as 8 tabelas e nenhum segredo (`tokenHash` presente).
+- **Falta:** o teste com a conta real (seção 13.8) e o diagnóstico por aparelho (Chrome, Safari do iPhone, app da tela inicial).

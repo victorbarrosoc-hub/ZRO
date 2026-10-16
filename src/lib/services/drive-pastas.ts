@@ -279,7 +279,9 @@ export async function esquecerPasta(pastaId: string): Promise<void> {
     .from(driveProjetos)
     .where(sql`${driveProjetos.subpastas}::text like ${`%"${pastaId}"%`}`);
   for (const r of comSub) {
+    // O "_" do id é curinga no LIKE: só mexe na linha que tem mesmo esse id.
     const sub = Object.fromEntries(Object.entries(r.subpastas ?? {}).filter(([, v]) => v !== pastaId));
+    if (Object.keys(sub).length === Object.keys(r.subpastas ?? {}).length) continue;
     await db.update(driveProjetos).set({ subpastas: sub, estado: "incompleta" }).where(eq(driveProjetos.id, r.id));
   }
   // Pastas de diária.

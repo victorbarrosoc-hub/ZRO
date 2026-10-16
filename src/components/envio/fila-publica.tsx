@@ -19,6 +19,8 @@ const botao =
 export const estilos = {
   principal: cn(botao, "h-14 bg-white px-7 text-base font-medium text-void hover:bg-light"),
   secundario: cn(botao, "border border-line-strong text-light hover:border-white/40 hover:bg-white/[0.04]"),
+  /** Ao lado do principal: a mesma altura. */
+  secundarioGrande: cn(botao, "h-14 border border-line-strong px-7 text-base text-light hover:border-white/40 hover:bg-white/[0.04]"),
   discreto: cn(botao, "text-ash hover:bg-white/[0.06] hover:text-light"),
   perigo: cn(botao, "border border-danger/40 text-danger hover:bg-danger/10"),
 };

@@ -361,15 +361,27 @@ export function AreaCliente({
               </div>
 
               <label className="flex min-h-11 cursor-pointer items-start gap-3 text-ui leading-snug text-ash">
-                <input
-                  type="checkbox"
-                  checked={aceite}
-                  onChange={(e) => {
-                    setAceite(e.target.checked);
-                    setErro(null);
-                  }}
-                  className="mt-0.5 size-5 shrink-0 cursor-pointer accent-white"
-                />
+                <span className="relative mt-0.5 grid size-5 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={aceite}
+                    onChange={(e) => {
+                      setAceite(e.target.checked);
+                      setErro(null);
+                    }}
+                    className="peer size-5 cursor-pointer appearance-none rounded-[6px] border border-line-strong bg-white/[0.03] transition-colors checked:border-white checked:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  />
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 16 16"
+                    className="pointer-events-none absolute inset-0 hidden p-[3px] text-void peer-checked:block"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                  >
+                    <path d="M3.5 8.5l3 3 6-7" />
+                  </svg>
+                </span>
                 <span>
                   Concordo que a ZRO guarde estes arquivos para o projeto, como explica a{" "}
                   <Link href="/privacidade" target="_blank" rel="noopener" className="text-light underline decoration-white/30 underline-offset-4">
@@ -395,7 +407,7 @@ export function AreaCliente({
                     </button>
                     <button
                       type="button"
-                      className={estilos.secundario}
+                      className={estilos.secundarioGrande}
                       onClick={() => {
                         setSelecao(null);
                         setErro(null);

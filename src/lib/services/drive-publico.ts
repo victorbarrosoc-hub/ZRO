@@ -110,7 +110,8 @@ export async function abrirLinkPublico(token: string, tipo: TipoLink): Promise<L
   if (!cliente) return { estado: "indisponivel", whatsapp };
 
   const conectado = await driveConectado();
-  const conta = conectado ? await contaAtual() : null;
+  // Com o Google fora (reconectar), os projetos continuam na lista; só os arquivos somem.
+  const conta = await contaAtual();
   const linhas = conta
     ? await db
         .select({

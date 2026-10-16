@@ -383,15 +383,18 @@ export async function entrarNaArea(
   if (!permitirIp(ip, "senha")) return { ok: false, erro: "muitas_tentativas" };
   const email = `area:${link.id}`;
   const desde = new Date(Date.now() - JANELA_MIN * 60_000);
+  // A tentativa entra como erro ANTES de conferir: vários pedidos ao mesmo tempo não passam juntos pela
+  // contagem (cada um já se vê contado). Senha certa: a linha vira sucesso.
+  const [tentativa] = await db.insert(loginAttempts).values({ email, ip: null, success: false }).returning({ id: loginAttempts.id });
   const [falhas] = await db
     .select({ n: count() })
     .from(loginAttempts)
     .where(and(eq(loginAttempts.email, email), eq(loginAttempts.success, false), gt(loginAttempts.createdAt, desde)));
-  if (Number(falhas?.n ?? 0) >= TENTATIVAS) return { ok: false, erro: "muitas_tentativas" };
+  if (Number(falhas?.n ?? 0) > TENTATIVAS) return { ok: false, erro: "muitas_tentativas" };
 
   const certo = await verifyPassword(String(senha ?? "").slice(0, 200), link.senhaHash ?? HASH_FALSO);
   const ok = Boolean(link.senhaHash) ? certo : true;
-  await db.insert(loginAttempts).values({ email, ip: null, success: ok });
+  if (ok && tentativa) await db.update(loginAttempts).set({ success: true }).where(eq(loginAttempts.id, tentativa.id));
   if (!ok) return { ok: false, erro: "senha" };
   (await cookies()).set(COOKIE_AREA, await assinarCookieDaArea(link), opcoesDoCookieDaArea(token));
   return { ok: true };

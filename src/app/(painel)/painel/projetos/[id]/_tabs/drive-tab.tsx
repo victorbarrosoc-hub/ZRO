@@ -134,52 +134,56 @@ export async function ProjectDriveTab({ project }: { project: ProjectDetail }) {
       {status.estado !== "conectado" ? <AvisoGoogle estado={status.estado} /> : null}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 xl:items-start">
-        <div className="grid min-w-0 grid-cols-1 gap-4">
+        <div className="min-w-0">
           <PastaDoProjeto projectId={project.id} dp={dp} conectado={conectado} />
-          <EntregasCard
-            projectId={project.id}
-            temCliente={Boolean(project.clientId)}
-            email={contato?.email?.trim() || null}
-            liberadasEm={liberacao?.liberadasEm ?? null}
-            liberadasPor={liberacao?.liberadasPor ?? null}
-            compartilhamentos={compartilhamentos}
-            linkArea={linkArea}
-            conectado={conectado}
-          />
-          <Card>
-            <CardHeader title="Do cliente" />
-            {doCliente.length ? (
-              <ul className="divide-y divide-line px-5 pt-1 pb-2 sm:px-6">
-                {doCliente.map((l) => (
-                  <LoteLinha key={l.id} lote={l} detalhe={detalheDoLote(l, { semProjeto: true, quando: "data" })} />
+        </div>
+
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:col-span-2">
+          <Card className="min-w-0">
+            <CardHeader title="Material das diárias" />
+            {diarias.length ? (
+              <ul className="mt-2 divide-y divide-line">
+                {diarias.map((d) => (
+                  <DiariaLinha key={d.eventId} d={d} projeto={project.title} conectado={conectado} />
                 ))}
               </ul>
             ) : (
-              <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nada enviado pelo cliente ainda.</p>
+              <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">
+                Nenhuma diária neste projeto.{" "}
+                <Link
+                  href={`/painel/projetos/${project.id}?aba=agenda`}
+                  className="text-light underline decoration-white/20 underline-offset-4 hover:decoration-white/60"
+                >
+                  Marcar na agenda
+                </Link>
+              </p>
             )}
           </Card>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
+            <EntregasCard
+              projectId={project.id}
+              temCliente={Boolean(project.clientId)}
+              email={contato?.email?.trim() || null}
+              liberadasEm={liberacao?.liberadasEm ?? null}
+              liberadasPor={liberacao?.liberadasPor ?? null}
+              compartilhamentos={compartilhamentos}
+              linkArea={linkArea}
+              conectado={conectado}
+            />
+            <Card>
+              <CardHeader title="Do cliente" />
+              {doCliente.length ? (
+                <ul className="divide-y divide-line px-5 pt-1 pb-2 sm:px-6">
+                  {doCliente.map((l) => (
+                    <LoteLinha key={l.id} lote={l} detalhe={detalheDoLote(l, { semProjeto: true, quando: "data" })} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">Nada enviado pelo cliente ainda.</p>
+              )}
+            </Card>
+          </div>
         </div>
-
-        <Card className="min-w-0 xl:col-span-2">
-          <CardHeader title="Material das diárias" />
-          {diarias.length ? (
-            <ul className="mt-2 divide-y divide-line">
-              {diarias.map((d) => (
-                <DiariaLinha key={d.eventId} d={d} projeto={project.title} conectado={conectado} />
-              ))}
-            </ul>
-          ) : (
-            <p className="px-5 pt-3 pb-5 text-[14px] text-mute sm:px-6">
-              Nenhuma diária neste projeto.{" "}
-              <Link
-                href={`/painel/projetos/${project.id}?aba=agenda`}
-                className="text-light underline decoration-white/20 underline-offset-4 hover:decoration-white/60"
-              >
-                Marcar na agenda
-              </Link>
-            </p>
-          )}
-        </Card>
       </div>
     </div>
   );

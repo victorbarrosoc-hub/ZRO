@@ -3,6 +3,7 @@ import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { SECOES_ENTREGAS } from "@/lib/drive/estrutura";
+import { limparControles } from "@/lib/drive/nomes";
 import { criarPermissao, listarPasta, removerPermissao } from "@/lib/google/drive";
 import { GoogleError } from "@/lib/google/erros";
 import { logProjectActivity } from "./activity";
@@ -229,7 +230,7 @@ export async function entregasDoProjeto(driveProjetoId: string): Promise<Entrega
         const primeira = pasta.caminho[0] ?? null;
         itens.push({
           id: it.id,
-          nome: it.nome,
+          nome: limparControles(it.nome).nome, // o cliente nunca vê caracteres de direção (golpe do "\u202E")
           secao: (SECOES_ENTREGAS as readonly string[]).includes(primeira ?? "") ? (primeira as EntregaArquivo["secao"]) : null,
           caminho: pasta.caminho.join("/"),
           tamanho: it.tamanho,

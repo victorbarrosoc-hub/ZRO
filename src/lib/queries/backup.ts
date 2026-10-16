@@ -54,6 +54,13 @@ const TABLES_DRIVE = {
   driveDiarias: s.driveDiarias,
 } as const;
 
+/** As colunas de uma tabela menos as secretas. */
+function sem<T extends Record<string, unknown>, K extends keyof T>(colunas: T, fora: K[]): Omit<T, K> {
+  const copia = { ...colunas };
+  for (const k of fora) delete copia[k];
+  return copia;
+}
+
 /** Tudo o que a ZRO guardou, num objeto só (para baixar como .json). */
 export async function exportAll() {
   const summary = await databaseSummary(db);
@@ -75,16 +82,13 @@ export async function exportAll() {
 
   // Google Drive (docs/dev/drive.md §3): depois de projetos, eventos, clientes, freelas e usuários.
   // As três com segredo saem sem as colunas secretas; tokenHash fica (é só o hash, e é NOT NULL).
-  const { refreshTokenEnc: _refresh, ...conexao } = getTableColumns(s.driveConexao);
-  tables.driveConexao = await db.select(conexao).from(s.driveConexao);
+  tables.driveConexao = await db.select(sem(getTableColumns(s.driveConexao), ["refreshTokenEnc"])).from(s.driveConexao);
   for (const [name, table] of Object.entries(TABLES_DRIVE)) {
     tables[name] = await db.select().from(table);
   }
-  const { tokenEnc: _token, senhaHash: _senha, ...links } = getTableColumns(s.driveLinks);
-  tables.driveLinks = await db.select(links).from(s.driveLinks);
+  tables.driveLinks = await db.select(sem(getTableColumns(s.driveLinks), ["tokenEnc", "senhaHash"])).from(s.driveLinks);
   tables.driveLotes = await db.select().from(s.driveLotes);
-  const { sessaoEnc: _sessao, ...envios } = getTableColumns(s.driveEnvios);
-  tables.driveEnvios = await db.select(envios).from(s.driveEnvios);
+  tables.driveEnvios = await db.select(sem(getTableColumns(s.driveEnvios), ["sessaoEnc"])).from(s.driveEnvios);
   tables.driveCompartilhamentos = await db.select().from(s.driveCompartilhamentos);
 
   return {

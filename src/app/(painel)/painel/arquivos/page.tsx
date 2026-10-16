@@ -4,7 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { idDriveValido } from "@/lib/drive/nomes";
+import { idDriveValido, limparControles } from "@/lib/drive/nomes";
 import { statusDrive } from "@/lib/google/conexao";
 import { arquivoOuNull, caminhoDaPasta, linkPasta, listarDrivesCompartilhados, listarPasta } from "@/lib/google/drive";
 import { GoogleError } from "@/lib/google/erros";
@@ -65,14 +65,14 @@ async function carregar(pedida: string | null, pagina: string | null, drives: bo
       caminhoDaPasta(a.id).catch(() => [{ id: a.id, nome: a.nome || "Meu Drive" }]),
       listarPasta(a.id, pagina),
     ]);
-    const nome = trilha.at(-1)?.nome || a.nome || "Meu Drive";
+    const nome = limparControles(trilha.at(-1)?.nome || a.nome || "Meu Drive").nome;
     return {
       tipo: "ok",
       pasta: { id: a.id, nome, url: a.verUrl || linkPasta(a.id), podeEnviar: a.podeAdicionar },
-      trilha,
+      trilha: trilha.map((t) => ({ id: t.id, nome: limparControles(t.nome).nome })),
       itens: lista.itens.map((i) => ({
         id: i.id,
-        nome: i.nome,
+        nome: limparControles(i.nome).nome, // nomes feitos fora da ZRO: sem caracteres de direção (golpe do "\u202E")
         pasta: i.pasta,
         tamanho: i.tamanho,
         modificadoEm: i.modificadoEm,
