@@ -30,11 +30,17 @@ O `db:reset` mostra no terminal (e salva em `data/credenciais-dev.txt`) o e-mail
 | `npm run db:reset` | apaga o banco local e recria com exemplos |
 | `npm run db:generate` | gera migração depois de mudar o schema |
 
-## Publicar (Vercel + Turso)
+## Publicar (Vercel + Postgres no Neon)
 
 Endereço: **https://zrofilmes.vercel.app**. Passo a passo completo no [`DEPLOY.md`](DEPLOY.md).
 
-Resumo: projeto `zrofilmes` na Vercel → variáveis (`SESSION_SECRET`, `ZRO_*`, `NEXT_PUBLIC_SITE_URL`) → banco Turso conectado pela aba Storage → Redeploy. O build (`npm run vercel-build`) aplica as migrações e cria as contas dos sócios sozinho.
+Resumo: projeto `zrofilmes` na Vercel → variáveis (`SESSION_SECRET`, `ZRO_*`, `NEXT_PUBLIC_SITE_URL`) → banco Neon (São Paulo) conectado pela aba Storage → Redeploy. O build (`npm run vercel-build`) aplica as migrações e cria as contas dos sócios sozinho.
+
+## Google Drive
+
+Pastas de cada projeto, envio de material pelo site (painel, freela e cliente) e área do cliente, tudo no Drive da empresa. Os arquivos vão do navegador direto para o Google. Configuração no [`DEPLOY.md`](DEPLOY.md) (seção 5); plano e protocolo em [`docs/dev/drive.md`](docs/dev/drive.md).
+
+No computador: `node scripts/google-mock/servidor.mjs` sobe um Google falso. Testes: `npx tsx --conditions=react-server --test scripts/tests/drive-*.test.mts`.
 
 ## Documentação
 
@@ -42,3 +48,4 @@ Resumo: projeto `zrofilmes` na Vercel → variáveis (`SESSION_SECRET`, `ZRO_*`,
 - `docs/marca/`: documento-mestre, identidade visual, mood, voz e tokens
 - `docs/referencias-ui/`: referências visuais e o que foi aproveitado de cada uma
 - `docs/dev/area-interna.md`: padrões de código da área interna
+- `docs/dev/drive.md`: Google Drive (pastas, envios, área do cliente)

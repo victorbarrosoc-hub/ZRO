@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { ProximoPasso } from "./cartao";
 import { cc, useQ, type AbaFicha } from "./contexto";
 import { COLUNAS, clone, linkSeguro, novoId, quando, type Card, type ColKey, type Mensagem, type Metodo, type Pessoa } from "./metodo";
+import { useLinkDoCard } from "./link-card";
+import { CampoProjeto, PastasDaPeca, projetoDoCard } from "./pastas-peca";
 import { PreviaLink } from "./previa-link";
 
 /** Campos à espera de gravar ("card:campo" → timer). Fica fora da tela: fechar a ficha não perde o que foi digitado. */
@@ -150,8 +152,8 @@ function ItemCk({ texto, onSalvar }: { texto: string; onSalvar: (t: string) => v
 const dataBR = (iso?: string) => (iso ? iso.split("-").reverse().join("/") : "");
 const corta = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
 
-/** O card resumido para o freela: o que é, até quando, o que fazer e onde está o material. */
-function mensagemFreela(m: Metodo, c: Card, p: Pessoa) {
+/** O card resumido para o freela: o que é, até quando, o que fazer, onde está o material e onde subir a peça. */
+function mensagemFreela(m: Metodo, c: Card, p: Pessoa, envio: { url: string; destino: string | null } | null) {
   const l: string[] = [p.ola || `Oi, ${p.nome.split(" ")[0]}!`, "", `*${m.titulo(c)}*`];
   if (c.prazo) l.push(`Entrega: ${dataBR(c.prazo)}${c.prazoHora ? ` às ${c.prazoHora}` : ""}`);
   if (c.data && !m.interno(c)) l.push(`Vai ao ar: ${dataBR(c.data)}${c.hora ? ` às ${c.hora}` : ""}`);
@@ -161,6 +163,7 @@ function mensagemFreela(m: Metodo, c: Card, p: Pessoa) {
   if (ck.length) l.push("", "*Checklist*", ...ck.slice(0, 20).map((x) => `• ${x.t}`));
   const links = (Array.isArray(c.links) ? c.links : []).map((x) => linkSeguro(x.url)).filter(Boolean);
   if (links.length) l.push("", "*Links*", ...links.slice(0, 10));
+  if (envio) l.push("", `*Para subir a peça final*${envio.destino ? ` (vai para ${envio.destino})` : ""}`, envio.url);
   return l.join("\n");
 }
 
@@ -168,6 +171,10 @@ function mensagemFreela(m: Metodo, c: Card, p: Pessoa) {
 function MandarFreela({ c }: { c: Card }) {
   const { cfg, m, store } = useQ();
   const p = c.resp?.startsWith("f:") ? m.pessoa(c.resp) : null;
+  // O link de envio do card entra na mensagem (se houver um ativo): só pergunta quando o card tem pasta.
+  const pastas = cfg.projetos ? projetoDoCard(cfg, c).projeto?.pastas : null;
+  const { ativo } = useLinkDoCard(c.id, Boolean(p?.whats && pastas && (pastas.entregas || pastas.render)));
+  const envio = ativo?.url ? { url: ativo.url, destino: ativo.destinoRotulo } : null;
   if (!p) return null;
   const primeiro = p.nome.split(" ")[0];
   if (!p.whats)
@@ -179,7 +186,7 @@ function MandarFreela({ c }: { c: Card }) {
   return (
     <a
       className="q-pil prim q-wa"
-      href={`https://wa.me/${p.whats}?text=${encodeURIComponent(mensagemFreela(m, c, p))}`}
+      href={`https://wa.me/${p.whats}?text=${encodeURIComponent(mensagemFreela(m, c, p, envio))}`}
       target="_blank"
       rel="noopener noreferrer"
       data-acao="mandar-freela"
@@ -270,7 +277,8 @@ function FichaDentro({ c }: { c: Card }) {
           onChange={(ev) => {
             const v = ev.currentTarget.value;
             if (v === (c.cliente || "")) return;
-            if (!c.cliente) mudar({ cliente: v });
+            // o projeto é do cliente: trocar de cliente volta o projeto para o automático
+            if (!c.cliente) mudar({ cliente: v, projeto: null });
             else up({ troca: v });
           }}
         >
@@ -284,6 +292,8 @@ function FichaDentro({ c }: { c: Card }) {
         </select>
       </label>
 
+      <CampoProjeto c={c} />
+
       {ui.troca ? (
         <div className="q-troca">
           <p>
@@ -295,7 +305,7 @@ function FichaDentro({ c }: { c: Card }) {
               className="q-pil prim"
               data-acao="troca-sim"
               onClick={() => {
-                mudar({ cliente: ui.troca, trocouDe: c.cliente || null, trocouEm: Date.now() });
+                mudar({ cliente: ui.troca, trocouDe: c.cliente || null, trocouEm: Date.now(), projeto: null });
                 up({ troca: null });
               }}
             >
@@ -391,6 +401,7 @@ function FichaDentro({ c }: { c: Card }) {
         </>
       ) : null}
 
+      {aba === "peca" ? <PastasDaPeca c={c} /> : null}
       {aba === "peca" ? (
         <div className="q-bloco">
           <h4>

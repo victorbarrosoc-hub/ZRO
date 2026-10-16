@@ -20,6 +20,7 @@ import {
 } from "@/lib/domain";
 import { formatPhone, instagramHandle } from "@/lib/format";
 import { ensureClientForLead } from "@/lib/services/clients";
+import { revogarLinksDe } from "@/lib/services/drive-links";
 import { gerarRecorrentes } from "@/lib/services/recurring";
 import { deleteImages, readImageField, resolveImageField } from "@/lib/services/images";
 import { ACTIVITY_TYPES, STAGE_ACTIVITY, keysOf, stageLabel } from "./crm-options";
@@ -504,6 +505,8 @@ export async function deleteClient(_prev: ActionResult | null, fd: FormData): Pr
   await requireUser();
   const id = str(fd, "id");
   if (!id) return fail("Cliente não encontrado.");
+  // A área do cliente para antes (nunca apagada; o que ele mandou fica no Drive e no banco).
+  await revogarLinksDe({ clientId: id });
   const [row] = await db.delete(clients).where(eq(clients.id, id)).returning({ logoId: clients.logoId });
   await deleteImages([row?.logoId]);
   revalidateClient();

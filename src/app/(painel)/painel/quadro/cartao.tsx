@@ -6,6 +6,7 @@ import { CalendarDays, Check, Clock, MessageSquare } from "lucide-react";
 import { imageUrl } from "@/components/painel/avatar";
 import { cn } from "@/lib/utils";
 import { cc, useQ } from "./contexto";
+import { IndicadorEnvio } from "./envio-peca";
 import { COL, EM_TRABALHO, hoje, iniciais, rotuloDia, type Card } from "./metodo";
 
 export function Avatar({ id }: { id?: string }) {
@@ -145,6 +146,7 @@ export function Cartao({ c, comColuna }: { c: Card; comColuna?: boolean }) {
             <MessageSquare size={11} aria-hidden /> {nMsg}
           </span>
         ) : null}
+        <IndicadorEnvio cardId={c.id} />
         <Avatar id={c.resp} />
       </div>
       {c.coluna === "revisao" && revisores.length ? (

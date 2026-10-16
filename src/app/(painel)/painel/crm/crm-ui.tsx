@@ -3,7 +3,7 @@
  * orçamentos, projetos, filtros). Os botões interativos vêm de crm-dialogs.
  */
 import Link from "next/link";
-import { ArrowRightLeft, CalendarDays, Clapperboard, Mail, MessageCircle, Phone, StickyNote, Users, Wallet } from "lucide-react";
+import { ArrowRightLeft, CalendarDays, Clapperboard, HardDrive, Mail, MessageCircle, Phone, StickyNote, Users, Wallet } from "lucide-react";
 import { ProjectStatusBadge, QuoteStatusBadge, StageBadge } from "@/components/painel/bits";
 import { brl, dateShort, dateTimeBR } from "@/lib/format";
 import type { ActivityRow, ProjectRow, QuoteRow } from "@/lib/queries/crm";
@@ -41,9 +41,10 @@ const ACTIVITY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   projeto: Clapperboard,
   agenda: CalendarDays,
   financeiro: Wallet,
+  arquivos: HardDrive,
 };
 
-const SYSTEM_TYPES = new Set([STAGE_ACTIVITY, "projeto", "agenda", "financeiro"]);
+const SYSTEM_TYPES = new Set([STAGE_ACTIVITY, "projeto", "agenda", "financeiro", "arquivos"]);
 
 export function ActivityTimeline({ items, showLead }: { items: ActivityRow[]; showLead?: boolean }) {
   return (

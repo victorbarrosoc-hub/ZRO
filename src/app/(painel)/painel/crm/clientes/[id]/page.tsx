@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { ActivityForm, DeleteClientButton, EditClientButton } from "../../crm-dialogs";
 import { formatDocument, sinceLabel } from "../../crm-options";
 import { ActivityTimeline } from "../../crm-ui";
+import { ClientAreaTab } from "./area-tab";
 
 export async function generateMetadata({ params }: PageProps<"/painel/crm/clientes/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -41,6 +42,7 @@ const TABS = [
   { key: "projetos", label: "Projetos" },
   { key: "orcamentos", label: "Orçamentos" },
   { key: "financeiro", label: "Financeiro" },
+  { key: "area", label: "Área do cliente" },
   { key: "historico", label: "Histórico" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
@@ -392,6 +394,10 @@ export default async function ClientePage({ params, searchParams }: PageProps<"/
               <EmptyState title="Nenhum recebimento ainda" />
             </Card>
           )
+        ) : null}
+
+        {aba === "area" ? (
+          <ClientAreaTab client={{ id: c.id, name: c.name, phone: c.phone, email: c.email, contactName: c.contactName }} />
         ) : null}
 
         {aba === "historico" ? (

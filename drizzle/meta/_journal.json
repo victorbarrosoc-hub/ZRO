@@ -57,6 +57,20 @@
       "when": 1792060371632,
       "tag": "0007_recorrente_automatico",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792108465263,
+      "tag": "0008_drive",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792149453636,
+      "tag": "0009_link_card",
+      "breakpoints": true
     }
   ]
 }

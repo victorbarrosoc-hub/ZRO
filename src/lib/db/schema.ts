@@ -18,6 +18,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { CreativeRuleAnswers } from "@/lib/domain";
+import type { DiagnosticoRegistro } from "@/lib/drive/protocolo";
 
 const id = () => text().primaryKey().$defaultFn(() => crypto.randomUUID());
 const createdAt = () =>
@@ -692,6 +693,319 @@ export const scripts = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("scripts_project_idx").on(t.projectId)],
+);
+
+/* ============================== Google Drive ==============================
+ * Plano: docs/dev/drive.md. Os bytes ficam no Drive; aqui ficam ids, travas e o registro do que chegou.
+ * Tudo que aponta para projeto, cliente, diária, freela ou usuário é ON DELETE SET NULL, com cópia do
+ * rótulo: apagar no painel nunca apaga o registro do que chegou.
+ */
+const quando = () => timestamp({ mode: "date", withTimezone: true });
+
+/** Conexão da ZRO com o Google (uma linha, id "zro"). */
+export const driveConexao = pgTable("drive_conexao", {
+  id: text().primaryKey(), // sempre "zro"
+  conta: text(), // e-mail do about.get (nunca fixo no código)
+  contaNome: text(),
+  escopo: text(),
+  /** AES-256-GCM; null = desconectado. FORA do backup. */
+  refreshTokenEnc: text(),
+  /** Sobe a cada troca de conta. */
+  geracao: integer().notNull().default(1),
+  raizNome: text().notNull().default("ZRO"),
+  /** Pasta raiz no Drive conectado. */
+  raizId: text(),
+  /** <raiz>/Clientes */
+  clientesId: text(),
+  conectadoPorId: text().references(() => users.id, { onDelete: "set null" }),
+  conectadoEm: quando(),
+  desconectadoEm: quando(),
+  /** "reconectar" | null */
+  erro: text(),
+  erroEm: quando(),
+  /** Últimos 12 testes de envio direto (Ajustes → Google Drive). */
+  diagnosticos: jsonb().$type<DiagnosticoRegistro[]>().notNull().default([]),
+  atualizadoEm: updatedAt(),
+});
+
+/** Cache e trava das pastas criadas pelo app. Uma linha por (conta, pai, nome). */
+export const drivePastas = pgTable(
+  "drive_pastas",
+  {
+    id: id(),
+    conta: text().notNull(),
+    paiId: text().notNull(),
+    /** Já limpo; casa exato. */
+    nome: text().notNull(),
+    /** null = alguém está criando (trava). */
+    pastaId: text(),
+    /** Nome lógico: "cliente:<id>", "cliente:<id>:empresa". */
+    chave: text(),
+    criandoDesde: quando(),
+    criadoEm: createdAt(),
+    atualizadoEm: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("drive_pastas_pai_nome_idx").on(t.conta, t.paiId, t.nome),
+    uniqueIndex("drive_pastas_chave_idx").on(t.conta, t.chave),
+    index("drive_pastas_pasta_idx").on(t.pastaId),
+  ],
+);
+
+/** Estrutura de pastas de cada projeto (as 7 pastas e as subpastas). */
+export const driveProjetos = pgTable(
+  "drive_projetos",
+  {
+    id: id(),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    conta: text().notNull(),
+    /** Cópia: "SERHS / 2026-03 · Verão Pipa". */
+    rotulo: text().notNull(),
+    /** "ZRO / Clientes / SERHS / 2026-03 · Verão Pipa" */
+    caminho: text(),
+    /** true = a pasta veio do driveUrl do projeto. */
+    deLink: boolean().notNull().default(false),
+    pastaId: text(),
+    pastaUrl: text(),
+    documentosId: text(), // 00 Documentos
+    cenasId: text(), // 01 Cenas
+    audiosId: text(), // 02 Áudios
+    assetsId: text(), // 03 Assets
+    projetoEdicaoId: text(), // 04 Projeto
+    renderId: text(), // 05 Render
+    entregasId: text(), // 06 Entregas (a ÚNICA que o cliente vê)
+    /** "03 Assets/Do cliente": id… */
+    subpastas: jsonb().$type<Record<string, string>>().notNull().default({}),
+    /** criando | pronta | incompleta | erro */
+    estado: text().notNull().default("criando"),
+    erro: text(),
+    /** Contador de rolos por letra: { "A": 3, "D": 1 }. */
+    rolos: jsonb().$type<Record<string, number>>().notNull().default({}),
+    entregasLiberadasEm: quando(),
+    entregasLiberadasPorId: text().references(() => users.id, { onDelete: "set null" }),
+    criadoEm: createdAt(),
+    atualizadoEm: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("drive_projetos_projeto_idx").on(t.projectId, t.conta),
+    index("drive_projetos_cliente_idx").on(t.clientId),
+  ],
+);
+
+/** Diária com número congelado e as pastas dela em 01 Cenas e 02 Áudios. */
+export const driveDiarias = pgTable(
+  "drive_diarias",
+  {
+    id: id(),
+    eventId: text().references(() => events.id, { onDelete: "set null" }),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    driveProjetoId: text().references(() => driveProjetos.id, { onDelete: "set null" }),
+    numero: integer().notNull(),
+    /** AAAA-MM-DD (cópia, do dia em que nasceu). */
+    data: text().notNull(),
+    /** "2026-03-12 · Diária 02" */
+    nome: text().notNull(),
+    /** Criada no primeiro rolo de vídeo. */
+    cenasPastaId: text(),
+    /** Criada no primeiro envio de áudio. */
+    audiosPastaId: text(),
+    criadoEm: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("drive_diarias_evento_idx").on(t.eventId, t.driveProjetoId),
+    uniqueIndex("drive_diarias_numero_idx").on(t.driveProjetoId, t.numero),
+  ],
+);
+
+/** Links públicos: um por diária (freela) e um por cliente (área). Nunca apagados: desativar = revogadoEm. */
+export const driveLinks = pgTable(
+  "drive_links",
+  {
+    id: id(),
+    /** "freela-diaria" | "cliente-area" | "freela-card" */
+    tipo: text().notNull(),
+    /** sha256 hex do token (fica no backup). */
+    tokenHash: text().notNull(),
+    /** Token cifrado, para mostrar o link de novo. FORA do backup. */
+    tokenEnc: text(),
+    /** bcrypt, opcional. FORA do backup. */
+    senhaHash: text(),
+    /** Muda ao trocar/tirar a senha: derruba os cookies da área. */
+    senhaVersao: integer().notNull().default(0),
+    eventId: text().references(() => events.id, { onDelete: "set null" }),
+    diariaId: text().references(() => driveDiarias.id, { onDelete: "set null" }),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    /** Cópia: "Verão Pipa · Diária 02 · 12/03/2026" | "SERHS" | "SERHS · Reels · Verão" (card). */
+    rotulo: text().notNull(),
+    /** freela-card: o card da Pauta (quadro_cards.id, org "zro"). */
+    cardId: text(),
+    /** freela-card: a pasta onde a peça cai (06 Entregas/<seção> ou 05 Render). Vem do banco, nunca do navegador. */
+    destinoPastaId: text(),
+    /** freela-card: "06 Entregas / Redes" | "05 Render". */
+    destinoRotulo: text(),
+    /** null = sem validade. */
+    expiraEm: quando(),
+    /** Freela: total do link; cliente: por dia. null = sem limite. */
+    limiteBytes: bigint({ mode: "number" }),
+    revogadoEm: quando(),
+    revogadoPorId: text().references(() => users.id, { onDelete: "set null" }),
+    criadoPorId: text().references(() => users.id, { onDelete: "set null" }),
+    ultimoUsoEm: quando(),
+    criadoEm: createdAt(),
+    atualizadoEm: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("drive_links_token_idx").on(t.tokenHash),
+    uniqueIndex("drive_links_diaria_ativa_idx")
+      .on(t.eventId)
+      .where(sql`${t.revogadoEm} is null and ${t.tipo} = 'freela-diaria'`),
+    uniqueIndex("drive_links_area_ativa_idx")
+      .on(t.clientId)
+      .where(sql`${t.revogadoEm} is null and ${t.tipo} = 'cliente-area'`),
+    uniqueIndex("drive_links_card_ativo_idx")
+      .on(t.cardId)
+      .where(sql`${t.revogadoEm} is null and ${t.tipo} = 'freela-card'`),
+    index("drive_links_projeto_idx").on(t.projectId),
+  ],
+);
+
+/** Um envio de cartão, pasta ou seleção. O rolo e a pasta de destino nascem aqui. */
+export const driveLotes = pgTable(
+  "drive_lotes",
+  {
+    id: id(),
+    /** "painel" | "freela" | "cliente" */
+    origem: text().notNull(),
+    linkId: text().references(() => driveLinks.id, { onDelete: "set null" }),
+    userId: text().references(() => users.id, { onDelete: "set null" }),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    eventId: text().references(() => events.id, { onDelete: "set null" }),
+    diariaId: text().references(() => driveDiarias.id, { onDelete: "set null" }),
+    driveProjetoId: text().references(() => driveProjetos.id, { onDelete: "set null" }),
+    freelancerId: text().references(() => freelancers.id, { onDelete: "set null" }),
+    /** Link de um card da Pauta (freela-card): o card que recebe a mensagem e os links do que chegou. */
+    cardId: text(),
+    /** Cópia do cadastro ("Rafael Moura") ou digitado. */
+    pessoaNome: text(),
+    /** "cam-a"…"foto" | "gravador" | null */
+    fonte: text(),
+    /** "Zoom F6" */
+    gravador: text(),
+    /** "A003" | null */
+    rolo: text(),
+    /** "A003 · Câm A · Rafael Moura" | "Manual de marca" | "Brutos" */
+    rotulo: text().notNull(),
+    /** Cliente. */
+    assunto: text(),
+    /** Pasta escolhida ("EOS_DIGITAL"), só registro. */
+    cartaoNome: text(),
+    /** sha256 de "caminho/nome|tamanho" ordenados. */
+    impressao: text(),
+    /** Destino do lote. */
+    pastaId: text().notNull(),
+    /** Caminho legível até o destino. */
+    caminho: text().notNull(),
+    arquivosPrevistos: integer().notNull().default(0),
+    bytesPrevistos: bigint({ mode: "number" }).notNull().default(0),
+    arquivosRecebidos: integer().notNull().default(0),
+    bytesRecebidos: bigint({ mode: "number" }).notNull().default(0),
+    /** aberto | concluido | parcial | cancelado */
+    estado: text().notNull().default("aberto"),
+    /** Cliente (LGPD). */
+    consentimentoEm: quando(),
+    /** Histórico do CRM gravado (trava contra duplicar). */
+    avisadoEm: quando(),
+    /** O painel já mostrou (ponto de "novo"). */
+    vistoEm: quando(),
+    ultimoSinalEm: quando(),
+    concluidoEm: quando(),
+    criadoEm: createdAt(),
+    atualizadoEm: updatedAt(),
+  },
+  (t) => [
+    index("drive_lotes_criado_idx").on(t.criadoEm),
+    index("drive_lotes_projeto_idx").on(t.projectId, t.criadoEm),
+    index("drive_lotes_link_idx").on(t.linkId, t.criadoEm),
+    index("drive_lotes_cliente_idx").on(t.clientId, t.criadoEm),
+  ],
+);
+
+/** Cada arquivo de um lote. Linha enxuta: o resto vem do lote. */
+export const driveEnvios = pgTable(
+  "drive_envios",
+  {
+    /** Vai em appProperties.zroEnvio no Drive. */
+    id: id(),
+    loteId: text().references(() => driveLotes.id, { onDelete: "set null" }),
+    /** Pasta final (com as subpastas do cartão). */
+    pastaId: text().notNull(),
+    /** "DCIM/100CANON" dentro do lote. */
+    caminhoRelativo: text().notNull().default(""),
+    /** Nome gravado no Drive. */
+    nome: text().notNull(),
+    /** Só quando precisou trocar controle/bidi. */
+    nomeOriginal: text(),
+    /** MIME (octet-stream se suspeito). */
+    tipo: text().notNull(),
+    tamanho: bigint({ mode: "number" }).notNull(),
+    /** lastModified (ms), desempate fora do WebKit. */
+    modificado: bigint({ mode: "number" }),
+    /** enviando | concluido | falhou | cancelado | expirado */
+    estado: text().notNull().default("enviando"),
+    /** URI cifrada; null ao concluir/cancelar/expirar. FORA do backup. */
+    sessaoEnc: text(),
+    /** Criação + 6 dias (o Google guarda 7). */
+    sessaoExpiraEm: quando(),
+    /** Só o host, para o diagnóstico. */
+    sessaoHost: text(),
+    /** Id no Drive: vem da sessão, nunca do navegador. */
+    arquivoId: text(),
+    md5: text(),
+    erro: text(),
+    ultimoSinalEm: quando(),
+    concluidoEm: quando(),
+    criadoEm: createdAt(),
+  },
+  (t) => [
+    index("drive_envios_lote_idx").on(t.loteId, t.estado),
+    index("drive_envios_pasta_nome_idx").on(t.pastaId, t.nome),
+    index("drive_envios_ativos_idx").on(t.ultimoSinalEm).where(sql`${t.estado} = 'enviando'`),
+  ],
+);
+
+/** Permissões que o app criou no Drive (para poder recolher). */
+export const driveCompartilhamentos = pgTable(
+  "drive_compartilhamentos",
+  {
+    id: id(),
+    /** "entregas" | "equipe" */
+    motivo: text().notNull(),
+    /** Pasta ou arquivo no Drive (ex.: 06 Entregas). */
+    arquivoId: text().notNull(),
+    /** Devolvido por permissions.create; null = falhou. */
+    permissaoId: text(),
+    /** "anyone" | "user" */
+    tipo: text().notNull(),
+    /** "reader" | "writer" */
+    papel: text().notNull(),
+    email: text(),
+    avisouPorEmail: boolean().notNull().default(false),
+    projectId: text().references(() => projects.id, { onDelete: "set null" }),
+    clientId: text().references(() => clients.id, { onDelete: "set null" }),
+    driveProjetoId: text().references(() => driveProjetos.id, { onDelete: "set null" }),
+    erro: text(),
+    criadoPorId: text().references(() => users.id, { onDelete: "set null" }),
+    criadoEm: createdAt(),
+    revogadoEm: quando(),
+    revogadoPorId: text().references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    index("drive_compart_projeto_idx").on(t.projectId),
+    index("drive_compart_arquivo_idx").on(t.arquivoId),
+  ],
 );
 
 /* ============================== Relações ============================== */
