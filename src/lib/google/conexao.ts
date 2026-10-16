@@ -205,6 +205,17 @@ export async function tokenDeAcesso(): Promise<string> {
   return emCurso;
 }
 
+/**
+ * Token de acesso para a prévia do painel (o service worker de /painel/stream/ lê o vídeo direto do Google).
+ * Só o token de acesso (vale cerca de 1 h); o refresh token nunca sai daqui. `expiraEm` já desconta 2 min
+ * e fica em no máximo 15 min: o service worker pede outro antes.
+ */
+export async function acessoCurto(): Promise<{ token: string; expiraEm: number }> {
+  const token = await tokenDeAcesso();
+  const exp = cache?.token === token ? cache.exp : Date.now() + 10 * 60_000;
+  return { token, expiraEm: Math.min(exp - 2 * 60_000, Date.now() + 15 * 60_000) };
+}
+
 /** Guarda o resultado do teste de envio direto (os últimos 12). */
 export async function registrarDiagnostico(registro: DiagnosticoRegistro): Promise<DiagnosticoRegistro[]> {
   const l = await linha();

@@ -45,11 +45,25 @@ export type MockDrive = {
   listAll(): ItemMock[];
   getItem(id: string): ItemMock | null;
   addFolder(nome: string, pai?: string): ItemMock;
-  addFile(nome: string, pai?: string, o?: { size?: number; content?: string | Uint8Array }): ItemMock;
+  addFile(nome: string, pai?: string, o?: { size?: number; content?: string | Uint8Array; resourceKey?: boolean | string; mimeType?: string }): ItemMock;
   permissionsOf(id: string): ItemMock["permissions"];
   contentMd5(id: string): Promise<string>;
   setOptions(o: Record<string, unknown>): unknown;
-  stats(): { uploadSessionsCreated: number; bytesReceived: number; emailsDeCompartilhamento: number; faults: { uploadDrops: number } };
+  stats(): {
+    uploadSessionsCreated: number;
+    bytesReceived: number;
+    emailsDeCompartilhamento: number;
+    faults: { uploadDrops: number };
+    miniaturas: number;
+    ultimaMiniatura?: number;
+    midiaPorChave: number;
+    rangeGets: number;
+    requests: Record<string, number>;
+  };
+  setMedia(
+    id: string,
+    o: { miniatura?: Uint8Array | null; tipoMiniatura?: string; video?: { width: number; height: number; durationMillis: string } | null; imagem?: { width: number; height: number } | null },
+  ): ItemMock;
   issueTokens(): { accessToken: string; refreshToken: string };
   expireUploadSessions(): void;
   revokeRefreshTokens(): void;

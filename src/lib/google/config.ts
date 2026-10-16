@@ -92,6 +92,32 @@ export function origensPermitidas(): string[] {
 }
 
 /**
+ * Endereço de miniatura que o servidor pode buscar (com o token): só https em hosts do Google
+ * (googleusercontent.com, drive.google.com, docs.google.com) ou, no computador, a base do Google falso.
+ * Impede que um thumbnailLink adulterado leve o token (ou o servidor) para outro lugar.
+ */
+export function miniaturaPermitida(url: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.username || u.password) return false;
+  const base = baseDeTeste();
+  if (base !== null && u.origin === base) return u.pathname.startsWith("/miniaturas/");
+  if (u.protocol !== "https:" || u.port) return false;
+  const h = u.hostname.toLowerCase();
+  return h.endsWith(".googleusercontent.com") || h === "drive.google.com" || h === "docs.google.com";
+}
+
+/** Chave de API do Google (opcional), só para a prévia da área do cliente. Formato conferido; sem ela, null. */
+export function chaveApiGoogle(): string | null {
+  const v = process.env.GOOGLE_API_KEY?.trim();
+  return v && /^[A-Za-z0-9_-]{20,64}$/.test(v) ? v : null;
+}
+
+/**
  * Só uma URI de sessão do Google (ou do mock, nas mesmas condições). Conferido ANTES de qualquer
  * PUT/DELETE do servidor numa URI decifrada.
  */

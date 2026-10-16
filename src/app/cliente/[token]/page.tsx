@@ -20,7 +20,8 @@ export const metadata: Metadata = {
   title: "Área do cliente",
   description: "Seus projetos com a ZRO.",
   robots: { index: false, follow: false },
-  referrer: "no-referrer",
+  // Só a origem no Referer (a chave de API do Google confere o site); nunca o caminho com o código.
+  referrer: "strict-origin",
   openGraph: { title: "Área do cliente · ZRO Filmes", description: "Seus projetos com a ZRO." },
 };
 
@@ -70,7 +71,7 @@ export default async function ClientePage({ params }: PageProps<"/cliente/[token
     <Moldura>
       <Cabecalho rotulo="Área do cliente" titulo={area.cliente} subtitulo="Seus projetos com a ZRO." />
       <div className="mt-16 grid gap-24 sm:mt-20">
-        <Entregas projetos={area.projetos} googleOk={area.googleOk} />
+        <Entregas projetos={area.projetos} googleOk={area.googleOk} token={token} />
         <AreaCliente
           token={token}
           linkId={link.linkId}

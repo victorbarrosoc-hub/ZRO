@@ -3,6 +3,7 @@ import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { SECOES_ENTREGAS } from "@/lib/drive/estrutura";
+import type { InfoMidia } from "@/lib/drive/midia";
 import { limparControles } from "@/lib/drive/nomes";
 import { criarPermissao, listarPasta, removerPermissao } from "@/lib/google/drive";
 import { GoogleError } from "@/lib/google/erros";
@@ -27,6 +28,12 @@ export type EntregaArquivo = {
   modificadoEm: string | null;
   baixarUrl: string | null;
   verUrl: string;
+  /** MIME do Drive (a prévia escolhe o player pelo tipo e pela extensão). */
+  tipo: string;
+  /** Miniatura, duração e resolução (a miniatura vem pela rota /cliente/<token>/miniatura/<id>). */
+  midia: InfoMidia;
+  /** Arquivo com resourceKey: a leitura pública pede cabeçalho (a prévia usa a do Google). */
+  chaveRecurso: boolean;
 };
 
 export type CompartilhamentoDTO = {
@@ -237,6 +244,9 @@ export async function entregasDoProjeto(driveProjetoId: string): Promise<Entrega
           modificadoEm: it.modificadoEm,
           baixarUrl: it.baixarUrl,
           verUrl: it.verUrl,
+          tipo: it.tipo,
+          midia: it.midia,
+          chaveRecurso: it.chaveRecurso,
         });
         if (itens.length >= 500) break;
       }

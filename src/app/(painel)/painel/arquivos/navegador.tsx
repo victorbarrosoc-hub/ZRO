@@ -4,16 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
-import { ChevronRight, Download, Ellipsis, ExternalLink, FileText, Folder, FolderUp, HardDrive, Upload } from "lucide-react";
+import { ChevronRight, Download, Ellipsis, ExternalLink, Folder, FolderUp, HardDrive, LayoutGrid, List, Upload } from "lucide-react";
+import { IconeDoTipo, Miniatura } from "@/components/previa/miniatura";
+import type { ArquivoPrevia } from "@/components/previa/previa";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Select } from "@/components/ui/field";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/overlay";
 import { Card, EmptyState } from "@/components/ui/surface";
 import { bytesBR } from "@/lib/drive/bytes";
+import { duracaoBR, tipoDeMidia, type InfoMidia } from "@/lib/drive/midia";
 import { deInput, deSoltura, podeEscolherPasta, type Selecao } from "@/lib/drive/navegador/selecao";
 import { cn } from "@/lib/utils";
 import { NovaPasta } from "./arquivos-dialogs";
 import { useEhIOS, useFila } from "./fila";
+import { miniaturaDoPainel, PreviaPainel } from "./previa-painel";
+import { COOKIE_VISTA, type Vista } from "./vista";
 
 /**
  * Navegador do Drive da ZRO (docs/dev/drive.md §7.1): trilha, barra de ações, pastas primeiro e
@@ -29,12 +34,19 @@ export type ItemLista = {
   modificadoEm: string | null;
   verUrl: string;
   baixarUrl: string | null;
+  tipo: string;
+  midia: InfoMidia;
 };
+
 
 export type PastaAberta = { id: string; nome: string; url: string; podeEnviar: boolean };
 
 const semAssinatura = () => () => {};
 const dataBR = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Fortaleza", day: "2-digit", month: "2-digit", year: "numeric" });
+
+function lembrarVista(v: Vista) {
+  document.cookie = `${COOKIE_VISTA}=${v}; path=/painel; max-age=31536000; samesite=lax`;
+}
 
 function hrefPasta(id: string) {
   return `/painel/arquivos?pasta=${encodeURIComponent(id)}`;
@@ -90,6 +102,7 @@ export function Navegador({
   pagina,
   drives,
   projetos,
+  vistaInicial,
 }: {
   pasta: PastaAberta | null; // null = lista dos drives compartilhados
   trilha: { id: string; nome: string }[];
@@ -98,6 +111,7 @@ export function Navegador({
   pagina: string | null;
   drives: boolean;
   projetos: { projectId: string; rotulo: string; pastaId: string }[];
+  vistaInicial: Vista;
 }) {
   const router = useRouter();
   const { enviar } = useFila();
@@ -106,6 +120,13 @@ export function Navegador({
   const arquivosRef = useRef<HTMLInputElement>(null);
   const pastaRef = useRef<HTMLInputElement>(null);
   const [arrastando, setArrastando] = useState(0);
+  const [vista, setVista] = useState<Vista>(vistaInicial);
+  const [aberto, setAberto] = useState<number | null>(null);
+
+  function trocarVista(v: Vista) {
+    setVista(v);
+    lembrarVista(v);
+  }
 
   const podeEnviar = Boolean(pasta?.podeEnviar);
   const pastaAtual = pasta ? { id: pasta.id, nome: pasta.nome } : null;
@@ -126,6 +147,16 @@ export function Navegador({
 
   const pastas = itens.filter((i) => i.pasta);
   const arquivos = itens.filter((i) => !i.pasta);
+  const previas: ArquivoPrevia[] = arquivos.map((a) => ({
+    id: a.id,
+    nome: a.nome,
+    tipo: a.tipo,
+    tamanho: a.tamanho,
+    modificadoEm: a.modificadoEm,
+    midia: a.midia,
+    verUrl: a.verUrl,
+    baixarUrl: a.baixarUrl,
+  }));
 
   return (
     <Card className="min-w-0">
@@ -184,6 +215,36 @@ export function Navegador({
             ) : null}
           </div>
         ) : null}
+        {itens.length && !drives ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[12px] text-mute">
+              {[pastas.length ? `${pastas.length} ${pastas.length === 1 ? "pasta" : "pastas"}` : null, arquivos.length ? `${arquivos.length} ${arquivos.length === 1 ? "arquivo" : "arquivos"}` : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            <div role="group" aria-label="Como mostrar" className="flex rounded-full border border-line p-0.5">
+              {(
+                [
+                  ["lista", "Lista", List],
+                  ["miniaturas", "Miniaturas", LayoutGrid],
+                ] as const
+              ).map(([v, rotulo, Icone]) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={vista === v}
+                  onClick={() => trocarVista(v)}
+                  className={cn(
+                    "flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors [&_svg]:size-4",
+                    vista === v ? "bg-white text-void" : "text-ash hover:text-light",
+                  )}
+                >
+                  <Icone aria-hidden /> {rotulo}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {pasta && !podeEnviar ? <p className="text-[13px] text-mute">A conta conectada não pode enviar para esta pasta.</p> : null}
         {pasta && podeEnviar && ios ? <p className="text-[13px] text-mute">Escolha pelo app Arquivos para mandar o vídeo original.</p> : null}
       </div>
@@ -234,6 +295,48 @@ export function Navegador({
               }
             />
           )
+        ) : vista === "miniaturas" && !drives ? (
+          <ul className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-4 sm:p-6 lg:grid-cols-4">
+            {pastas.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={hrefPasta(p.id)}
+                  className="group flex h-full flex-col overflow-hidden rounded-thumb border border-line bg-white/[0.02] transition-colors hover:border-white/25"
+                >
+                  <span className="grid aspect-[4/3] place-items-center bg-graphite">
+                    <IconeDoTipo tipo="pasta" nome={p.nome} />
+                  </span>
+                  <span className="truncate px-3 py-2.5 text-[13px] text-light" title={p.nome}>
+                    {p.nome}
+                  </span>
+                </Link>
+              </li>
+            ))}
+            {arquivos.map((a, i) => (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() => setAberto(i)}
+                  className="group flex h-full w-full flex-col overflow-hidden rounded-thumb border border-line bg-white/[0.02] text-left transition-colors hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70"
+                  aria-label={`Ver ${a.nome}`}
+                >
+                  <Miniatura
+                    src={a.midia.miniatura ? miniaturaDoPainel(a.id, 640) : null}
+                    nome={a.nome}
+                    tipo={tipoDeMidia(a)}
+                    duracao={duracaoBR(a.midia.duracaoMs)}
+                    className="aspect-[4/3] w-full transition-transform duration-500 ease-out-expo"
+                  />
+                  <span className="grid gap-0.5 px-3 py-2.5">
+                    <span className="truncate text-[13px] text-light" title={a.nome}>
+                      {a.nome}
+                    </span>
+                    <span className="text-[11px] text-mute">{a.tamanho != null ? bytesBR(a.tamanho) : "Google Docs"}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         ) : (
           <ul className="divide-y divide-line">
             {pastas.map((p) => (
@@ -249,8 +352,8 @@ export function Navegador({
                 </Link>
               </li>
             ))}
-            {arquivos.map((a) => (
-              <ArquivoLinha key={a.id} a={a} />
+            {arquivos.map((a, i) => (
+              <ArquivoLinha key={a.id} a={a} onAbrir={() => setAberto(i)} />
             ))}
           </ul>
         )}
@@ -275,21 +378,37 @@ export function Navegador({
           </div>
         ) : null}
       </div>
+      {aberto != null && previas[aberto] ? (
+        <PreviaPainel arquivos={previas} indice={aberto} onIndice={setAberto} onFechar={() => setAberto(null)} />
+      ) : null}
     </Card>
   );
 }
 
-function ArquivoLinha({ a }: { a: ItemLista }) {
-  const meta = [a.tamanho != null ? bytesBR(a.tamanho) : null, a.modificadoEm ? dataBR.format(new Date(a.modificadoEm)) : null].filter(Boolean).join(" · ");
+function ArquivoLinha({ a, onAbrir }: { a: ItemLista; onAbrir: () => void }) {
+  const meta = [
+    a.tamanho != null ? bytesBR(a.tamanho) : null,
+    duracaoBR(a.midia.duracaoMs),
+    a.modificadoEm ? dataBR.format(new Date(a.modificadoEm)) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <li className="flex min-h-12 items-center gap-3 px-5 py-2.5 sm:px-6">
-      <FileText className="size-4 shrink-0 text-mute" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[14px] text-light" title={a.nome}>
-          {a.nome}
-        </p>
-        {meta ? <p className="text-[12px] text-mute">{meta}</p> : null}
-      </div>
+    <li className="flex min-h-12 items-center gap-3 px-5 py-2 sm:px-6">
+      <button type="button" onClick={onAbrir} className="group flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={`Ver ${a.nome}`}>
+        <Miniatura
+          src={a.midia.miniatura ? miniaturaDoPainel(a.id, 160) : null}
+          nome={a.nome}
+          tipo={tipoDeMidia(a)}
+          className="size-10 shrink-0 rounded-[10px] [&_.label]:hidden [&_svg]:size-4"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] text-light group-hover:text-white" title={a.nome}>
+            {a.nome}
+          </span>
+          {meta ? <span className="block text-[12px] text-mute">{meta}</span> : null}
+        </span>
+      </button>
       <div className="hidden shrink-0 items-center gap-1 sm:flex">
         {a.baixarUrl ? (
           <a href={a.baixarUrl} target="_blank" rel="noreferrer" className={buttonClasses({ variant: "ghost", size: "sm" })}>

@@ -1259,6 +1259,7 @@ Com senha, uma segunda mensagem: "A senha vai em outra mensagem." Nenhuma varia�
   //             { source: "/enviar/:path*", headers: envioHeaders }, { source: "/cliente/:path*", headers: envioHeaders }]
   ```
   Em dev (o React precisa), `connect-src` ganha `ws:`. A CSP global e a `Permissions-Policy` não mudam.
+  **Atualização (§16):** `/cliente/*` usa `Referrer-Policy: strict-origin` (só a origem, nunca o código do link) e `frame-src 'self' https://drive.google.com`, por causa da prévia das entregas.
 - **`src/app/(site)/privacidade/page.tsx`** (texto para o Victor e o Edu revisarem):
   - **Quais dados coletamos**, novo parágrafo: "Na área do cliente e nos links de envio da ZRO, guardamos os arquivos enviados, quem enviou (o nome do cadastro ou o que for informado), a data e, no caso de clientes, o aceite."
   - **Com quem compartilhamos**, acrescentar: "Os arquivos ficam no Google Drive da ZRO, no Google Workspace. O Google é o operador do armazenamento."
@@ -1368,6 +1369,7 @@ Com senha, uma segunda mensagem: "A senha vai em outra mensagem." Nenhuma varia�
 | `GOOGLE_CLIENT_SECRET` | Vercel (Production, **Sensitive**) | segredo do cliente |
 | `ZRO_DRIVE_KEY` | Vercel (Production, **Sensitive**) | `openssl rand -base64 32` (32 bytes). Guardar no gerenciador de senhas. |
 | `ZRO_GOOGLE_API_BASE` | **só local e testes**; ignorada na Vercel e em produção | `http://127.0.0.1:54400` (mock) |
+| `GOOGLE_API_KEY` | Vercel (Production), **opcional** | chave de API restrita à Drive API e ao referenciador `https://zrofilmes.vercel.app/*` (§16). Sem ela, o cliente assiste pelo player do Google Drive. |
 
 Sem variável de modo: só existe o envio direto.
 
@@ -1648,6 +1650,76 @@ Card da Pauta ligado a um projeto com pasta no Drive. Duas formas de a peça fin
 
 ---
 
+## 16. Prévia: miniaturas, player e Baixar (painel e área do cliente)
+
+### Para o Victor
+
+- **Painel → Arquivos:** botão **Lista / Miniaturas** (cada aparelho lembra a escolha). Em Miniaturas, a grade mostra a miniatura do Google, a duração no vídeo e o ícone do tipo quando não há miniatura. Tocar num arquivo abre a **prévia**: janela grande no computador, tela cheia no celular; setas ou deslizar para o lado passam de arquivo; arrastar para baixo ou Esc fecham.
+- **Vídeo e áudio** tocam no player da ZRO (preto e branco, pílulas): barra arrastável com o tempo, play/pausa, volume e mudo, velocidade (1x, 1,5x, 2x, 0,5x) e tela cheia. Tocam **em streaming, direto do Google**: nada é baixado inteiro antes e nenhum byte passa pela Vercel.
+- **Foto:** grande, com zoom (pinça, toque duplo, duplo clique, roda do mouse). Primeiro a miniatura alta do Google; o JPG/PNG/WebP original entra por cima quando chega.
+- **Bruto de câmera** (BRAW, R3D, ARRI, MXF; ProRes que o navegador recusa): se existir um `.mp4`/`.mov` com o mesmo nome na pasta ou numa subpasta `Proxy`/`Proxies`, toca o proxy com o selo **Proxy** e a frase "Prévia em baixa resolução. O Baixar traz o original." Sem proxy: miniatura grande e "Este formato não toca no navegador."
+- **Vídeo pesado demais para a rede** (pedido do Victor depois do teste no iPhone): antes de tocar, a taxa é calculada (`tamanho × 8 ÷ duração`). Acima de **60 Mb/s no celular** ou **400 Mb/s no computador**, o original não toca: aparece a miniatura grande com "Vídeo pesado demais para tocar pela rede.", **Ver no Google Drive** (no iPhone abre o app do Drive, que toca a cópia leve dele) e **Tentar mesmo assim**. Se tocando ele travar (em espera por mais de 4 s, ou o tempo andando sem quadro novo), o player pausa e mostra o mesmo aviso. O proxy de câmera, quando existe, tem prioridade e toca.
+- **Botões da prévia:** **Baixar** em destaque (no computador, o link do próprio Google; no celular, pelo stream, com aviso acima de 1 GB), **Abrir no Drive** e **Copiar link**.
+- **Área do cliente:** as entregas viram uma grade de miniaturas por seção (Master, Redes, Legendas, Outros) com duração e botão de baixar. Tocar abre a mesma prévia, com o símbolo da ZRO no topo. O vídeo toca no player da ZRO direto do Google quando a **chave de API** opcional existe (DEPLOY.md, passo 5.6); sem a chave, com arquivo pesado demais ou travando, toca o **player do próprio Google Drive** embutido (a cópia leve dele). Se nem ele carregar, aviso com **Ver no Google Drive**.
+
+### Decisões
+
+| Tema | Decisão | Por quê |
+|---|---|---|
+| **Vídeo no painel** | **Service worker com escopo `/painel/stream/`** (`/painel/stream/sw.js`). Ele pega um token de acesso curto em `/painel/arquivos/token` e repassa o pedido com `Range` para `files/<id>?alt=media&supportsAllDrives=true`, devolvendo em streaming (206). | `<video>` não manda `Authorization`. Os bytes vão do Google para o navegador: nada pela Vercel (custo e limite de tempo das funções). Mesmo desenho do SOBEDESCE, que já roda. |
+| **Por que um quadro (`<iframe>`)** | O `<video>` mora num quadro em `/painel/stream/quadro` (mesma origem, sem script próprio); os controles ficam na página e mexem no elemento de lá. Fotos originais e o "por que não tocou" são lidos por um quadro escondido. Download: navegação para `/painel/stream/arquivo/<id>?baixar=1`. | Um service worker só atende as páginas **dentro** do escopo dele. Escopo `/painel/` deixaria o painel inteiro (a Pauta a cada 4 s, os envios de 250 GB em pedaços) passando por ele. Com o quadro, o SW fica restrito e nada mais muda. |
+| **Sem service worker** | `/painel/stream/arquivo/<id>` existe também no servidor: com login, redireciona para o próprio Google (ver ou baixar). A prévia mostra "A prévia não abriu neste navegador." com o link do Drive. | Navegador sem SW (ou recarregar forçado) nunca cai numa página quebrada e nunca recebe bytes pela Vercel. |
+| **Token do stream** | `GET /painel/arquivos/token`: login, cabeçalho `X-ZRO-Stream: 1`, `Sec-Fetch-Site` do mesmo site, `no-store`. Devolve só o token de acesso (≈1 h; o SW renova antes de 15 min) e a base da API. O SW aceita só `https://www.googleapis.com/drive/v3` (ou o Google falso em 127.0.0.1/localhost, só se o próprio painel estiver em localhost). | O refresh token nunca sai do servidor. Outro site não consegue ler a resposta (sem CORS) nem mandar o cabeçalho sem preflight. O token só vai para os navegadores logados do Victor e do Edu, e já dá o mesmo acesso que o painel inteiro dá. |
+| **Miniatura** | Rota do servidor: `/painel/arquivos/miniatura/<id>?s=` (login) e `/cliente/<token>/miniatura/<id>?s=`. O servidor pede o `thumbnailLink` atual (`files.get`) e busca a imagem com o token (sem token, se o Google recusar). Tamanhos fixos 160/320/640/1280/2000. Só hosts do Google, redirecionamentos conferidos, só jpeg/png/webp/gif, até 8 MB, `CSP sandbox`, `nosniff`. Cache em memória 5 min (32 MB) e `Cache-Control: private` (300 s no painel, 120 s no cliente). | O `thumbnailLink` exige sessão do Google e dura horas. Miniatura é pequena (dezenas de KB): passar pelo servidor custa pouco e não expõe token. |
+| **Vídeo no cliente** | (a) **chave de API** (`GOOGLE_API_KEY`, opcional): `files/<id>?alt=media&key=…` direto no `<video>` (Range, sem CORS, nenhum token da ZRO). (b) Sem chave, com `resourceKey`, pesado demais ou travando: o **player do Google Drive** em `<iframe>` (`/file/d/<id>/preview`). (c) Proxy pelo servidor: **não** usado. | (a) dá o player da ZRO e só lê o que tem "qualquer pessoa com o link" (06 Entregas liberada); Recolher corta na hora. (b) funciona sem configurar nada e usa a cópia leve do Google. (c) passaria GB pela Vercel. |
+| **Referer do cliente** | `/cliente/*` passa de `no-referrer` para **`strict-origin`** e ganha `frame-src 'self' https://drive.google.com`. | A chave de API é restrita ao endereço do site e o Google confere o Referer. `strict-origin` manda só `https://zrofilmes.vercel.app/`, nunca o caminho com o código do link (o motivo do `no-referrer`). |
+| **Pesado demais** | `pesadoDemais({tamanho, duracaoMs}, celular)` em `src/lib/drive/midia.ts`: 60 Mb/s no celular (largura < 768 px ou ponteiro grosso), 400 Mb/s no computador. Sem duração: tenta tocar (o vigia cobre). Vigia no player: `readyState < 3` por 4 s com o play pedido, ou `requestVideoFrameCallback` sem quadro novo por 4 s com o tempo andando. | A rede não entrega ~1 Gb/s em tempo real; o Drive toca porque usa uma cópia leve que a API não expõe. |
+| **Proxy** | `GET /painel/arquivos/proxy/<id>`: o servidor busca por **nome exato** (`base.mp4/.MP4/.mov/.MOV/.m4v/.M4V`) na pasta do original e nas subpastas `Proxy`/`Proxies` dela. Cache de 5 min. | Nada de listar um cartão inteiro (milhares de arquivos). |
+| **Lista / Miniaturas** | Cookie `zro_arquivos_vista` (`path=/painel`, 1 ano): o servidor já desenha a vista certa. | Sem piscar na abertura. |
+
+### Arquivos
+
+| Arquivo | O quê |
+|---|---|
+| `src/lib/drive/midia.ts` (puro) | tipo do arquivo, o que toca, proxy (nome-base), tamanhos de miniatura, duração, `taxaMbps`, `pesadoDemais`, links do Drive |
+| `src/lib/drive/stream-sw.ts` | o código do service worker e a página do quadro |
+| `src/lib/drive/navegador/stream.ts` | registro do SW, `urlDeStream`, quadro escondido, `porQueFalhou`, `baixarPeloStream` |
+| `src/lib/drive/rota-previa.ts` | as rotas (miniatura do painel e do cliente, token, proxy, reserva sem SW) |
+| `src/lib/services/drive-previa.ts` | `miniatura` (cache), `acessoParaStream`, `acharProxy`, `entregaDaArea`, `urlPublicaDeMidia` |
+| `src/lib/auth/requisicao.ts` | `usuarioDaRequisicao` (a sessão lida do cookie da requisição, para route handlers) |
+| `src/lib/google/drive.ts` | `ItemDrive.midia` e `chaveRecurso`; `buscarItens`, `itemComMidia`, `linkDaMiniatura`, `baixarMiniatura` |
+| `src/lib/google/config.ts` | `miniaturaPermitida`, `chaveApiGoogle` |
+| `src/lib/google/conexao.ts` | `acessoCurto` |
+| `src/components/previa/` | `player.tsx` (player da ZRO, com quadro opcional e vigia), `previa.tsx` (janela, gestos, foto com zoom, avisos), `miniatura.tsx` |
+| `src/app/(painel)/painel/arquivos/` | `navegador.tsx` (Lista/Miniaturas, abre a prévia), `previa-painel.tsx`, `vista.ts`, rotas `miniatura/[id]`, `token`, `proxy/[id]` |
+| `src/app/(painel)/painel/stream/` | `sw.js`, `quadro`, `arquivo/[id]` (reserva) |
+| `src/app/cliente/[token]/` | `entregas.tsx` (servidor), `entregas-grade.tsx` (grade e prévia), rota `miniatura/[id]` |
+
+### Segurança e LGPD
+
+- O cliente **nunca** recebe token da conta Google da ZRO. Na página dele só vão: a miniatura pela rota do servidor e, com a chave, o endereço `alt=media&key=` de arquivos que já são "qualquer pessoa com o link".
+- Miniatura do cliente, nesta ordem: prévia da Vercel → 404; limite por IP; link do tipo `cliente-area`, **ativo** (não expirado, não revogado); senha (cookie da área); o arquivo está em **06 Entregas** de um projeto **deste cliente**, não cancelado, com `entregasLiberadasEm`, na conta atual (a lista vem dos ids do banco, `entregasDoProjeto`). Qualquer recusa: 404 (não diz se existe).
+- Painel: login em toda rota (o `src/proxy.ts` continua como estava); ids pelo formato (`idDriveValido`, nunca `root`); o Google decide o que a conta enxerga.
+- O SW só atende `GET /painel/stream/arquivo/<id>` com id no formato do Drive; nada é guardado (`no-store`); o token fica só na memória dele.
+- Nada é apagado: a prévia só lê.
+
+### Testes
+
+- `scripts/tests/drive-previa.test.mts` (Google falso, Postgres em memória): pura (tipos, proxy, tamanhos, taxa); miniatura do painel (sem login, sessão de senha antiga, tamanho arredondado, cache sem ir ao Google, sem miniatura/lixeira/id inválido); token (cabeçalho, sessão, mesmo site, sem refresh token, `Range` 206 no Google); proxy (mesma pasta, subpasta `Proxy`, não achado, sem login); cliente (sem liberar, liberado, 05 Render recusado, outro cliente recusado, senha, expirado, Recolher corta miniatura e chave, revogado; dados de mídia e chave com Range; `resourceKey` sem endereço direto); reserva sem SW; Google desconectado.
+- `scripts/drive-e2e-previa.mjs` (Playwright + Google falso com chave de API e Referer conferido; mídia VP9/Opus gerada com ffmpeg, porque o Chromium do Playwright não toca H.264): grade, vídeo tocando pelo SW (tempo avança, `rangeGets` no Google, 206 do SW com `Content-Range` refeito), foto original, R3D sem proxy, BRAW com proxy, ProRes 1,2 GB/10 s (pesado), vigia com o Google a 20 KB/s, áudio, lista, 390 px; área do cliente em 1440 e 390 (miniaturas, filme tocando pela chave, pesado no player do Drive, foto), miniatura de 01 Cenas recusada, cabeçalhos de `/cliente`. Apaga os dados de teste no fim.
+- O Google falso (`scripts/google-mock/`) ganhou: `setMedia` (miniatura com `thumbnailLink` que exige token, `videoMediaMetadata`, `imageMediaMetadata`), chave de API (`chavesApi`, `chaveApiReferer`) só para arquivo com link público, CORS na API de arquivos (sem expor `Content-Range`, o pior caso) e, no controle, `POST /adicionar` e `POST /midia`.
+
+### Pendências
+
+1. **Conferir com a conta real** (depois do deploy): miniatura pelo servidor (o `thumbnailLink` aceitar o token), vídeo do painel no Chrome, Safari do Mac e iPhone (SW em quadro), download pelo stream no iPhone, e a chave de API com o Referer `strict-origin`.
+2. **Criar a chave de API** (DEPLOY.md, passo 5.6). Sem ela tudo funciona, só que o cliente assiste no player do Google Drive.
+3. **Limites de taxa** (60 e 400 Mb/s) são estimativas: ajustar depois de usar com material de verdade.
+4. **"Baixar tudo"** não existe na área do cliente (não havia antes). Dá para acrescentar um botão para a pasta 06 Entregas no Google Drive (o próprio Google baixa tudo em .zip).
+5. **Prévia na Pauta** (card) continua com a regra antiga (§15): pode usar este player depois.
+6. O player do Google Drive embutido não tem como avisar que falhou (é de outro domínio): depois de 15 s sem carregar, cai no aviso com o botão.
+
+---
+
 ## Anexo: onde cada ponto da revisão adversarial foi resolvido
 
 | Ponto | Onde |
@@ -1700,3 +1772,10 @@ Card da Pauta ligado a um projeto com pasta no Drive. Duas formas de a peça fin
 - **E2E do protocolo** (`scripts/drive-e2e-protocolo.mjs`): 20 de 20.
 - **E2E das telas** (`scripts/drive-e2e-telas.mjs`, 1440 e 390): 21 de 21. Árvore com os nomes exatos; "Criar pastas" em projeto antigo; Arquivos (arquivos, pasta, 0 byte, Baixar = `webContentLink`, Nova pasta); link da diária na aba Drive e na agenda; cartão com subpastas (estrutura preservada, sem o nome do cartão e sem `.DS_Store`) → A001, A002, mesmo cartão → pergunta, Drone → D001; quedas de conexão (`dropUploadProb 0.9`) e recarga no meio (mesmo rolo, 1 sessão, menos de 1,6× os bytes); MD5 igual no Google falso em todos os arquivos; Liberar entregas (permissão só em 06 Entregas, e-mail do Google contado); área com senha (errada, certa, 6 erros → bloqueio, senha trocada no meio do envio → janela e continua); cliente só vê 06 Entregas, projeto de outro cliente → 404; envio para `03 Assets/Do cliente/<data> · <assunto>`; sessão do painel expirada no meio → Entrar e Continuar; links desativado, expirado e indisponível; backup com as 8 tabelas e nenhum segredo (`tokenHash` presente).
 - **Falta:** o teste com a conta real (seção 13.8) e o diagnóstico por aparelho (Chrome, Safari do iPhone, app da tela inicial).
+
+### Prévia (§16), 2026-10-16, Google falso
+
+- `npm run typecheck`, `npm run lint` e `next build` (cópia isolada) limpos.
+- Testes: 95 de 95 em `scripts/tests/drive-*.test.mts` (inclui os 20 novos de `drive-previa.test.mts`).
+- E2E `scripts/drive-e2e-previa.mjs`: 14 de 14, em 1440 e 390. Vídeo pelo SW: tempo 2,7 → 4,2 s, pedidos com `Range` no Google, SW respondendo 206 `bytes 100-1099/<total>`. Cliente: filme pela chave de API (o Referer passou na restrição do Google falso).
+- **Falta:** a conta real (pendência 1 do §16).

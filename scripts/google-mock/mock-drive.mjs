@@ -1,6 +1,7 @@
 // Copiado do SOBEDESCE (test/mock-drive.js) em 2026-10-15; mudanças marcadas com `// ZRO:`.
-// ZRO: escopo local (sem import do src/config.js), porta fixa, appProperties (guardadas, devolvidas em
-//      `fields` e aceitas em `q`), webContentLink, permissões (files/<id>/permissions) com contagem de
+// ZRO: escopo local (sem import do src/config.js), porta fixa, miniaturas (setMedia, thumbnailLink com token),
+//      metadados de vídeo e foto, chave de API para arquivo com link público, CORS na API de arquivos,
+//      appProperties (guardadas, devolvidas em `fields` e aceitas em `q`), webContentLink, permissões (files/<id>/permissions) com contagem de
 //      e-mails de compartilhamento e `bloquearLinkPublico`, e `corsModo: "google"` (CORS só para o Origin
 //      que abriu a sessão; `expoeRange` e `finalSemCors`, como medido no Google).
 //
@@ -71,6 +72,9 @@ const DEFAULT_OPTIONS = {
   expoeRange: true, // modo google: Range listado em Access-Control-Expose-Headers
   finalSemCors: true, // modo google: a resposta final (200/201) da sessão vem sem CORS
   bloquearLinkPublico: false, // permissions.create "anyone" → 403 publishOutNotPermitted
+  // ZRO: chave de API (files.get/alt=media sem token, só em arquivo com link público) e a restrição por referer.
+  chavesApi: [],
+  chaveApiReferer: null, // ex.: "http://localhost:3000/" (sem Referer começando assim → 403, como no Google)
 }
 
 // Headers de CORS do modo `cors`. "Authorization" vai explícito porque o curinga "*" não cobre esse header.
@@ -1000,6 +1004,8 @@ class MockDrive {
       statusQueries: 0,
       dailyUploadBytes: this.dailyUploaded ?? 0,
       emailsDeCompartilhamento: 0, // ZRO
+      miniaturas: 0, // ZRO: miniaturas servidas
+      midiaPorChave: 0, // ZRO: files.get/alt=media com chave de API
       faults: { error5xx: 0, error429: 0, rateLimit403: 0, wrongRange: 0, ignoredRange: 0, downloadDrops: 0, downloadStalls: 0, uploadDrops: 0, uploadStalls: 0, shortPages: 0 },
     }
   }
@@ -1077,6 +1083,7 @@ class MockDrive {
       description,
       appProperties: appProperties && typeof appProperties === 'object' ? { ...appProperties } : null, // ZRO
       permissions: [], // ZRO
+      midia: null, // ZRO: { miniatura: Buffer, tipoMiniatura, video: {width,height,durationMillis}, imagem: {width,height} }
       version: 1,
       seq: this._seq++,
     }
@@ -1392,6 +1399,13 @@ class MockDrive {
     j.webViewLink = isFolder ? `https://drive.google.com/drive/folders/${item.id}` : `https://drive.google.com/file/d/${item.id}/view?usp=drivesdk`
     j.iconLink = `https://drive-thirdparty.googleusercontent.com/16/type/${item.mimeType}`
     j.hasThumbnail = false
+    // ZRO: miniatura (thumbnailLink só abre com o token, como o lh3 do Google) e metadados de mídia.
+    if (item.midia?.miniatura) {
+      j.hasThumbnail = true
+      j.thumbnailLink = `${this.url}/miniaturas/${item.id}=s220`
+    }
+    if (item.midia?.video) j.videoMediaMetadata = { ...item.midia.video }
+    if (item.midia?.imagem) j.imageMediaMetadata = { ...item.midia.imagem }
     j.viewedByMe = true
     j.createdTime = item.createdTime
     j.modifiedTime = item.modifiedTime
@@ -1502,6 +1516,22 @@ class MockDrive {
             return writeHead(status, ...resto)
           }
         }
+      } else if (origem && u.pathname.startsWith('/drive/v3/files/')) {
+        // ZRO: a API do Drive responde com CORS a qualquer origem (o service worker do painel lê o vídeo com o
+        // token e o Range). Nenhum cabeçalho exposto além dos de sempre (o pior caso: sem Content-Range legível).
+        const cors = { 'access-control-allow-origin': origem, vary: 'Origin' }
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204, {
+            ...cors,
+            'access-control-allow-methods': 'GET, OPTIONS',
+            'access-control-allow-headers': 'Authorization, Range, X-Goog-Drive-Resource-Keys',
+            'access-control-max-age': '600',
+            'content-length': 0,
+          })
+          res.end()
+          return
+        }
+        for (const [nome, valor] of Object.entries(cors)) res.setHeader(nome, valor)
       } else if (req.method === 'OPTIONS') {
         res.writeHead(204, { 'content-length': 0 }) // sem CORS: o navegador bloqueia
         res.end()
@@ -1657,6 +1687,10 @@ class MockDrive {
       return notFound
     }
 
+    // ZRO: miniatura (o thumbnailLink), só com token válido
+    const mm = /^\/miniaturas\/([^/=]+)=s(\d+)$/.exec(p)
+    if (mm && method === 'GET') return { name: 'thumbnail', run: (q, s) => this._miniatura(q, s, safeDecode(mm[1]), Number(mm[2])) }
+
     if (!p.startsWith('/drive/v3/')) return notFound
     const segs = p.slice('/drive/v3/'.length).split('/').map(safeDecode)
     if (segs[0] === 'about' && segs.length === 1 && method === 'GET') return drive('about.get', (q, s, u) => this._about(q, s, u))
@@ -1672,7 +1706,12 @@ class MockDrive {
         const id = segs[1]
         if (method === 'GET') {
           const media = url.searchParams.get('alt') === 'media'
-          return drive(media ? 'files.media' : 'files.get', (q, s, u) => this._filesGet(q, s, u, id))
+          const normal = drive(media ? 'files.media' : 'files.get', (q, s, u) => this._filesGet(q, s, u, id))
+          // ZRO: com chave de API e sem token (link público), como o Google.
+          if (url.searchParams.has('key')) {
+            return { name: `${normal.name}.chave`, run: (q, s, u) => (q.headers.authorization ? normal.run(q, s, u) : this._comChave(q, s, u, id)) }
+          }
+          return normal
         }
         if (method === 'PATCH') return drive('files.update', (q, s, u) => this._filesUpdate(q, s, u, id), { write: true })
         if (method === 'DELETE') return drive('files.delete', (q, s, u) => this._filesDelete(q, s, u, id), { write: true })
@@ -2294,6 +2333,50 @@ class MockDrive {
     if (item.permissions.length === antes) return this._send(res, 404, gError(404, 'notFound', `Permission not found: ${permId}.`, { location: 'permissionId' }))
     res.writeHead(204)
     res.end()
+  }
+
+  /** ZRO: miniatura e metadados de mídia de um arquivo (o Google gera sozinho; aqui o teste define). */
+  setMedia(id, { miniatura = null, tipoMiniatura = 'image/png', video = null, imagem = null } = {}) {
+    const item = this.items.get(this._resolve(id))
+    if (!item) throw new Error(`não existe: ${id}`)
+    item.midia = { miniatura: miniatura ? Buffer.from(miniatura) : null, tipoMiniatura, video, imagem }
+    return this._view(item)
+  }
+
+  /** ZRO: o thumbnailLink. Sem token válido: 403 (o lh3 do Google pede a sessão). */
+  _miniatura(req, res, rawId, tamanho) {
+    if (!this._tokenInfo(req.headers.authorization)) return this._send(res, 403, '<!doctype html><title>403</title>')
+    const item = this.items.get(rawId)
+    const buf = item?.midia?.miniatura
+    if (!buf || item.trashed) return this._send(res, 404, '<!doctype html><title>404</title>')
+    this._stats.miniaturas++
+    this._stats.ultimaMiniatura = tamanho
+    res.writeHead(200, { 'content-type': item.midia.tipoMiniatura || 'image/png', 'content-length': buf.length, 'x-mock-tamanho': String(tamanho) })
+    res.end(buf)
+  }
+
+  /** ZRO: link público (permissão "anyone" no item ou numa pasta acima). */
+  _publico(item) {
+    for (let it = item, n = 0; it && n < 64; it = this.items.get(it.parents[0]), n++) {
+      if ((it.permissions || []).some(p => p.type === 'anyone')) return true
+    }
+    return false
+  }
+
+  /** ZRO: files.get / alt=media com chave de API: só arquivo com link público; referer conferido se pedido. */
+  async _comChave(req, res, url, rawId) {
+    const chave = url.searchParams.get('key')
+    if (!(this.options.chavesApi || []).includes(chave)) {
+      return this._send(res, 400, gError(400, 'badRequest', 'API key not valid. Please pass a valid API key.'))
+    }
+    const ref = this.options.chaveApiReferer
+    if (ref && !String(req.headers.referer || '').startsWith(ref)) {
+      return this._send(res, 403, gError(403, 'forbidden', `Requests from referer ${req.headers.referer || '<empty>'} are blocked.`))
+    }
+    const item = this._accessible(rawId, url, req)
+    if (!item || item.trashed || !this._publico(item)) return this._send(res, 404, notFoundFile(rawId))
+    this._stats.midiaPorChave++
+    return this._filesGet(req, res, url, rawId)
   }
 
   /** ZRO: permissões de um item (para os testes conferirem). */
