@@ -4,7 +4,7 @@ import { Card, CardHeader, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
 import { dateTimeBR } from "@/lib/format";
 import { getAccount } from "@/lib/queries/admin-content";
-import { ChangePasswordForm, ProfileForm } from "../account-form";
+import { ChangeEmailForm, ChangePasswordForm, ProfileForm } from "../account-form";
 import { AjustesTabs } from "../ajustes-tabs";
 
 export const metadata: Metadata = { title: "Minha conta" };
@@ -23,6 +23,10 @@ export default async function ContaPage() {
           <Card>
             <CardHeader title="Perfil" />
             <ProfileForm name={user.name} photoId={user.photoId} />
+          </Card>
+          <Card>
+            <CardHeader title="E-mail de acesso" />
+            <ChangeEmailForm email={user.email} />
           </Card>
           <Card>
             <CardHeader title="Trocar senha" />

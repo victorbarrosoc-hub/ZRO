@@ -7,7 +7,7 @@ import { ImageField } from "@/components/painel/image-field";
 import { Field, Input } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { StableForm, StableSubmit } from "../site/_components/stable-form";
-import { changePassword, saveProfile } from "./actions";
+import { changeEmail, changePassword, saveProfile } from "./actions";
 
 export function ChangePasswordForm({ email }: { email: string }) {
   const [show, setShow] = useState(false);
@@ -66,6 +66,31 @@ export function ChangePasswordForm({ email }: { email: string }) {
               {show ? "Esconder senhas" : "Mostrar senhas"}
             </button>
             <StableSubmit pendingLabel="Trocando…">Trocar senha</StableSubmit>
+          </div>
+        </>
+      )}
+    </StableForm>
+  );
+}
+
+/** E-mail de acesso: o novo e a senha atual para confirmar. */
+export function ChangeEmailForm({ email }: { email: string }) {
+  const [formKey, setFormKey] = useState(0);
+  return (
+    <StableForm key={formKey} action={changeEmail} onSuccess={() => setFormKey((k) => k + 1)} className="grid gap-4 p-5 sm:p-6">
+      {(state) => (
+        <>
+          <p className="text-[13px] text-mute">
+            Hoje você entra com <span className="text-light">{email}</span>.
+          </p>
+          <Field label="Novo e-mail" htmlFor="em-new" error={fieldError(state, "email")}>
+            <Input id="em-new" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" maxLength={120} required />
+          </Field>
+          <Field label="Senha atual" htmlFor="em-current" error={fieldError(state, "current")} hint="Para confirmar que é você.">
+            <Input id="em-current" name="current" type="password" autoComplete="current-password" required />
+          </Field>
+          <div className="flex justify-end border-t border-line pt-4">
+            <StableSubmit pendingLabel="Trocando…">Trocar e-mail</StableSubmit>
           </div>
         </>
       )}
