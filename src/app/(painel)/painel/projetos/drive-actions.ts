@@ -18,7 +18,8 @@ import {
   type LinkDTO,
 } from "@/lib/services/drive-links";
 import type { DiariaDTO } from "@/lib/services/drive-pastas";
-import { garantirPastasDoProjeto } from "@/lib/services/drive-pastas";
+import { logProjectActivity } from "@/lib/services/activity";
+import { apagarPastaDoProjeto, garantirPastasDoProjeto } from "@/lib/services/drive-pastas";
 
 /**
  * Drive do projeto (docs/dev/drive.md §7.2 e §7.3): pastas, link de envio de cada diária e entregas
@@ -63,6 +64,25 @@ export async function criarPastasAction(_prev: ActionResult | null, fd: FormData
   if (!r.ok) return fail(r.mensagem);
   if (modo === "verificar") return ok(r.criadas ? `Pastas conferidas. ${r.criadas === 1 ? "1 recriada" : `${r.criadas} recriadas`}.` : "Pastas conferidas. Nada faltava.");
   return ok(r.criadas ? "Pastas criadas no Drive." : "Pastas prontas no Drive.");
+}
+
+/**
+ * "Apagar pasta do Drive": só a árvore vazia que a ZRO criou. Vai para a lixeira do Drive (30 dias
+ * para recuperar). Entregas liberadas são recolhidas antes.
+ */
+export async function apagarPastaAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const user = await requireUser();
+  const projeto = await projetoDe(str(fd, "projectId"));
+  if (!projeto) return fail("Projeto não encontrado.");
+  const r = await apagarPastaDoProjeto(projeto.id, async (dp) => {
+    if (!dp.entregasLiberadasEm) return { ok: true };
+    const recolhidas = await recolherEntregas(projeto.id, user.id);
+    return recolhidas.ok ? { ok: true } : recolhidas;
+  });
+  revalidarDrive(projeto.id, projeto.clientId);
+  if (!r.ok) return fail(r.mensagem);
+  await logProjectActivity(projeto.id, "arquivos", "Pasta do Drive movida para a lixeira.", user.id);
+  return ok("Pasta movida para a lixeira do Drive.");
 }
 
 /* ============================== Link de envio da diária ============================== */

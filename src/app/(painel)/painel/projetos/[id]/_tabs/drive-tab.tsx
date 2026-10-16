@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import {
   AcoesLinkDiaria,
   Andamento,
+  ApagarPasta,
   AtualizaEnquantoCria,
   CopiarBotao,
   GerarLinkDiaria,
@@ -291,9 +292,10 @@ function PastaDoProjeto({ projectId, dp, conectado }: { projectId: string; dp: D
               </ul>
             ) : null}
 
-            {dp.estado === "pronta" && !dp.contaAntiga && conectado ? (
-              <div>
-                <PastasBotao projectId={projectId} modo="verificar" rotulo="Recriar o que falta" variant="ghost" />
+            {!dp.contaAntiga && conectado && dp.estado !== "criando" && (dp.estado === "pronta" || (dp.pastaId && !dp.deLink)) ? (
+              <div className="flex flex-wrap gap-2">
+                {dp.estado === "pronta" ? <PastasBotao projectId={projectId} modo="verificar" rotulo="Recriar o que falta" variant="ghost" /> : null}
+                {dp.pastaId && !dp.deLink ? <ApagarPasta projectId={projectId} /> : null}
               </div>
             ) : null}
           </>
