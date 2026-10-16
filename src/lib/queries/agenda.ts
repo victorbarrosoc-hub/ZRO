@@ -1,9 +1,9 @@
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, schema } from "@/lib/db";
 
-const { events, eventCrew, freelancers, projects, callSheets } = schema;
+const { events, eventCrew, freelancers, projects, callSheets, users } = schema;
 
 export type EventCrewMember = { freelancerId: string; name: string; photoId: string | null; function: string | null };
 
@@ -30,6 +30,9 @@ export type AgendaEvent = {
   projectId: string | null;
   projectCode: string | null;
   projectTitle: string | null;
+  /** De quem é (Victor ou Edu); vazio = agenda da ZRO. */
+  ownerId: string | null;
+  ownerName: string | null;
   crew: EventCrewMember[];
   conflicts: EventConflict[];
   callSheetId: string | null;
@@ -41,6 +44,9 @@ export type Booking = { freelancerId: string; eventId: string; title: string; da
 export type AgendaOptions = {
   projects: { id: string; code: string; title: string; status: string }[];
   freelancers: { id: string; name: string; functions: string[]; active: boolean }[];
+  /** Os sócios (a agenda de cada um) e quem está usando agora. */
+  socios: { id: string; name: string }[];
+  eu?: string;
 };
 
 /** Último dia do evento (a própria data quando não há data final). */
@@ -59,6 +65,8 @@ const baseColumns = {
   projectId: events.projectId,
   projectCode: projects.code,
   projectTitle: projects.title,
+  ownerId: events.ownerId,
+  ownerName: users.name,
 };
 
 type BaseRow = Omit<AgendaEvent, "crew" | "conflicts" | "callSheetId">;
@@ -145,8 +153,12 @@ export async function listEventsInRange(filters: {
   type?: string;
   projectId?: string;
   freelancerId?: string;
+  /** "zro" = só a agenda da ZRO; o id de um sócio = só a agenda dele. */
+  ownerId?: string;
 }) {
   const where = [lte(events.date, filters.end), gte(eventEndSql, filters.start)];
+  if (filters.ownerId === "zro") where.push(isNull(events.ownerId));
+  else if (filters.ownerId) where.push(eq(events.ownerId, filters.ownerId));
   if (filters.type) where.push(eq(events.type, filters.type));
   if (filters.projectId) where.push(eq(events.projectId, filters.projectId));
   if (filters.freelancerId) {
@@ -161,6 +173,7 @@ export async function listEventsInRange(filters: {
     .select(baseColumns)
     .from(events)
     .leftJoin(projects, eq(events.projectId, projects.id))
+    .leftJoin(users, eq(events.ownerId, users.id))
     .where(and(...where))
     .orderBy(asc(events.date), asc(events.startTime), asc(events.title));
   return hydrate(rows);
@@ -172,6 +185,7 @@ export async function listProjectEvents(projectId: string) {
     .select(baseColumns)
     .from(events)
     .leftJoin(projects, eq(events.projectId, projects.id))
+    .leftJoin(users, eq(events.ownerId, users.id))
     .where(eq(events.projectId, projectId))
     .orderBy(asc(events.date), asc(events.startTime), asc(events.title));
   return hydrate(rows);
@@ -184,8 +198,8 @@ export async function getEventDate(id: string) {
 }
 
 /** Projetos e freelas para os filtros e o formulário de evento. */
-export async function getAgendaOptions(): Promise<AgendaOptions> {
-  const [projectRows, freelaRows] = await Promise.all([
+export async function getAgendaOptions(eu?: string): Promise<AgendaOptions> {
+  const [projectRows, freelaRows, socios] = await Promise.all([
     db
       .select({ id: projects.id, code: projects.code, title: projects.title, status: projects.status })
       .from(projects)
@@ -194,8 +208,9 @@ export async function getAgendaOptions(): Promise<AgendaOptions> {
       .select({ id: freelancers.id, name: freelancers.name, functions: freelancers.functions, active: freelancers.active })
       .from(freelancers)
       .orderBy(desc(freelancers.active), asc(freelancers.name)),
+    db.select({ id: users.id, name: users.name }).from(users).orderBy(asc(users.name)),
   ]);
-  return { projects: projectRows, freelancers: freelaRows };
+  return { projects: projectRows, freelancers: freelaRows, socios, eu };
 }
 
 /** Escalações de eventos que terminam a partir de `from`. */

@@ -28,7 +28,7 @@ import { MobileWeek, WeekBoard } from "./agenda-week";
 export const metadata: Metadata = { title: "Agenda" };
 
 export default async function AgendaPage({ searchParams }: PageProps<"/painel/agenda">) {
-  await requireUser();
+  const user = await requireUser();
   const sp = await searchParams;
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
   const today = todayISO();
@@ -44,7 +44,8 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
   const tipo = EVENT_TYPES.some((t) => t.key === one("tipo")) ? one("tipo") : undefined;
   const projeto = one("projeto");
   const freela = one("freela");
-  const filtered = !!(tipo || projeto || freela);
+  const pessoa = one("pessoa");
+  const filtered = !!(tipo || projeto || freela || pessoa);
 
   const grid = monthGrid(month);
   const range = week ? { start: week, end: addDaysISO(week, 6) } : { start: grid.start, end: grid.end };
@@ -52,15 +53,15 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
   const bookingsFrom = addDaysISO(range.start < today ? range.start : today, -7);
 
   const [events, options, bookings] = await Promise.all([
-    listEventsInRange({ start: range.start, end: range.end, type: tipo, projectId: projeto, freelancerId: freela }),
-    getAgendaOptions(),
+    listEventsInRange({ start: range.start, end: range.end, type: tipo, projectId: projeto, freelancerId: freela, ownerId: pessoa }),
+    getAgendaOptions(user.id),
     listBookings(bookingsFrom),
   ]);
 
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
     const base = week ? { semana: week } : { mes: month };
-    const merged = { ...base, tipo, projeto, freela, ...patch };
+    const merged = { ...base, tipo, projeto, freela, pessoa, ...patch };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
     const s = p.toString();
     return `/painel/agenda${s ? `?${s}` : ""}`;
@@ -141,6 +142,17 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
 
             <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
               <FilterSelect
+                param="pessoa"
+                value={pessoa}
+                label="Filtrar por agenda"
+                allLabel="Todas as agendas"
+                options={[
+                  { value: "zro", label: "Só a ZRO" },
+                  ...options.socios.map((s) => ({ value: s.id, label: `Agenda de ${s.name.split(" ")[0]}` })),
+                ]}
+                className="col-span-2 min-w-0 sm:w-48"
+              />
+              <FilterSelect
                 param="projeto"
                 value={projeto}
                 label="Filtrar por projeto"
@@ -203,7 +215,7 @@ export default async function AgendaPage({ searchParams }: PageProps<"/painel/ag
         {filtered ? (
           <p className="text-[13px] text-mute">
             <Link
-              href={qs({ tipo: undefined, projeto: undefined, freela: undefined })}
+              href={qs({ tipo: undefined, projeto: undefined, freela: undefined, pessoa: undefined })}
               className="underline decoration-white/20 underline-offset-4 hover:text-light"
             >
               Limpar filtros

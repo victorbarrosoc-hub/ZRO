@@ -299,8 +299,12 @@ export const EVENT_TYPES = [
   { key: "diaria", label: "Diária" },
   { key: "entrega", label: "Entrega" },
   { key: "reuniao", label: "Reunião" },
+  { key: "freela", label: "Freela" },
+  { key: "pessoal", label: "Pessoal" },
   { key: "outro", label: "Outro" },
 ] as const;
+/** Tipos que são a agenda de um sócio (freela fora da ZRO, compromisso pessoal): sempre têm dono. */
+export const EVENT_TYPES_PESSOAIS = ["freela", "pessoal"] as const;
 export type EventType = (typeof EVENT_TYPES)[number]["key"];
 
 export const DELIVERABLE_STATUS = [

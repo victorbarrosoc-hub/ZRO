@@ -10,7 +10,7 @@ import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { DayButton, EventButton } from "./agenda-dialogs";
 import { MobileEventRow, eventAriaLabel } from "./agenda-month";
-import { WEEKDAY_HEADERS, eachDay, eventChipClass, eventDays, eventEnd, rangesOverlap, timeRange } from "./agenda-utils";
+import { WEEKDAY_HEADERS, eachDay, eventChipClass, eventDays, eventEnd, eventKicker, rangesOverlap, timeRange } from "./agenda-utils";
 
 function eventsOn(day: string, events: AgendaEvent[]) {
   return events.filter((ev) => rangesOverlap(ev.date, eventEnd(ev), day, day));
@@ -86,7 +86,7 @@ function WeekCard({ ev, day, today }: { ev: AgendaEvent; day: string; today: str
       <span className={cn("flex items-center gap-1.5 font-mono text-[10px] leading-[1.3] tracking-[0.12em] uppercase", ev.type === "diaria" ? "text-white/70" : "text-mute")}>
         {conflict ? <AlertTriangle className="size-3 shrink-0 text-warn" aria-hidden /> : null}
         <span className="truncate">
-          {optionLabel(EVENT_TYPES, ev.type)}
+          {eventKicker(ev, optionLabel(EVENT_TYPES, ev.type))}
           {days > 1 ? ` · ${index}/${days}` : ""}
         </span>
       </span>

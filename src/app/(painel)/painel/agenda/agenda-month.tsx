@@ -13,6 +13,7 @@ import {
   WEEKDAY_HEADERS,
   eachDay,
   eventChipClass,
+  eventKicker,
   eventDays,
   eventEnd,
   layoutWeek,
@@ -28,9 +29,14 @@ function typeLabel(type: string) {
   return optionLabel(EVENT_TYPES, type);
 }
 
+/** Tipo com o dono na frente, quando é a agenda de um sócio. */
+function kicker(ev: AgendaEvent) {
+  return eventKicker(ev, typeLabel(ev.type));
+}
+
 /** Texto para leitores de tela e para a dica ao passar o mouse. */
 export function eventAriaLabel(ev: AgendaEvent) {
-  const parts = [`${typeLabel(ev.type)}: ${ev.title}`, eventDays(ev) > 1 ? `${dateShort(ev.date)} a ${dateShort(eventEnd(ev))}` : dateShort(ev.date)];
+  const parts = [`${kicker(ev)}: ${ev.title}`, eventDays(ev) > 1 ? `${dateShort(ev.date)} a ${dateShort(eventEnd(ev))}` : dateShort(ev.date)];
   const t = timeRange(ev);
   if (t) parts.push(t);
   if (ev.projectCode) parts.push(ev.projectCode);
@@ -152,7 +158,7 @@ function Chip({ seg, month, today }: { seg: WeekSegment<AgendaEvent>; month: str
       >
         {conflict ? <AlertTriangle className="size-3 shrink-0 text-warn" aria-hidden /> : null}
         <span className="truncate">
-          {typeLabel(ev.type)}
+          {kicker(ev)}
           {time ? ` · ${time}` : ""}
           {days > 1 ? ` · ${days} dias` : ""}
         </span>
@@ -303,7 +309,7 @@ export function MobileEventRow({ ev, day, today }: { ev: AgendaEvent; day: strin
       </span>
       <span className="min-w-0 flex-1 border-l border-line pl-3">
         <span className="label block text-[10px] text-mute">
-          {typeLabel(ev.type)}
+          {kicker(ev)}
           {days > 1 ? ` · dia ${dayIndex} de ${days}` : ""}
         </span>
         <span className="mt-0.5 block text-[15px] leading-snug font-medium text-white">{ev.title}</span>

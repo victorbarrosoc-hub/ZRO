@@ -444,6 +444,8 @@ export const events = pgTable(
     endTime: text(),
     location: text(),
     notes: text(),
+    /** De quem é o compromisso (Victor ou Edu). Vazio = agenda da ZRO (produção). */
+    ownerId: text().references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [index("events_date_idx").on(t.date)],

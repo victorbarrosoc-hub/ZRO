@@ -6,14 +6,14 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema, transact, type Tx } from "@/lib/db";
 import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, FUNCTION_MAX } from "@/lib/domain";
+import { EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTION_MAX } from "@/lib/domain";
 import { dateBR } from "@/lib/format";
 import { logProjectActivity } from "@/lib/services/activity";
 import { revogarLinksDe } from "@/lib/services/drive-links";
 import { syncProjectTeam, teamSyncNote, type TeamSyncReport } from "@/lib/services/team";
 import { joinNames } from "./agenda-utils";
 
-const { events, eventCrew, freelancers, projects } = schema;
+const { events, eventCrew, freelancers, projects, users } = schema;
 
 const EVENT_TYPE_KEYS = EVENT_TYPES.map((t) => t.key) as [string, ...string[]];
 
@@ -30,11 +30,16 @@ const EventSchema = z
     endTime: time.optional(),
     location: z.string().max(160, "Local longo demais.").optional(),
     notes: z.string().max(2000, "Observação longa demais.").optional(),
+    ownerId: z.string().optional(),
     crew: z.array(z.object({ freelancerId: z.string().min(1), function: z.string().optional() })).max(40),
   })
   .refine((v) => !v.endDate || v.endDate >= v.date, {
     path: ["endDate"],
     message: "A data final vem depois da inicial.",
+  })
+  .refine((v) => !(EVENT_TYPES_PESSOAIS as readonly string[]).includes(v.type) || !!v.ownerId, {
+    path: ["ownerId"],
+    message: "Diga de quem é a agenda.",
   });
 
 type EventInput = z.infer<typeof EventSchema>;
@@ -51,6 +56,7 @@ function readEvent(fd: FormData) {
     endTime: str(fd, "endTime"),
     location: str(fd, "location"),
     notes: str(fd, "notes"),
+    ownerId: str(fd, "ownerId"),
     crew: crewIds.map((freelancerId) => {
       const fn = str(fd, `fn:${freelancerId}`);
       return { freelancerId, function: fn && fn.length <= FUNCTION_MAX ? fn : undefined };
@@ -72,6 +78,15 @@ async function sanitize(data: EventInput) {
         (await db.select({ id: freelancers.id }).from(freelancers).where(inArray(freelancers.id, ids))).map((f) => f.id),
       )
     : new Set<string>();
+  let ownerId: string | null = null;
+  if (data.ownerId) {
+    const [u] = await db.select({ id: users.id }).from(users).where(eq(users.id, data.ownerId)).limit(1);
+    if (!u) return { error: "Sócio não encontrado." } as const;
+    ownerId = u.id;
+  }
+  // Freela fora da ZRO e compromisso pessoal são a agenda do sócio: sem projeto e sem equipe.
+  const pessoal = (EVENT_TYPES_PESSOAIS as readonly string[]).includes(data.type);
+  if (pessoal) projectId = null;
   const endDate = data.endDate && data.endDate > data.date ? data.endDate : null;
   return {
     values: {
@@ -84,8 +99,9 @@ async function sanitize(data: EventInput) {
       endTime: data.endTime ?? null,
       location: data.location ?? null,
       notes: data.notes ?? null,
+      ownerId,
     },
-    crew: data.crew.filter((c) => existing.has(c.freelancerId)),
+    crew: pessoal ? [] : data.crew.filter((c) => existing.has(c.freelancerId)),
   } as const;
 }
 

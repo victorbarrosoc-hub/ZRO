@@ -157,6 +157,7 @@ function ResumoTab({ data, recorrentes }: { data: Dashboard; recorrentes: Recorr
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] text-light">{ev.title}</span>
                     <span className="mt-0.5 block truncate text-[12px] text-mute">
+                      {ev.ownerName ? `${ev.ownerName.split(" ")[0]} · ` : ""}
                       {optionLabel(EVENT_TYPES, ev.type)}
                       {ev.startTime ? ` · ${ev.startTime}` : ""}
                       {ev.projectTitle ? ` · ${ev.projectTitle}` : ev.location ? ` · ${ev.location}` : ""}
