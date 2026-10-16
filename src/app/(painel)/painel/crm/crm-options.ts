@@ -18,7 +18,7 @@ export const ACTIVITY_TYPES = [
 export const STAGE_ACTIVITY = "etapa";
 
 /** Registros automáticos que vêm dos projetos (services/activity). */
-const AUTO_ACTIVITY: Record<string, string> = { projeto: "Projeto", agenda: "Agenda", financeiro: "Financeiro" };
+const AUTO_ACTIVITY: Record<string, string> = { projeto: "Projeto", agenda: "Agenda", financeiro: "Financeiro", arquivos: "Arquivos" };
 
 export function activityLabel(type: string) {
   if (type === STAGE_ACTIVITY) return "Etapa";

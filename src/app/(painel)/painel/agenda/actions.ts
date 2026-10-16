@@ -9,6 +9,7 @@ import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
 import { EVENT_TYPES, FUNCTION_MAX } from "@/lib/domain";
 import { dateBR } from "@/lib/format";
 import { logProjectActivity } from "@/lib/services/activity";
+import { revogarLinksDe } from "@/lib/services/drive-links";
 import { syncProjectTeam, teamSyncNote, type TeamSyncReport } from "@/lib/services/team";
 import { joinNames } from "./agenda-utils";
 
@@ -240,6 +241,8 @@ export async function deleteEvent(_prev: ActionResult | null, fd: FormData): Pro
     .where(eq(events.id, id))
     .limit(1);
   if (!current) return fail("Esse evento já foi excluído.");
+  // O link de envio da diária para antes (nunca apagado; o que chegou fica no Drive e no banco).
+  await revogarLinksDe({ eventId: id });
   await transact((t) => [
     t.delete(eventCrew).where(eq(eventCrew.eventId, id)),
     t.update(schema.callSheets).set({ eventId: null }).where(eq(schema.callSheets.eventId, id)),
