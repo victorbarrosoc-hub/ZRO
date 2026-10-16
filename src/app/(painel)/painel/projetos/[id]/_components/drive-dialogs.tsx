@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import {
   CalendarClock,
@@ -10,6 +11,7 @@ import {
   FolderPlus,
   Link2,
   Link2Off,
+  LoaderCircle,
   MessageCircle,
   RefreshCw,
   Send,
@@ -150,10 +152,47 @@ export function PastasBotao({
     <ActionForm action={criarPastasAction}>
       <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="modo" value={modo} />
-      <SubmitButton variant={variant} size="sm" pendingLabel={modo === "verificar" ? "Conferindo…" : "Criando…"} className="h-10 sm:h-8">
-        {modo === "verificar" ? <RefreshCw aria-hidden /> : <FolderPlus aria-hidden />} {rotulo}
-      </SubmitButton>
+      <PastasEnviar modo={modo} rotulo={rotulo} variant={variant} />
     </ActionForm>
+  );
+}
+
+/** Botão + andamento: criar 17 pastas no Drive leva alguns segundos e a tela não pode parecer travada. */
+function PastasEnviar({ modo, rotulo, variant }: { modo: "criar" | "verificar" | "contaAtual"; rotulo: string; variant: "primary" | "secondary" | "ghost" }) {
+  const { pending } = useFormStatus();
+  return (
+    <div className="grid gap-3">
+      <div>
+        <Button type="submit" variant={variant} size="sm" disabled={pending} className="h-10 sm:h-8">
+          {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : modo === "verificar" ? <RefreshCw aria-hidden /> : <FolderPlus aria-hidden />}
+          {pending ? (modo === "verificar" ? "Conferindo…" : "Criando…") : rotulo}
+        </Button>
+      </div>
+      {pending ? <Andamento texto={modo === "verificar" ? "Conferindo as pastas no Drive" : "Criando as pastas no Drive"} /> : null}
+    </div>
+  );
+}
+
+/** Barra com luz correndo + segundos passando: mostra que está vivo. */
+export function Andamento({ texto }: { texto: string }) {
+  const [seg, setSeg] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSeg((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="grid gap-2" role="status" aria-live="polite">
+      <div className="relative h-[3px] overflow-hidden rounded-full bg-white/10">
+        <span className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-white/80 animate-indeterminate" />
+      </div>
+      <p className="flex items-center justify-between text-[13px] text-ash">
+        <span>{texto}…</span>
+        <span className="font-mono text-mute tabular-nums">{seg} s</span>
+      </p>
+      {seg >= 30 ? (
+        <p className="text-[13px] text-mute">Está levando mais que o normal. Pode sair desta tela: as pastas continuam sendo criadas.</p>
+      ) : null}
+    </div>
   );
 }
 
