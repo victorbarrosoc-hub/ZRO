@@ -45,6 +45,21 @@ const envioHeaders = [
   { key: "X-Robots-Tag", value: "noindex, nofollow" },
 ];
 
+/**
+ * Área do cliente: as mesmas regras, com duas diferenças por causa da prévia das entregas (docs/dev/drive.md §16).
+ * - `frame-src`: só o player do próprio Google Drive (vídeo pesado ou sem chave de API).
+ * - `Referrer-Policy: strict-origin`: o vídeo direto do Google usa a chave de API restrita ao endereço do site, e o
+ *   Google confere o Referer. Só a origem vai (https://zrofilmes.vercel.app/), nunca o caminho com o código.
+ */
+const clienteHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: `frame-ancestors 'self'; frame-src 'self' https://drive.google.com; connect-src 'self' ${googleApi()}${process.env.NODE_ENV === "production" ? "" : " ws: wss:"}; form-action 'self'; base-uri 'self'`,
+  },
+  { key: "Referrer-Policy", value: "strict-origin" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Postgres local (PGlite, WebAssembly): carregado do node_modules, sem passar pelo bundler.
@@ -66,7 +81,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       { source: "/enviar/:path*", headers: envioHeaders },
-      { source: "/cliente/:path*", headers: envioHeaders },
+      { source: "/cliente/:path*", headers: clienteHeaders },
     ];
   },
 };

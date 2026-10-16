@@ -1,29 +1,19 @@
-import { Download, Eye } from "lucide-react";
 import { bytesBR } from "@/lib/drive/bytes";
 import { SECOES_ENTREGAS } from "@/lib/drive/estrutura";
 import type { EntregaArquivo } from "@/lib/services/drive-entregas";
+import { urlPublicaDeMidia } from "@/lib/services/drive-previa";
 import type { DadosArea } from "@/lib/services/drive-publico";
+import { GradeEntregas, type EntregaGrade } from "./entregas-grade";
 
 /**
- * Arquivos finais de cada projeto do cliente (docs/dev/drive.md §8.3): só o que está em 06 Entregas,
- * só depois de "Liberar entregas", agrupado em Master, Redes, Legendas e Outros. Baixar e Ver levam
- * ao próprio Google (os bytes nunca passam pela ZRO). A lista vem do servidor, pelos ids do banco.
+ * Arquivos finais de cada projeto do cliente (docs/dev/drive.md §8.3 e §16): só o que está em 06 Entregas,
+ * só depois de "Liberar entregas", em miniaturas agrupadas em Master, Redes, Legendas e Outros. O cliente
+ * assiste antes de baixar (player da ZRO, direto do Google pelo link público) e o Baixar leva ao próprio
+ * Google: os bytes nunca passam pela ZRO. A lista vem do servidor, pelos ids do banco.
  */
 
 const GRUPOS = [...SECOES_ENTREGAS, "Outros"] as const;
 const comparar = new Intl.Collator("pt-BR", { numeric: true, sensitivity: "base" });
-
-function agrupar(entregas: EntregaArquivo[]) {
-  const grupos = new Map<(typeof GRUPOS)[number], EntregaArquivo[]>();
-  for (const e of entregas) {
-    const g = e.secao ?? "Outros";
-    grupos.set(g, [...(grupos.get(g) ?? []), e]);
-  }
-  return GRUPOS.filter((g) => grupos.has(g)).map((g) => ({
-    nome: g,
-    itens: grupos.get(g)!.sort((a, b) => comparar.compare(`${a.caminho}/${a.nome}`, `${b.caminho}/${b.nome}`)),
-  }));
-}
 
 /** "Master/4K" → "4K" (a subpasta dentro da seção). */
 function subpasta(e: EntregaArquivo): string | null {
@@ -32,10 +22,33 @@ function subpasta(e: EntregaArquivo): string | null {
   return resto.length ? resto.join(" / ") : null;
 }
 
-const acao =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[14px] transition-colors [&_svg]:size-4";
+function agrupar(entregas: EntregaArquivo[]): { nome: string; itens: EntregaGrade[] }[] {
+  const grupos = new Map<(typeof GRUPOS)[number], EntregaArquivo[]>();
+  for (const e of entregas) {
+    const g = e.secao ?? "Outros";
+    grupos.set(g, [...(grupos.get(g) ?? []), e]);
+  }
+  return GRUPOS.filter((g) => grupos.has(g)).map((g) => ({
+    nome: g,
+    itens: grupos
+      .get(g)!
+      .sort((a, b) => comparar.compare(`${a.caminho}/${a.nome}`, `${b.caminho}/${b.nome}`))
+      .map((e) => ({
+        id: e.id,
+        nome: e.nome,
+        tipo: e.tipo,
+        tamanho: e.tamanho,
+        modificadoEm: e.modificadoEm,
+        midia: e.midia,
+        verUrl: e.verUrl,
+        baixarUrl: e.baixarUrl,
+        sub: subpasta(e),
+        assistir: urlPublicaDeMidia(e),
+      })),
+  }));
+}
 
-export function Entregas({ projetos, googleOk }: { projetos: DadosArea["projetos"]; googleOk: boolean }) {
+export function Entregas({ projetos, googleOk, token }: { projetos: DadosArea["projetos"]; googleOk: boolean; token: string }) {
   const algumArquivo = projetos.some((p) => p.entregas.length > 0);
   return (
     <section aria-labelledby="arquivos-finais" className="grid gap-8">
@@ -52,75 +65,35 @@ export function Entregas({ projetos, googleOk }: { projetos: DadosArea["projetos
         </p>
       ) : (
         <div className="grid gap-6">
-          {projetos.map((p) => (
-            <article key={p.id} className="rounded-media border border-line bg-white/[0.02] p-5 sm:p-8">
-              <header className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-                <h3 className="text-h3 break-words text-white">{p.titulo}</h3>
-                <p className="label shrink-0 text-mute">{p.mes}</p>
-              </header>
+          {projetos.map((p) => {
+            const total = p.entregas.reduce((s, e) => s + (e.tamanho ?? 0), 0);
+            return (
+              <article key={p.id} className="rounded-media border border-line bg-white/[0.02] p-5 sm:p-8">
+                <header className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                  <h3 className="text-h3 break-words text-white">{p.titulo}</h3>
+                  <p className="label shrink-0 text-mute">{p.mes}</p>
+                </header>
 
-              {!googleOk ? (
-                <p className="mt-5 text-ui text-ash">Os arquivos estão indisponíveis agora. Avise a ZRO.</p>
-              ) : !p.liberado || p.entregas.length === 0 ? (
-                <p className="mt-5 text-ui text-ash">Os arquivos finais aparecem aqui quando estiverem prontos.</p>
-              ) : (
-                <div className="mt-6 grid gap-6">
-                  {agrupar(p.entregas).map((g) => (
-                    <div key={g.nome}>
-                      <p className="label mb-2 text-mute">{g.nome}</p>
-                      <ul className="border-t border-line">
-                        {g.itens.map((e) => {
-                          const sub = subpasta(e);
-                          return (
-                            <li
-                              key={e.id}
-                              className="flex flex-col gap-3 border-b border-line py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-ui break-words text-light">{e.nome}</p>
-                                <p className="mt-0.5 text-caption text-mute">
-                                  {[sub, e.tamanho != null ? bytesBR(e.tamanho) : null].filter(Boolean).join(" · ")}
-                                </p>
-                              </div>
-                              <div className="flex shrink-0 gap-2">
-                                {e.baixarUrl ? (
-                                  <a
-                                    href={e.baixarUrl}
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                    className={`${acao} bg-white font-medium text-void hover:bg-light`}
-                                    aria-label={`Baixar ${e.nome}`}
-                                  >
-                                    <Download aria-hidden />
-                                    Baixar
-                                  </a>
-                                ) : null}
-                                <a
-                                  href={e.verUrl}
-                                  target="_blank"
-                                  rel="noreferrer noopener"
-                                  className={`${acao} border border-line-strong text-light hover:border-white/40 hover:bg-white/[0.04]`}
-                                  aria-label={`Ver ${e.nome}`}
-                                >
-                                  <Eye aria-hidden />
-                                  Ver
-                                </a>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
+                {!googleOk ? (
+                  <p className="mt-5 text-ui text-ash">Os arquivos estão indisponíveis agora. Avise a ZRO.</p>
+                ) : !p.liberado || p.entregas.length === 0 ? (
+                  <p className="mt-5 text-ui text-ash">Os arquivos finais aparecem aqui quando estiverem prontos.</p>
+                ) : (
+                  <>
+                    <p className="mt-2 text-caption text-mute">
+                      {p.entregas.length} {p.entregas.length === 1 ? "arquivo" : "arquivos"} · {bytesBR(total)}
+                    </p>
+                    <GradeEntregas token={token} grupos={agrupar(p.entregas)} />
+                  </>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
 
       {algumArquivo && googleOk ? (
-        <p className="text-caption text-mute">Arquivos grandes abrem uma página do Google antes de baixar.</p>
+        <p className="text-caption text-mute">Toque para assistir. Arquivos grandes abrem uma página do Google antes de baixar.</p>
       ) : null}
     </section>
   );

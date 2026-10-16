@@ -78,6 +78,7 @@ Uns 20 minutos, uma vez só. Plano completo em `docs/dev/drive.md`.
 | `GOOGLE_CLIENT_ID` | o ID do passo 5.1.7 |
 | `GOOGLE_CLIENT_SECRET` | o segredo do cliente (tipo **Sensitive**) |
 | `ZRO_DRIVE_KEY` | no Terminal do Mac: `openssl rand -base64 32` (tipo **Sensitive**). Guardar também no gerenciador de senhas. |
+| `GOOGLE_API_KEY` | **opcional** (passo 5.6): o cliente assiste às entregas no player da ZRO |
 
 Depois: **Deployments → Redeploy**.
 
@@ -87,6 +88,13 @@ Depois: **Deployments → Redeploy**.
 **5.5 Testar o envio direto**
 - No mesmo lugar, **Testar neste aparelho**: no Chrome do computador, no Safari do iPhone e no app da tela inicial.
 - Tudo "ok": pronto. Algo "falhou": mandar o print. O plano B está em `docs/dev/drive.md` (seção 9).
+
+**5.6 Opcional: o cliente assistir no player da ZRO** (uns 5 minutos)
+Sem isso, a área do cliente já mostra as miniaturas e toca os vídeos no player do próprio Google Drive. Com a chave, o vídeo toca no player da ZRO, direto do Google.
+1. No mesmo projeto **ZRO Site**: **APIs e serviços → Credenciais → Criar credenciais → Chave de API**.
+2. Na chave: **Restrições de aplicativo → Referenciadores HTTP**, com `https://zrofilmes.vercel.app/*` (e o domínio próprio, se houver). **Restrições de API → Google Drive API** (só ela). Salvar.
+3. Vercel → Environment Variables: `GOOGLE_API_KEY` = a chave → **Redeploy**.
+- A chave fica visível na página do cliente (é assim que chave de navegador funciona) e só lê arquivos com "qualquer pessoa com o link", ou seja, 06 Entregas depois de **Liberar entregas**. **Recolher** corta na hora.
 
 ## Depois
 

@@ -1,7 +1,8 @@
 import "server-only";
+import { infoDeMidia, linkComTamanho, type InfoMidia } from "@/lib/drive/midia";
 import { escaparConsulta, idDriveValido } from "@/lib/drive/nomes";
 import { lerRange } from "@/lib/drive/protocolo";
-import { endpoints, sessaoPermitida } from "./config";
+import { endpoints, miniaturaPermitida, sessaoPermitida } from "./config";
 import { esquecerToken, tokenDeAcesso } from "./conexao";
 import { deResposta, GoogleError, razaoDoErro } from "./erros";
 
@@ -38,7 +39,13 @@ export type ItemDrive = {
   modificadoEm: string | null;
   verUrl: string;
   baixarUrl: string | null;
+  /** Miniatura, duração e resolução (a miniatura em si vem por uma rota do servidor: o link do Google pede sessão). */
+  midia: InfoMidia;
+  /** O arquivo tem resourceKey (link antigo do Google): a leitura pública pede um cabeçalho a mais. */
+  chaveRecurso: boolean;
 };
+
+const CAMPOS_MIDIA = "hasThumbnail,thumbnailLink,videoMediaMetadata(width,height,durationMillis),imageMediaMetadata(width,height),resourceKey";
 
 type ArquivoJson = {
   id: string;
@@ -53,6 +60,11 @@ type ArquivoJson = {
   modifiedTime?: string;
   driveId?: string;
   capabilities?: { canAddChildren?: boolean };
+  hasThumbnail?: boolean;
+  thumbnailLink?: string;
+  videoMediaMetadata?: { width?: number; height?: number; durationMillis?: string };
+  imageMediaMetadata?: { width?: number; height?: number };
+  resourceKey?: string;
 };
 
 export function linkPasta(id: string): string {
@@ -91,6 +103,8 @@ function paraItem(j: ArquivoJson): ItemDrive {
     modificadoEm: j.modifiedTime ?? null,
     verUrl: j.webViewLink ?? (pasta ? linkPasta(j.id) : linkArquivo(j.id)),
     baixarUrl: pasta ? null : (j.webContentLink ?? null),
+    midia: infoDeMidia(j),
+    chaveRecurso: Boolean(j.resourceKey),
   };
 }
 
@@ -208,11 +222,100 @@ export async function listarPasta(pastaId: string, pagina?: string | null): Prom
       pageSize: 200,
       includeItemsFromAllDrives: true,
       pageToken: pagina || undefined,
-      fields: "nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink)",
+      fields: `nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,${CAMPOS_MIDIA})`,
     },
   });
   const j = (await res.json()) as { nextPageToken?: string; files?: ArquivoJson[] };
   return { itens: (j.files ?? []).map(paraItem), proxima: j.nextPageToken ?? null };
+}
+
+/** Busca livre (q já montado e escapado por quem chama), até 50 itens, com os dados de mídia. */
+export async function buscarItens(q: string): Promise<ItemDrive[]> {
+  const res = await driveFetch("/files", {
+    query: {
+      q,
+      pageSize: 50,
+      includeItemsFromAllDrives: true,
+      fields: `files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,${CAMPOS_MIDIA})`,
+    },
+  });
+  const j = (await res.json()) as { files?: ArquivoJson[] };
+  return (j.files ?? []).map(paraItem);
+}
+
+/** Um item com os dados de mídia e o pai (prévia e proxy). 404 → null. */
+export async function itemComMidia(id: string): Promise<(ItemDrive & { pais: string[]; lixeira: boolean }) | null> {
+  if (!idDriveValido(id)) return null;
+  const res = await driveFetch(`/files/${encodeURIComponent(id)}`, {
+    query: { fields: `id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,parents,trashed,${CAMPOS_MIDIA}` },
+    aceitar: [404],
+  });
+  if (res.status === 404) {
+    await res.body?.cancel().catch(() => {});
+    return null;
+  }
+  const j = (await res.json()) as ArquivoJson;
+  return { ...paraItem(j), pais: j.parents ?? [], lixeira: Boolean(j.trashed) };
+}
+
+/** O thumbnailLink atual de um arquivo que a conta conectada enxerga (o link do Google dura horas). */
+export async function linkDaMiniatura(id: string): Promise<string | null> {
+  if (!idDriveValido(id)) return null;
+  const res = await driveFetch(`/files/${encodeURIComponent(id)}`, {
+    query: { fields: "id,trashed,hasThumbnail,thumbnailLink" },
+    aceitar: [404],
+  });
+  if (res.status === 404) {
+    await res.body?.cancel().catch(() => {});
+    return null;
+  }
+  const j = (await res.json()) as ArquivoJson;
+  if (j.trashed || !j.hasThumbnail || !j.thumbnailLink || !miniaturaPermitida(j.thumbnailLink)) return null;
+  return j.thumbnailLink;
+}
+
+const MINIATURA_MAX = 8 * 1024 * 1024;
+const TIPOS_IMAGEM = /^image\/(jpeg|png|webp|gif)$/;
+
+/**
+ * Bytes da miniatura no tamanho pedido. O thumbnailLink abre com o token (sessão do Google); se o Google
+ * recusar, tenta sem. Só hosts do Google (miniaturaPermitida), redirecionamentos conferidos um a um,
+ * só imagem (jpeg, png, webp, gif) e no máximo 8 MB. null = sem miniatura.
+ */
+export async function baixarMiniatura(link: string, px: number): Promise<{ bytes: Uint8Array; tipo: string } | null> {
+  if (!miniaturaPermitida(link)) return null;
+  const token = await tokenDeAcesso();
+  for (const comToken of [true, false]) {
+    let url = linkComTamanho(link, px);
+    for (let salto = 0; salto < 4; salto++) {
+      if (!miniaturaPermitida(url)) return null;
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          headers: comToken ? { Authorization: `Bearer ${token}` } : {},
+          cache: "no-store",
+          redirect: "manual",
+          signal: AbortSignal.timeout(15_000),
+        });
+      } catch {
+        return null;
+      }
+      if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+        await res.body?.cancel().catch(() => {});
+        url = new URL(res.headers.get("location")!, url).toString();
+        continue;
+      }
+      const tipo = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+      if (!res.ok || !TIPOS_IMAGEM.test(tipo) || Number(res.headers.get("content-length") ?? 0) > MINIATURA_MAX) {
+        await res.body?.cancel().catch(() => {});
+        break;
+      }
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      if (!bytes.length || bytes.length > MINIATURA_MAX) break;
+      return { bytes, tipo };
+    }
+  }
+  return null;
 }
 
 /** Do topo até a pasta: [{ id, nome }] (máx. 12 níveis). A raiz do Meu Drive vira "Meu Drive". */

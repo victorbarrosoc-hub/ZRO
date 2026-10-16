@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { after } from "next/server";
 import { AlertTriangle } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { garantirRaiz } from "@/lib/services/drive-pastas";
 import { LoteLinha } from "../projetos/[id]/_tabs/drive-tab";
 import { FaixaFila, Fila, FilaProvider } from "./fila";
 import { Navegador, Trilha, type ItemLista, type PastaAberta } from "./navegador";
+import { COOKIE_VISTA } from "./vista";
 
 export const metadata: Metadata = { title: "Arquivos" };
 
@@ -47,7 +49,17 @@ async function carregar(pedida: string | null, pagina: string | null, drives: bo
   try {
     if (drives) {
       const lista = await listarDrivesCompartilhados();
-      const itens = lista.map((d) => ({ id: d.id, nome: d.nome, pasta: true, tamanho: null, modificadoEm: null, verUrl: linkPasta(d.id), baixarUrl: null }));
+      const itens = lista.map((d) => ({
+        id: d.id,
+        nome: d.nome,
+        pasta: true,
+        tamanho: null,
+        modificadoEm: null,
+        verUrl: linkPasta(d.id),
+        baixarUrl: null,
+        tipo: "application/vnd.google-apps.folder",
+        midia: { miniatura: false, duracaoMs: null, largura: null, altura: null },
+      }));
       return { tipo: "ok", pasta: null, trilha: [], itens, proxima: null };
     }
     let pastaId = pedida;
@@ -78,6 +90,8 @@ async function carregar(pedida: string | null, pagina: string | null, drives: bo
         modificadoEm: i.modificadoEm,
         verUrl: i.verUrl,
         baixarUrl: i.baixarUrl,
+        tipo: i.tipo,
+        midia: i.midia,
       })),
       proxima: lista.proxima,
     };
@@ -93,6 +107,7 @@ export default async function ArquivosPage({ searchParams }: PageProps<"/painel/
   const pedida = typeof sp.pasta === "string" && idDriveValido(sp.pasta) ? sp.pasta : null;
   const pagina = typeof sp.pagina === "string" && /^[\w.~-]{1,600}$/.test(sp.pagina) ? sp.pagina : null;
   const drives = sp.drives === "1";
+  const vista = (await cookies()).get(COOKIE_VISTA)?.value === "miniaturas" ? "miniaturas" : "lista";
 
   const status = await statusDrive();
   const header = <PageHeader label="Drive" title="Arquivos" />;
@@ -149,6 +164,7 @@ export default async function ArquivosPage({ searchParams }: PageProps<"/painel/
                 pagina={pagina}
                 drives={drives}
                 projetos={projetos}
+                vistaInicial={vista}
               />
             ) : (
               <Card className="min-w-0">
