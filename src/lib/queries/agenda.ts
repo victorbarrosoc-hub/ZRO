@@ -33,6 +33,8 @@ export type AgendaEvent = {
   /** De quem é (Victor ou Edu); vazio = agenda da ZRO. */
   ownerId: string | null;
   ownerName: string | null;
+  /** Cor de marcação (chave de EVENT_COLORS); vazio = o visual do tipo. */
+  color: string | null;
   crew: EventCrewMember[];
   conflicts: EventConflict[];
   callSheetId: string | null;
@@ -67,6 +69,7 @@ const baseColumns = {
   projectTitle: projects.title,
   ownerId: events.ownerId,
   ownerName: users.name,
+  color: events.color,
 };
 
 type BaseRow = Omit<AgendaEvent, "crew" | "conflicts" | "callSheetId">;

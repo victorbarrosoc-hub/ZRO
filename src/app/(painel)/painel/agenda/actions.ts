@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema, transact, type Tx } from "@/lib/db";
 import { fail, fromZod, list, ok, str, type ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTION_MAX } from "@/lib/domain";
+import { EVENT_COLORS, EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTION_MAX } from "@/lib/domain";
 import { dateBR } from "@/lib/format";
 import { logProjectActivity } from "@/lib/services/activity";
 import { revogarLinksDe } from "@/lib/services/drive-links";
@@ -31,6 +31,7 @@ const EventSchema = z
     location: z.string().max(160, "Local longo demais.").optional(),
     notes: z.string().max(2000, "Observação longa demais.").optional(),
     ownerId: z.string().optional(),
+    color: z.enum(EVENT_COLORS.map((c) => c.key) as [string, ...string[]]).optional(),
     crew: z.array(z.object({ freelancerId: z.string().min(1), function: z.string().optional() })).max(40),
   })
   .refine((v) => !v.endDate || v.endDate >= v.date, {
@@ -57,6 +58,7 @@ function readEvent(fd: FormData) {
     location: str(fd, "location"),
     notes: str(fd, "notes"),
     ownerId: str(fd, "ownerId"),
+    color: str(fd, "color"),
     crew: crewIds.map((freelancerId) => {
       const fn = str(fd, `fn:${freelancerId}`);
       return { freelancerId, function: fn && fn.length <= FUNCTION_MAX ? fn : undefined };
@@ -100,6 +102,7 @@ async function sanitize(data: EventInput) {
       location: data.location ?? null,
       notes: data.notes ?? null,
       ownerId,
+      color: data.color ?? null,
     },
     crew: pessoal ? [] : data.crew.filter((c) => existing.has(c.freelancerId)),
   } as const;

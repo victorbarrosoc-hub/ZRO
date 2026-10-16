@@ -2,7 +2,10 @@
  * Utilitários puros da agenda: grade do mês, faixas de eventos de vários
  * dias, rótulos de data e hora. Rodam no servidor e no navegador.
  */
+import type { CSSProperties } from "react";
+import { eventColorHex } from "@/lib/domain";
 import { addDaysISO, daysBetween, monthLong } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const WEEKDAY_HEADERS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"] as const;
 
@@ -212,6 +215,24 @@ export function eventKicker(ev: { type: string; ownerName?: string | null }, typ
 
 export function eventChipClass(type: string) {
   return EVENT_CHIP[type] ?? EVENT_CHIP.outro;
+}
+
+/**
+ * Visual do chip: a cor de marcação, quando escolhida, tinge o fundo e a borda
+ * e ganha uma faixa à esquerda; sem cor, fica o preto e branco do tipo.
+ */
+export function eventChip(ev: { type: string; color?: string | null }) {
+  const hex = eventColorHex(ev.color);
+  if (!hex) return { className: eventChipClass(ev.type), style: undefined, kicker: ev.type === "diaria" ? "text-white/70" : "text-mute" };
+  const dashed = ev.type === "freela" || ev.type === "pessoal";
+  return {
+    className: cn(
+      "border-[color-mix(in_oklab,var(--ev)_55%,transparent)] bg-[color-mix(in_oklab,var(--ev)_16%,transparent)] text-white shadow-[inset_3px_0_0_var(--ev)]",
+      dashed && "border-dashed",
+    ),
+    style: { "--ev": hex } as CSSProperties,
+    kicker: "text-white/70",
+  };
 }
 
 /** "14 a 20 de setembro" ou "28 de setembro a 4 de outubro" (semana de segunda a domingo). */

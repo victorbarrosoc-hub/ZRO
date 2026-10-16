@@ -4,7 +4,7 @@
  */
 import { AlertTriangle, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/surface";
-import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
+import { EVENT_TYPES, FUNCTIONS, eventColorHex, optionLabel } from "@/lib/domain";
 import { dateLong, dateShort, monthShort, relativeDay, weekdayShort } from "@/lib/format";
 import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { DayButton, EventButton } from "./agenda-dialogs";
 import {
   WEEKDAY_HEADERS,
   eachDay,
+  eventChip,
   eventChipClass,
   eventKicker,
   eventDays,
@@ -136,14 +137,15 @@ function Chip({ seg, month, today }: { seg: WeekSegment<AgendaEvent>; month: str
   const outside = eventEnd(ev) < `${month}-01` || ev.date > `${month}-31`;
   const past = eventEnd(ev) < today;
   const conflict = ev.conflicts.length > 0;
+  const chip = eventChip(ev);
   return (
     <EventButton
       eventId={ev.id}
       label={eventAriaLabel(ev)}
-      style={{ gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 2 }}
+      style={{ ...chip.style, gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 2 }}
       className={cn(
         "relative z-10 mx-1.5 my-[3px] flex min-w-0 flex-col justify-center overflow-hidden rounded-[10px] border px-2.5 text-left transition-[border-color,background-color,opacity] duration-200 hover:border-white/60 hover:opacity-100 focus-visible:z-30",
-        eventChipClass(ev.type),
+        chip.className,
         seg.continuesBefore && "ml-0 rounded-l-none border-l-0",
         seg.continuesAfter && "mr-0 rounded-r-none border-r-0",
         (outside || past) && "opacity-55",
@@ -153,7 +155,7 @@ function Chip({ seg, month, today }: { seg: WeekSegment<AgendaEvent>; month: str
       <span
         className={cn(
           "flex items-center gap-1.5 truncate font-mono text-[10px] leading-[1.3] tracking-[0.12em] uppercase",
-          ev.type === "diaria" ? "text-white/70" : "text-mute",
+          chip.kicker,
         )}
       >
         {conflict ? <AlertTriangle className="size-3 shrink-0 text-warn" aria-hidden /> : null}
@@ -239,7 +241,11 @@ export function MobileAgenda({
             const dots = (
               <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden>
                 {list.slice(0, 3).map((ev) => (
-                  <span key={ev.id} className={cn("size-1 rounded-full", isToday ? "bg-void" : ev.conflicts.length ? "bg-warn" : "bg-white/80")} />
+                  <span
+                    key={ev.id}
+                    className={cn("size-1 rounded-full", isToday ? "bg-void" : ev.conflicts.length ? "bg-warn" : "bg-white/80")}
+                    style={!isToday && !ev.conflicts.length && eventColorHex(ev.color) ? { background: eventColorHex(ev.color)! } : undefined}
+                  />
                 ))}
               </span>
             );
@@ -307,7 +313,10 @@ export function MobileEventRow({ ev, day, today }: { ev: AgendaEvent; day: strin
         <span className="text-light">{ev.startTime ?? "Dia"}</span>
         <span className="text-mute">{ev.endTime ?? (ev.startTime ? "" : "todo")}</span>
       </span>
-      <span className="min-w-0 flex-1 border-l border-line pl-3">
+      <span
+        className={cn("min-w-0 flex-1 border-l border-line pl-3", eventColorHex(ev.color) && "border-l-2")}
+        style={eventColorHex(ev.color) ? { borderLeftColor: eventColorHex(ev.color)! } : undefined}
+      >
         <span className="label block text-[10px] text-mute">
           {kicker(ev)}
           {days > 1 ? ` · dia ${dayIndex} de ${days}` : ""}
