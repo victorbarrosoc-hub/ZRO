@@ -1608,6 +1608,46 @@ Conferir: nada passa da largura a 390 px, alvos ≥ 40 px (44 px no público), `
 
 ---
 
+## 15. Card da Pauta: link para o freela e "Enviar aqui" no card
+
+Card da Pauta ligado a um projeto com pasta no Drive. Duas formas de a peça final chegar na pasta certa, as duas com o mesmo protocolo (§5) e o mesmo motor (§6). Quando o lote fecha, o card ganha a mensagem e os links.
+
+### Link para o freela (`drive_links.tipo = "freela-card"`)
+
+- **Banco (migração 0009, só aditiva):** `drive_links.card_id`, `destino_pasta_id`, `destino_rotulo` ("06 Entregas / Redes" | "05 Render") e o índice único parcial `drive_links_card_ativo_idx` (um ativo por card: `revogado_em is null and tipo = 'freela-card'`); `drive_lotes.card_id`. Nada é apagado: desativar = `revogadoEm`. Validade padrão: 23:59:59 em Natal, 30 dias depois de gerar (`validadePadraoDoCard`). Sem limite de tamanho.
+- **Serviços:** `src/lib/services/drive-card.ts` (`lerCard`, `projetoDoCard` com a regra da ficha, `destinosDoProjeto`, `tituloDoCard`, `freelaDoCard`, `registrarEnvioNoCard`) e, em `drive-links.ts`, `linkDoCard(cardId, { userId, criar? })`, `trocarDestinoDoCard(linkId, chave)`, `textoWhatsAppCard`. `trocarLink` copia card e destino. `revogarLinksDe({ projectId })` também pega o link do card.
+- **Destino:** a chave (`Master` | `Redes` | `Legendas` | `render`) vira a pasta pela estrutura do projeto no banco (`drive_projetos`, conta atual). Nenhum id de pasta vem do navegador: o `Destino` `{ tipo: "card", pessoa }` não tem pasta (zod `.strict()`), e o lote cai em `link.destinoPastaId`.
+- **Painel (aba Peça → Onde subir → "Link para o freela", `quadro/link-card.tsx` + `link-card-actions.ts`):** só aparece com projeto e pasta. Escolhe o destino (padrão: a seção marcada nos chips), gera; depois mostra destino e validade, **Copiar link**, **Mandar no WhatsApp** (freela responsável com telefone), **Trocar destino** (mesmo token), **Validade**, **Trocar link** e **Desativar**. O estado vem sob demanda por Server Action (não entra no `cfg`); um cache por card serve também o **Mandar para o freela**, que acrescenta "*Para subir a peça final* (vai para …) <link>" quando há link ativo.
+- **WhatsApp do link (3 variações):**
+  1. **"Olá, Rafael. Link para subir a peça final de “SERHS · Reels · Verão”: <url>. Vai direto para 06 Entregas / Redes, com o nome original do arquivo."** (escolhida: diz o quê, onde cai e que o nome fica)
+  2. "Rafael, a versão final de “SERHS · Reels · Verão” sobe por aqui: <url>"
+  3. "Peça final de “SERHS · Reels · Verão”: <url>. Os arquivos caem direto na pasta da ZRO."
+- **Página pública** `/enviar/<token>` (mesmo endereço da diária; `abrirLinkPublico` aceita os dois tipos; a rota `/enviar/<token>/api` usa `rotaEnvioPublica(["freela-diaria", "freela-card"])`): rótulo "ENVIO DA PEÇA FINAL", título **"Da edição para a ZRO."** (variações: "A peça final, direto na pasta.", "Peça final."), subtítulo cliente · projeto · formato, bloco "O card" com o tema e "Vai para 06 Entregas / Redes.". "01 · Quem envia": o responsável já marcado ("Rafael M.", nunca o nome inteiro) ou "Outra pessoa" com o nome. "02 · Os arquivos": arquivos (principal) ou pasta (entra com a estrutura), sem rolo, sem pergunta de cartão, nome original. Concluído: **"Peça recebida."** (variações: "Chegou na ZRO.", "Na pasta certa."). Expirado, desativado e indisponível: as telas da diária. Card na lixeira: indisponível.
+- **Servidor:** `abrirLote` com link `freela-card` → `abrirLoteDoCard`: link ativo, card vivo, pessoa = o freela responsável (`resp = "f:<id>"`) ou nome de 2 a 60 letras, pasta de destino viva no Drive. Mesma impressão = mesmo lote (retomada). Rótulo do lote: "06 Entregas / Redes · Rafael Moura". Histórico do projeto uma vez (`avisadoEm`): "Rafael Moura enviou a peça de “SERHS · Reels · Verão” para 06 Entregas / Redes: 2 arquivos, 1,2 GB.".
+
+### "Enviar aqui" dentro do card (`quadro/envio-peca.tsx`)
+
+- Tocar abre o seletor do aparelho (vários arquivos; no iPhone, Fotos ou Arquivos) e o envio acontece no próprio card: miniatura (imagem pelo arquivo, vídeo por um quadro gerado no navegador, o resto pelo ícone do tipo), nome, tamanho, barra, velocidade e tempo, Pausar/Continuar/Cancelar/Tentar de novo, aviso de rede caída e de sessão expirada.
+- Um motor só para a Pauta (`criarMotor` com `transporteDaRota("/painel/arquivos/api")`, escopo `pauta`): fechar a ficha não para o envio e o card da lista mostra um chip com o andamento. Recarregar a página: o card avisa que um envio parou (`zro.pauta.envio.v1` guarda lote → card) e escolher os mesmos arquivos continua de onde parou.
+- Protocolo: `Destino` `{ tipo: "pasta", pastaId, cardId? }`. Com `cardId`, o servidor só aceita uma pasta de destino do projeto do card (senão 400), grava `drive_lotes.card_id`, rótulo "06 Entregas / Master" e `pessoaNome` do sócio logado.
+
+### No card, quando o lote fecha (`registrarEnvioNoCard`)
+
+- Roda em todo `fecharLote` e na conciliação, para link e para "Enviar aqui". Sempre por `quadroMudar` (por campo, com histórico; `quem` = `link:<id>` ou o usuário), com `base` e até três voltas se alguém mexeu nos links ao mesmo tempo.
+- Mensagem com chave fixa por lote `cm_env_<lote>`: "Rafael subiu 2 arquivos em 06 Entregas / Redes." (`por` = "Link de envio" ou `u:<id>` no painel). Só é regravada se o texto mudar (um "Tentar de novo" que completa o lote atualiza a contagem).
+- `links` ganha `https://drive.google.com/file/d/<id>/view` (nome = nome do arquivo) de cada arquivo concluído, sem repetir o que já está lá (compara o id do Drive). Card na lixeira ou sumido: nada.
+
+### Testes
+
+`scripts/tests/drive-link-card.test.mts` (Google falso): criar, um ativo por card (índice), trocar destino, envio completo na pasta certa sem rolo, card com mensagem e links uma vez só (fechar duas vezes e conciliação), arquivo repetido não duplica, "Enviar aqui" do painel (pasta fora do card recusada, mensagem com o sócio), pessoa, formato (cartão/pasta no link do card e card no link da diária), IDOR (envio e lote de outro link), expirado e revogado, trocar link e card na lixeira.
+
+### Pendências
+
+- O lote do card aparece em Arquivos → "Chegou" como lote de freela ("06 Entregas / Redes · Rafael Moura"); a aba Drive do projeto ainda não tem um card próprio para ele.
+- Prévia de vídeo depende do navegador decodificar o formato (MOV/ProRes no Chrome do computador costuma não abrir: fica o ícone).
+
+---
+
 ## Anexo: onde cada ponto da revisão adversarial foi resolvido
 
 | Ponto | Onde |

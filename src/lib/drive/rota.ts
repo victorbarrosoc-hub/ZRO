@@ -141,9 +141,12 @@ export function rotaEnvioPainel(): (request: NextRequest) => Promise<Response> {
   };
 }
 
-/** POST /enviar/<token>/api (freela) e /cliente/<token>/api (cliente). */
+/**
+ * POST /enviar/<token>/api (freela: link da diária ou de um card da Pauta) e /cliente/<token>/api
+ * (cliente). O tipo do link decide o escopo; o serviço confere o destino de cada tipo.
+ */
 export function rotaEnvioPublica(
-  tipo: TipoLink,
+  tipo: TipoLink | readonly TipoLink[],
 ): (request: NextRequest, ctx: { params: Promise<{ token: string }> }) => Promise<Response> {
   return async (request, ctx) => {
     const voz: Voz = "publico";
@@ -157,7 +160,7 @@ export function rotaEnvioPublica(
     try {
       const link = await buscarLinkPorToken(token, tipo);
       if (!link) return erro(respErro("nao_encontrado", voz), 404);
-      if (tipo === "freela-diaria") return await despachar(lido.pedido, { origem: "freela", link }, origem);
+      if (link.tipo !== "cliente-area") return await despachar(lido.pedido, { origem: "freela", link }, origem);
 
       if (!link.clientId) return erro(respErro("link_inativo", voz), 409);
       // Senha: o cookie só é exigido para abrir lote e iniciar arquivos. conferir, cancelar e
