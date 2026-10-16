@@ -10,7 +10,7 @@ import type { AgendaEvent } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { DayButton, EventButton } from "./agenda-dialogs";
 import { MobileEventRow, eventAriaLabel } from "./agenda-month";
-import { WEEKDAY_HEADERS, eachDay, eventChipClass, eventDays, eventEnd, eventKicker, rangesOverlap, timeRange } from "./agenda-utils";
+import { WEEKDAY_HEADERS, eachDay, eventChip, eventDays, eventEnd, eventKicker, rangesOverlap, timeRange } from "./agenda-utils";
 
 function eventsOn(day: string, events: AgendaEvent[]) {
   return events.filter((ev) => rangesOverlap(ev.date, eventEnd(ev), day, day));
@@ -72,18 +72,20 @@ function WeekCard({ ev, day, today }: { ev: AgendaEvent; day: string; today: str
   const index = days > 1 ? eachDay(ev.date, day).length : 0;
   const time = timeRange(ev);
   const conflict = ev.conflicts.length > 0;
+  const chip = eventChip(ev);
   return (
     <EventButton
       eventId={ev.id}
       label={eventAriaLabel(ev)}
+      style={chip.style}
       className={cn(
         "grid gap-1 rounded-xl border p-2.5 text-left transition-[border-color,opacity] duration-200 hover:border-white/60",
-        eventChipClass(ev.type),
+        chip.className,
         eventEnd(ev) < today && "opacity-60",
         conflict && "border-warn/60",
       )}
     >
-      <span className={cn("flex items-center gap-1.5 font-mono text-[10px] leading-[1.3] tracking-[0.12em] uppercase", ev.type === "diaria" ? "text-white/70" : "text-mute")}>
+      <span className={cn("flex items-center gap-1.5 font-mono text-[10px] leading-[1.3] tracking-[0.12em] uppercase", chip.kicker)}>
         {conflict ? <AlertTriangle className="size-3 shrink-0 text-warn" aria-hidden /> : null}
         <span className="truncate">
           {eventKicker(ev, optionLabel(EVENT_TYPES, ev.type))}

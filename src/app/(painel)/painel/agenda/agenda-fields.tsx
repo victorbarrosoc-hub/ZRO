@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Check } from "lucide-react";
 import { fieldError } from "@/components/painel/form";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTIONS, functionOptions, optionLabel } from "@/lib/domain";
+import { EVENT_COLORS, EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTIONS, functionOptions, optionLabel } from "@/lib/domain";
 import { todayISO } from "@/lib/format";
 import type { AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export type EventDefaults = {
   location?: string | null;
   notes?: string | null;
   ownerId?: string | null;
+  color?: string | null;
   crew?: { freelancerId: string; function: string | null }[];
 };
 
@@ -58,6 +59,7 @@ export function EventFields({
   const [location, setLocation] = useState(defaults.location ?? "");
   const [notes, setNotes] = useState(defaults.notes ?? "");
   const [ownerId, setOwnerId] = useState(defaults.ownerId ?? "");
+  const [color, setColor] = useState(defaults.color ?? "");
   // Freela fora da ZRO e compromisso pessoal: a agenda de um sócio (sem projeto e sem equipe).
   const pessoal = (EVENT_TYPES_PESSOAIS as readonly string[]).includes(type);
   const escolherTipo = (k: string) => {
@@ -112,6 +114,37 @@ export function EventFields({
                 )}
               >
                 {t.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="mb-2 text-[13px] font-medium text-ash">Cor na agenda</legend>
+        <div className="flex flex-wrap items-center gap-2">
+          {[{ key: "", label: "Sem cor", hex: "" }, ...EVENT_COLORS].map((c) => (
+            <label key={c.key || "sem"} className="cursor-pointer" title={c.label}>
+              <input
+                type="radio"
+                name="color"
+                value={c.key}
+                checked={color === c.key}
+                onChange={() => setColor(c.key)}
+                className="peer sr-only"
+              />
+              <span className="sr-only">{c.label}</span>
+              <span
+                aria-hidden
+                style={c.hex ? { background: c.hex } : undefined}
+                className={cn(
+                  "grid size-9 place-items-center rounded-full border transition-[box-shadow,border-color]",
+                  c.hex ? "border-transparent text-void" : "border-dashed border-line-strong text-white",
+                  "peer-checked:shadow-[0_0_0_2px_var(--color-void),0_0_0_4px_var(--color-white)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-white",
+                  "[&>svg]:hidden peer-checked:[&>svg]:block",
+                )}
+              >
+                <Check className="size-4" strokeWidth={2.6} />
               </span>
             </label>
           ))}

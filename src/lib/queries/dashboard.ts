@@ -125,6 +125,7 @@ export async function getDashboard(today = todayISO()) {
         projectId: events.projectId,
         projectTitle: projects.title,
         ownerName: users.name,
+        color: events.color,
       })
       .from(events)
       .leftJoin(projects, eq(events.projectId, projects.id))

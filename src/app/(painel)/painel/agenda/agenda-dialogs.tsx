@@ -20,7 +20,7 @@ import { ActionForm, ConfirmAction, FormModal, SubmitButton } from "@/components
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Modal, ModalContent } from "@/components/ui/overlay";
 import { Badge } from "@/components/ui/surface";
-import { EVENT_TYPES, FUNCTIONS, optionLabel } from "@/lib/domain";
+import { EVENT_TYPES, FUNCTIONS, eventColorHex, optionLabel } from "@/lib/domain";
 import { addDaysISO, todayISO } from "@/lib/format";
 import type { AgendaEvent, AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,7 @@ function toDefaults(ev: AgendaEvent): EventDefaults {
     location: ev.location,
     notes: ev.notes,
     ownerId: ev.ownerId,
+    color: ev.color,
     crew: ev.crew.map((c) => ({ freelancerId: c.freelancerId, function: c.function })),
   };
 }
@@ -200,7 +201,12 @@ function EventDetails({
     >
       <div className="grid gap-5">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="light">{optionLabel(EVENT_TYPES, event.type)}</Badge>
+          <Badge tone="light">
+            {eventColorHex(event.color) ? (
+              <span className="size-2 rounded-full" style={{ background: eventColorHex(event.color)! }} aria-hidden />
+            ) : null}
+            {optionLabel(EVENT_TYPES, event.type)}
+          </Badge>
           {event.ownerName ? <Badge tone="neutral">Agenda de {event.ownerName.split(" ")[0]}</Badge> : null}
           {days > 1 ? <Badge>{days} dias</Badge> : null}
           {event.conflicts.length ? (

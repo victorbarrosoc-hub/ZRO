@@ -305,6 +305,24 @@ export const EVENT_TYPES = [
 ] as const;
 /** Tipos que são a agenda de um sócio (freela fora da ZRO, compromisso pessoal): sempre têm dono. */
 export const EVENT_TYPES_PESSOAIS = ["freela", "pessoal"] as const;
+
+/**
+ * Cores de marcação da agenda (opcionais). Tons fechados, que aparecem no preto
+ * sem gritar; sem cor, o evento fica no preto e branco do tipo.
+ */
+export const EVENT_COLORS = [
+  { key: "vermelho", label: "Vermelho", hex: "#E5484D" },
+  { key: "laranja", label: "Laranja", hex: "#F0883E" },
+  { key: "amarelo", label: "Amarelo", hex: "#E9C46A" },
+  { key: "verde", label: "Verde", hex: "#3FB27F" },
+  { key: "azul", label: "Azul", hex: "#2D7BFF" },
+  { key: "roxo", label: "Roxo", hex: "#9B6BDF" },
+  { key: "rosa", label: "Rosa", hex: "#E0679F" },
+] as const;
+
+export function eventColorHex(key: string | null | undefined) {
+  return EVENT_COLORS.find((c) => c.key === key)?.hex ?? null;
+}
 export type EventType = (typeof EVENT_TYPES)[number]["key"];
 
 export const DELIVERABLE_STATUS = [

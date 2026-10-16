@@ -8,7 +8,7 @@ import { CashflowChart } from "@/components/painel/cashflow-chart";
 import { HeroFigure, StatTile } from "@/components/painel/stat";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui/surface";
 import { requireUser } from "@/lib/auth/dal";
-import { EVENT_TYPES, LEAD_STAGES, STAGES, optionLabel, FUNNEL_PROJECT_TYPES, FUNNEL_BUDGETS } from "@/lib/domain";
+import { EVENT_TYPES, eventColorHex, LEAD_STAGES, STAGES, optionLabel, FUNNEL_PROJECT_TYPES, FUNNEL_BUDGETS } from "@/lib/domain";
 import { TIMEZONE, brl, brlCompact, dateShort, monthLong, relativeDay, weekdayShort } from "@/lib/format";
 import { getCashFlow, getDashboard, getFreelaPayables, getProjectsOverview, type FreelaPayables, type ProjectOverviewRow } from "@/lib/queries/dashboard";
 import { getRecurringOverview } from "@/lib/queries/crm";
@@ -155,7 +155,12 @@ function ResumoTab({ data, recorrentes }: { data: Dashboard; recorrentes: Recorr
                     <span className="text-[20px] leading-tight font-semibold text-white">{Number(ev.date.slice(8, 10))}</span>
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] text-light">{ev.title}</span>
+                    <span className="flex items-center gap-2 text-[14px] text-light">
+                      {eventColorHex(ev.color) ? (
+                        <span className="size-2 shrink-0 rounded-full" style={{ background: eventColorHex(ev.color)! }} aria-hidden />
+                      ) : null}
+                      <span className="truncate">{ev.title}</span>
+                    </span>
                     <span className="mt-0.5 block truncate text-[12px] text-mute">
                       {ev.ownerName ? `${ev.ownerName.split(" ")[0]} · ` : ""}
                       {optionLabel(EVENT_TYPES, ev.type)}

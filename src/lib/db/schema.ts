@@ -446,6 +446,8 @@ export const events = pgTable(
     notes: text(),
     /** De quem é o compromisso (Victor ou Edu). Vazio = agenda da ZRO (produção). */
     ownerId: text().references(() => users.id, { onDelete: "set null" }),
+    /** Cor de marcação escolhida (chave de EVENT_COLORS). Vazio = o visual do tipo. */
+    color: text(),
     createdAt: createdAt(),
   },
   (t) => [index("events_date_idx").on(t.date)],
