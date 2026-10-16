@@ -74,6 +74,8 @@ export async function apagarPastaAction(_prev: ActionResult | null, fd: FormData
   const user = await requireUser();
   const projeto = await projetoDe(str(fd, "projectId"));
   if (!projeto) return fail("Projeto não encontrado.");
+  // Trava: sem a palavra digitada, nada acontece (o botão da tela já pede, aqui confere de novo).
+  if ((str(fd, "confirmacao") ?? "").trim().toUpperCase() !== "APAGAR") return fail("Digite APAGAR para confirmar.");
   const r = await apagarPastaDoProjeto(projeto.id, async (dp) => {
     if (!dp.entregasLiberadasEm) return { ok: true };
     const recolhidas = await recolherEntregas(projeto.id, user.id);
