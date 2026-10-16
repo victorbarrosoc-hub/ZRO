@@ -57,6 +57,7 @@ function toDefaults(ev: AgendaEvent): EventDefaults {
     endTime: ev.endTime,
     location: ev.location,
     notes: ev.notes,
+    ownerId: ev.ownerId,
     crew: ev.crew.map((c) => ({ freelancerId: c.freelancerId, function: c.function })),
   };
 }
@@ -200,6 +201,7 @@ function EventDetails({
       <div className="grid gap-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="light">{optionLabel(EVENT_TYPES, event.type)}</Badge>
+          {event.ownerName ? <Badge tone="neutral">Agenda de {event.ownerName.split(" ")[0]}</Badge> : null}
           {days > 1 ? <Badge>{days} dias</Badge> : null}
           {event.conflicts.length ? (
             <Badge tone="warn" dot>

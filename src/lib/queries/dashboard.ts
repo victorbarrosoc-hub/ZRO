@@ -3,7 +3,7 @@ import { and, asc, eq, gte, inArray, lte, notInArray, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { addDaysISO, todayISO } from "@/lib/format";
 
-const { financeEntries, financePayments, projects, events, leads, clients } = schema;
+const { financeEntries, financePayments, projects, events, leads, clients, users } = schema;
 
 export type MonthFlow = {
   key: string; // AAAA-MM
@@ -124,9 +124,11 @@ export async function getDashboard(today = todayISO()) {
         location: events.location,
         projectId: events.projectId,
         projectTitle: projects.title,
+        ownerName: users.name,
       })
       .from(events)
       .leftJoin(projects, eq(events.projectId, projects.id))
+      .leftJoin(users, eq(events.ownerId, users.id))
       .where(and(gte(events.date, today), lte(events.date, weekEnd)))
       .orderBy(asc(events.date), asc(events.startTime)),
     db

@@ -5,11 +5,18 @@ import { AlertTriangle } from "lucide-react";
 import { fieldError } from "@/components/painel/form";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import type { ActionResult } from "@/lib/actions";
-import { EVENT_TYPES, FUNCTIONS, functionOptions, optionLabel } from "@/lib/domain";
+import { EVENT_TYPES, EVENT_TYPES_PESSOAIS, FUNCTIONS, functionOptions, optionLabel } from "@/lib/domain";
 import { todayISO } from "@/lib/format";
 import type { AgendaOptions, Booking } from "@/lib/queries/agenda";
 import { cn } from "@/lib/utils";
 import { rangesOverlap } from "./agenda-utils";
+
+const PLACEHOLDER: Record<string, string> = {
+  diaria: "Ex.: Diária 3 · Pipa",
+  entrega: "Ex.: Entrega do lote 1",
+  freela: "Ex.: Câmera para a Quartzo",
+  pessoal: "Ex.: Médico, viagem, aniversário",
+};
 
 export type EventDefaults = {
   id?: string;
@@ -22,6 +29,7 @@ export type EventDefaults = {
   endTime?: string | null;
   location?: string | null;
   notes?: string | null;
+  ownerId?: string | null;
   crew?: { freelancerId: string; function: string | null }[];
 };
 
@@ -49,6 +57,13 @@ export function EventFields({
   const [endTime, setEndTime] = useState(defaults.endTime ?? "");
   const [location, setLocation] = useState(defaults.location ?? "");
   const [notes, setNotes] = useState(defaults.notes ?? "");
+  const [ownerId, setOwnerId] = useState(defaults.ownerId ?? "");
+  // Freela fora da ZRO e compromisso pessoal: a agenda de um sócio (sem projeto e sem equipe).
+  const pessoal = (EVENT_TYPES_PESSOAIS as readonly string[]).includes(type);
+  const escolherTipo = (k: string) => {
+    setType(k);
+    if ((EVENT_TYPES_PESSOAIS as readonly string[]).includes(k) && !ownerId) setOwnerId(options.eu ?? options.socios[0]?.id ?? "");
+  };
   const [crew, setCrew] = useState<Record<string, string>>(() =>
     Object.fromEntries((defaults.crew ?? []).map((c) => [c.freelancerId, c.function ?? ""])),
   );
@@ -87,7 +102,7 @@ export function EventFields({
                 name="type"
                 value={t.key}
                 checked={type === t.key}
-                onChange={() => setType(t.key)}
+                onChange={() => escolherTipo(t.key)}
                 className="peer sr-only"
               />
               <span
@@ -110,14 +125,36 @@ export function EventFields({
             name="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={type === "diaria" ? "Ex.: Diária 3 · Pipa" : type === "entrega" ? "Ex.: Entrega do lote 1" : "Ex.: Aprovação do corte"}
+            placeholder={PLACEHOLDER[type] ?? "Ex.: Aprovação do corte"}
             aria-invalid={fieldError(state, "title") ? true : undefined}
             autoFocus={!defaults.id}
           />
         </Field>
 
-        <Field label="Projeto" htmlFor="ev-project" hint="Opcional. Reuniões soltas podem ficar sem projeto." className="sm:col-span-2">
-          <Select id="ev-project" name="projectId" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+        <Field
+          label="De quem é"
+          htmlFor="ev-owner"
+          hint={pessoal ? "A data fica ocupada na agenda dessa pessoa." : "ZRO = produção da casa. Ou marque na agenda de um de vocês."}
+          error={fieldError(state, "ownerId")}
+          className="sm:col-span-2"
+        >
+          <Select id="ev-owner" name="ownerId" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+            {!pessoal ? <option value="">ZRO (produção)</option> : null}
+            {options.socios.map((s) => (
+              <option key={s.id} value={s.id}>
+                Agenda de {s.name.split(" ")[0]}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Field
+          label="Projeto"
+          htmlFor="ev-project"
+          hint="Opcional. Reuniões soltas podem ficar sem projeto."
+          className={cn("sm:col-span-2", pessoal && "hidden")}
+        >
+          <Select id="ev-project" name="projectId" value={pessoal ? "" : projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">Sem projeto</option>
             <optgroup label="Em andamento">
               {activeProjects.map((p) => (
@@ -176,7 +213,7 @@ export function EventFields({
         </Field>
       </div>
 
-      <fieldset className="grid gap-2">
+      <fieldset className={cn("grid gap-2", pessoal && "hidden")} disabled={pessoal}>
         <legend className="mb-1 flex w-full items-baseline justify-between gap-3 text-[13px] font-medium text-ash">
           <span>Equipe</span>
           <span className="text-[12px] font-normal text-mute">

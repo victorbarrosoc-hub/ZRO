@@ -8,6 +8,7 @@ import { eventEnd } from "@/app/(painel)/painel/agenda/agenda-utils";
 import { StatTile } from "@/components/painel/stat";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardHeader, EmptyState } from "@/components/ui/surface";
+import { requireUser } from "@/lib/auth/dal";
 import { addDaysISO, brl, dateBR, todayISO } from "@/lib/format";
 import { getAgendaOptions, listBookings, listProjectEvents } from "@/lib/queries/agenda";
 import type { ProjectDetail, ProjectSummary } from "@/lib/queries/projects";
@@ -16,9 +17,10 @@ import { ProjectEventList } from "./agenda-list";
 
 export async function ProjectAgendaTab({ project, summary }: { project: ProjectDetail; summary: ProjectSummary }) {
   const today = todayISO();
+  const user = await requireUser();
   const [events, options, bookings] = await Promise.all([
     listProjectEvents(project.id),
-    getAgendaOptions(),
+    getAgendaOptions(user.id),
     listBookings(addDaysISO(today, -30)),
   ]);
 

@@ -198,8 +198,17 @@ export const EVENT_CHIP: Record<string, string> = {
   diaria: "border-white/25 bg-white/[0.11] text-white",
   entrega: "border-white/35 bg-transparent text-light",
   reuniao: "border-line-strong bg-white/[0.035] text-light",
+  // a agenda de um sócio: tracejado, para não se confundir com a produção da ZRO
+  freela: "border-dashed border-white/35 bg-white/[0.04] text-light",
+  pessoal: "border-dashed border-line-strong bg-transparent text-ash",
   outro: "border-line bg-transparent text-ash",
 };
+
+/** "Edu · Freela" (agenda de um sócio) ou só "Diária" (agenda da ZRO). */
+export function eventKicker(ev: { type: string; ownerName?: string | null }, typeLabel: string) {
+  const dono = ev.ownerName?.trim().split(/\s+/)[0];
+  return dono ? `${dono} · ${typeLabel}` : typeLabel;
+}
 
 export function eventChipClass(type: string) {
   return EVENT_CHIP[type] ?? EVENT_CHIP.outro;
