@@ -341,6 +341,48 @@ export async function changePassword(_prev: ActionResult | null, fd: FormData): 
   return ok("Senha trocada. Os outros aparelhos vão pedir login de novo.");
 }
 
+const EmailSchema = z.object({
+  email: z.email("Confira o e-mail.").max(120, "E-mail longo demais."),
+  current: z.string().min(1, "Digite a senha atual."),
+});
+
+/**
+ * Troca o e-mail de acesso de quem está logado. Pede a senha atual (mesmo freio do login)
+ * e não deixa usar o e-mail de outra conta. A sessão continua: ela é presa à senha, não ao e-mail.
+ */
+export async function changeEmail(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const me = await requireUser();
+  const parsed = EmailSchema.safeParse({
+    email: (str(fd, "email") ?? "").toLowerCase(),
+    current: String(fd.get("current") ?? ""),
+  });
+  if (!parsed.success) return fromZod(parsed.error);
+  const { email, current } = parsed.data;
+  if (email === me.email) return fail("Esse já é o seu e-mail de acesso.", { email: ["Esse já é o seu e-mail de acesso."] });
+
+  const since = new Date(Date.now() - WINDOW_MIN * 60 * 1000);
+  const [fails] = await db
+    .select({ n: sql<number>`count(*)`.mapWith(Number) })
+    .from(loginAttempts)
+    .where(and(eq(loginAttempts.email, me.email), eq(loginAttempts.success, false), gte(loginAttempts.createdAt, since)));
+  if (Number(fails?.n ?? 0) >= MAX_FAILS) {
+    return fail(`Muitas tentativas com senha errada. Espere ${WINDOW_MIN} minutos e tente de novo.`);
+  }
+
+  const user = await db.query.users.findFirst({ where: eq(users.id, me.id), columns: { id: true, passwordHash: true } });
+  if (!user) return fail("Usuário não encontrado.");
+  if (!(await verifyPassword(current, user.passwordHash))) {
+    await db.insert(loginAttempts).values({ email: me.email, ip: null, success: false });
+    return fail("A senha atual não confere.", { current: ["A senha atual não confere."] });
+  }
+  const outro = await db.query.users.findFirst({ where: eq(users.email, email), columns: { id: true } });
+  if (outro) return fail("Esse e-mail já é de outra conta.", { email: ["Esse e-mail já é de outra conta."] });
+
+  await db.update(users).set({ email }).where(eq(users.id, user.id));
+  revalidatePath("/painel", "layout");
+  return ok(`Pronto. Daqui em diante, entre com ${email}.`);
+}
+
 /* ============================== Perfil ============================== */
 
 /** Nome e foto de quem está logado (aparecem no menu e nos cards da Pauta). */
