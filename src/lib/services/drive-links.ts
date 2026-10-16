@@ -39,8 +39,8 @@ export type LinkDTO = {
   ultimoUsoEm: Date | null;
 };
 
-/** Limite padrão da área do cliente: 20 GB por dia. */
-export const LIMITE_AREA_PADRAO_GB = 20;
+/** Limite padrão da área do cliente: 50 GB por dia. */
+export const LIMITE_AREA_PADRAO_GB = 50;
 const CONTEXTO_TOKEN = (id: string) => `drive_links.token:${id}`;
 
 export function estadoDoLink(l: Pick<LinkLinha, "revogadoEm" | "expiraEm">, agora = new Date()): LinkDTO["estado"] {

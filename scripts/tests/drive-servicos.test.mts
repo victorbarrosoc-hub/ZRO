@@ -443,12 +443,12 @@ describe("escopo e links", () => {
     );
     assert.ok(!sem.ok && sem.erro === "consentimento");
     const grande = await envios.abrirLote(
-      { op: "lote", destino: { tipo: "cliente", projetoId: amb.ids.projeto, assunto: "Brutos", consentimento: true }, arquivos: 1, bytes: 21e9, impressao: impressaoDe("c3") },
+      { op: "lote", destino: { tipo: "cliente", projetoId: amb.ids.projeto, assunto: "Brutos", consentimento: true }, arquivos: 1, bytes: 51e9, impressao: impressaoDe("c3") },
       escopo,
       ORIGEM,
     );
-    assert.ok(!grande.ok && grande.erro === "limite_link" && grande.cabem === 20e9, JSON.stringify(grande));
-    assert.equal(!grande.ok && grande.mensagem, "Hoje dá para enviar mais 20 GB. O limite volta amanhã.");
+    assert.ok(!grande.ok && grande.erro === "limite_link" && grande.cabem === 50e9, JSON.stringify(grande));
+    assert.equal(!grande.ok && grande.mensagem, "Hoje dá para enviar mais 50 GB. O limite volta amanhã.");
     const ok = await envios.abrirLote(
       { op: "lote", destino: { tipo: "cliente", projetoId: amb.ids.projeto, assunto: "Manual de marca", consentimento: true }, arquivos: 1, bytes: 100, impressao: impressaoDe("c4") },
       escopo,

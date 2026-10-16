@@ -91,7 +91,7 @@ Pastas dos projetos, envio de material pelo site (painel, freela e cliente) e á
 1. **Numeração dos rolos por projeto inteiro**, não por diária: A001…A005 na diária 1, A006 na diária 2. Assim o editor nunca tem dois "A001" no mesmo projeto.
 2. **Letras:** A, B, C, E = câmeras; **D = Drone**; **F = Foto**. Áudio não tem rolo.
 3. **Nome do cartão:** quando o freela escolhe o cartão inteiro, o conteúdo dele vai direto para dentro de `A003` (como um DIT faz). O nome do cartão ("EOS_DIGITAL") fica anotado na descrição da pasta.
-4. **Link da diária:** vale 30 dias depois da diária, sem limite de tamanho (dá para pôr um limite em cada link). **Área do cliente:** sem validade, até 20 GB de envio por dia.
+4. **Link da diária:** vale 30 dias depois da diária, sem limite de tamanho (dá para pôr um limite em cada link). **Área do cliente:** sem validade, até 50 GB de envio por dia.
 5. **No fim do envio, o freela lê:** "Guarde o cartão até a ZRO confirmar." (e não "pode formatar").
 6. **As entregas só aparecem para o cliente depois de "Liberar entregas"** no projeto. Depois disso, tudo o que entrar em `06 Entregas` aparece para ele.
 
@@ -1440,7 +1440,7 @@ export function textoWhatsAppDiaria(i: { data: string; projeto: string; url: str
 export function textoWhatsAppArea(i: { contato: string | null; cliente: string; url: string; temSenha: boolean }): string[];
 export async function entrarNaArea(token: string, senha: string): Promise<{ ok: true } | { ok: false; erro: "senha" | "muitas_tentativas" | "inativo" }>;
 ```
-Validade padrão da diária: 23:59:59 (America/Fortaleza) do 30º dia depois do fim da diária. Área: sem validade, limite de 20 GB por dia.
+Validade padrão da diária: 23:59:59 (America/Fortaleza) do 30º dia depois do fim da diária. Área: sem validade, limite de 50 GB por dia.
 
 ### 12.2 PAINEL
 
