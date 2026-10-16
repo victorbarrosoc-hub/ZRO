@@ -29,6 +29,8 @@ const ERROS: Record<string, string> = {
   config: "Faltam as chaves do Google na Vercel.",
   sessao: "Entre de novo e conecte.",
   estado: "A conexão demorou demais. Tente de novo.",
+  troca: "O Google recusou a conexão. Confira a chave na Vercel e tente de novo.",
+  api: "A Google Drive API está desligada no projeto do Google Cloud. Ative em console.cloud.google.com/apis/library/drive.googleapis.com e conecte de novo.",
   negado: "O Google não autorizou.",
   sem_refresh: "O Google não mandou o acesso contínuo. Remova o app em myaccount.google.com/permissions e conecte de novo.",
   permissao: "Marque a permissão do Google Drive ao conectar.",

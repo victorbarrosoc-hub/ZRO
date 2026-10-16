@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth/dal";
 import { dadosDaConexao, salvarConexao } from "@/lib/google/conexao";
 import { chaveDerivada } from "@/lib/google/cripto";
 import { sobre } from "@/lib/google/drive";
+import { GoogleError } from "@/lib/google/erros";
 import { COOKIE_OAUTH, escopoTemDrive, revogar, trocarCodigo } from "@/lib/google/oauth";
 import { paraOficial } from "@/lib/google/previa";
 import { contaTemPastas, garantirRaiz } from "@/lib/services/drive-pastas";
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
   try {
     troca = await trocarCodigo(code, dados.v);
   } catch {
-    return voltar("?erro=estado");
+    return voltar("?erro=troca");
   }
   if (!troca.refresh) return voltar("?erro=sem_refresh");
   if (!escopoTemDrive(troca.escopo)) {
@@ -68,8 +69,10 @@ export async function GET(request: NextRequest) {
   let conta: { email: string; nome: string | null };
   try {
     conta = await sobre(troca.acesso);
-  } catch {
-    return voltar("?erro=estado");
+  } catch (err) {
+    // 403 logo depois de um consentimento válido: quase sempre a Google Drive API desligada no projeto.
+    if (err instanceof GoogleError && err.motivo === "sem_permissao") return voltar("?erro=api");
+    return voltar("?erro=troca");
   }
   if (!conta.email) return voltar("?erro=estado");
 
