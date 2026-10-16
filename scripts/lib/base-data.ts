@@ -75,6 +75,12 @@ async function resetPassword(db: DB, u: SeedUser) {
   console.log(`✓ Senha de ${u.name} (${user.email}) redefinida.`);
 }
 
+/** "eddu.rocha@hotmail.com" → "edd***@hotmail.com" (para o registro do deploy). */
+function mascarar(email: string) {
+  const [nome, dominio] = email.split("@");
+  return `${nome.slice(0, 3)}***@${dominio ?? ""}`;
+}
+
 export async function ensureUsers(db: DB, opts: { allowGenerated: boolean }) {
   const created: { email: string; password: string }[] = [];
   for (const u of seedUsersFromEnv()) {
@@ -115,7 +121,11 @@ export async function ensureUsers(db: DB, opts: { allowGenerated: boolean }) {
       passwordHash: await hashPassword(password),
     });
     created.push({ email: u.email.toLowerCase(), password: u.password ? "(definida no ambiente)" : password });
+    console.log(`✓ Conta de ${u.name} criada (${mascarar(u.email)}).`);
   }
+  // Quem pode entrar, a cada deploy (e-mail mascarado): mostra no registro se sobrou conta duplicada.
+  const contas = await db.query.users.findMany({ columns: { name: true, email: true } });
+  console.log(`Contas da área interna: ${contas.map((c) => `${c.name} (${mascarar(c.email)})`).join(" · ")}`);
   if (created.length && opts.allowGenerated) {
     mkdirSync("./data", { recursive: true });
     const lines = created.map((c) => `${c.email}  ${c.password}`).join("\n");
