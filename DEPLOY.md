@@ -101,6 +101,7 @@ Depois: **Deployments → Redeploy**.
 - **Perdeu `ZRO_DRIVE_KEY`?** Criar outra (`openssl rand -base64 32`), Redeploy, **Reconectar** em Ajustes → Google Drive e **Trocar link** nas diárias e áreas do cliente ativas. Nada some do Drive nem do banco.
 - **Cliente OAuth sem uso por 6 meses é apagado pelo Google:** se o Drive ficar parado tanto tempo, conferir o cliente no console.
 - **Conta nova de sócio:** definir o e-mail e a senha nas variáveis e fazer Redeploy. Contas que já existem não são alteradas.
+- **Trocar o e-mail de um sócio:** mudar `ZRO_VICTOR_EMAIL` ou `ZRO_EDU_EMAIL` e fazer Redeploy. A conta que já existe (mesmo nome) passa para o e-mail novo, com a mesma senha, foto e histórico; não cria outra.
 - **Esqueceu a senha:** em Settings → Environment Variables, criar `ZRO_REDEFINIR_SENHA` = `victor` (ou `edu`) e `ZRO_VICTOR_PASSWORD` (ou `ZRO_EDU_PASSWORD`) com a senha nova (10+ caracteres), e fazer Redeploy. Depois de entrar, apagar as duas variáveis. Cada senha nova só é aplicada uma vez, então um deploy depois não desfaz uma troca feita no painel.
 
 ## Custos
