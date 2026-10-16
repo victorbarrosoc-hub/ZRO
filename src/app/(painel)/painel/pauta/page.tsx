@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray, or } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/dal";
 import { db, schema } from "@/lib/db";
 import { freelaWhatsappText } from "@/lib/domain";
+import { pastasDaPauta } from "@/lib/services/drive-pastas";
 import { ORG, quadroCarregar } from "../quadro/servidor";
-import type { Card, Config, Pessoa } from "../quadro/metodo";
+import type { Card, Config, Pessoa, ProjetoPauta } from "../quadro/metodo";
 import { QuadroApp } from "../quadro/quadro-app";
 import "../quadro/quadro.css";
 
@@ -42,6 +43,28 @@ export default async function PautaPage() {
     quadroCarregar(ORG),
   ]);
 
+  // Projetos do campo "Projeto" e as pastas da aba Peça: os em andamento e os que algum card já usa.
+  const usados = inicio.ok
+    ? [...new Set(inicio.cards.map((c) => (c as Card).projeto).filter((x): x is string => typeof x === "string" && x !== "nenhum"))]
+    : [];
+  const projetos = await db
+    .select({ id: schema.projects.id, title: schema.projects.title, clientId: schema.projects.clientId, status: schema.projects.status })
+    .from(schema.projects)
+    .where(or(inArray(schema.projects.status, ["ativo", "pausado"]), usados.length ? inArray(schema.projects.id, usados) : undefined))
+    .orderBy(asc(schema.projects.title));
+  const pastas = await pastasDaPauta(projetos.map((p) => p.id));
+  const projetosPauta: ProjetoPauta[] = projetos.map((p) => {
+    const d = pastas.get(p.id);
+    return {
+      id: p.id,
+      titulo: p.title,
+      cliente: p.clientId,
+      ativo: p.status === "ativo" || p.status === "pausado",
+      pastas: d ? { render: d.render, entregas: d.entregas, secoes: d.secoes } : null,
+      entregasLiberadas: d?.entregasLiberadas ?? false,
+    };
+  });
+
   const pessoas: Pessoa[] = [
     ...socios.map((s) => ({ id: `u:${s.id}`, nome: s.name, revisor: true, fotoId: s.photoId })),
     ...freelas.map((f) => ({
@@ -59,6 +82,7 @@ export default async function PautaPage() {
     clientes: [{ id: "casa", nome: "Interno", interno: true }, ...clientes.map((c) => ({ id: c.id, nome: c.name }))],
     formatos: FORMATOS,
     nomePadrao: true,
+    projetos: projetosPauta,
   };
 
   if (!inicio.ok) {

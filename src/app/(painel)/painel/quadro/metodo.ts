@@ -34,7 +34,26 @@ export type Pessoa = {
   ola?: string;
 };
 export type Cliente = { id: string; nome: string; interno?: boolean };
-export type Config = { org: string; eu: string; pessoas: Pessoa[]; clientes: Cliente[]; formatos: string[]; nomePadrao: boolean };
+/** Pasta do Drive que a ficha mostra (id para enviar pelo painel, url para abrir no Drive). */
+export type PastaPauta = { id: string; url: string };
+/** Projeto que um card pode ter, com as pastas onde a peça final sobe (null = projeto sem pasta no Drive). */
+export type ProjetoPauta = {
+  id: string;
+  titulo: string;
+  cliente: string | null;
+  ativo: boolean;
+  pastas: { render: PastaPauta | null; entregas: PastaPauta | null; secoes: Record<string, PastaPauta | null> } | null;
+  entregasLiberadas: boolean;
+};
+export type Config = {
+  org: string;
+  eu: string;
+  pessoas: Pessoa[];
+  clientes: Cliente[];
+  formatos: string[];
+  nomePadrao: boolean;
+  projetos?: ProjetoPauta[];
+};
 
 export type Mensagem = { por: string; em: number; txt: string };
 export type Card = {
@@ -47,6 +66,8 @@ export type Card = {
   criadoPor?: string;
   mod?: number;
   cliente?: string;
+  /** Projeto do card; "nenhum" = escolhido sem projeto. Vazio: o único projeto ativo do cliente. */
+  projeto?: string;
   formatos?: string[];
   resp?: string;
   prazo?: string;

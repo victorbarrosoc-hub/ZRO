@@ -1,11 +1,12 @@
 import "server-only";
-import { and, asc, desc, eq, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { after } from "next/server";
 import { db, schema } from "@/lib/db";
 import {
   ARQUIVOS_DA_EMPRESA,
   CLIENTES,
   ESTRUTURA,
+  SECOES_ENTREGAS,
   SEM_CLIENTE,
   type ChaveEstrutura,
   nomeDiaria,
@@ -662,6 +663,41 @@ export async function pastasDoProjeto(projectId: string): Promise<DriveProjetoDT
     pastas,
     entregasLiberadasEm: linha.entregasLiberadasEm,
   };
+}
+
+export type PastasDaPauta = {
+  render: { id: string; url: string } | null;
+  entregas: { id: string; url: string } | null;
+  /** Seções de 06 Entregas ("Master", "Redes", "Legendas"). */
+  secoes: Record<string, { id: string; url: string } | null>;
+  entregasLiberadas: boolean;
+};
+
+/**
+ * Onde a peça final sobe, para a ficha da Pauta: 05 Render e 06 Entregas (com as seções) de cada
+ * projeto, na conta conectada agora. Só lê o banco (nada de Google). Sem Drive: mapa vazio.
+ */
+export async function pastasDaPauta(projectIds: string[]): Promise<Map<string, PastasDaPauta>> {
+  const mapa = new Map<string, PastasDaPauta>();
+  if (!projectIds.length) return mapa;
+  const c = await contaAtual().catch(() => null);
+  if (!c) return mapa;
+  const linhas = await db
+    .select()
+    .from(driveProjetos)
+    .where(and(eq(driveProjetos.conta, c.conta), inArray(driveProjetos.projectId, projectIds)));
+  const pasta = (id: string | null | undefined) => (id ? { id, url: linkPasta(id) } : null);
+  for (const l of linhas) {
+    if (!l.projectId || !l.pastaId || apagada(l)) continue;
+    const sub = l.subpastas ?? {};
+    mapa.set(l.projectId, {
+      render: pasta(l.renderId),
+      entregas: pasta(l.entregasId),
+      secoes: Object.fromEntries(SECOES_ENTREGAS.map((s) => [s, pasta(sub[`06 Entregas/${s}`])])),
+      entregasLiberadas: Boolean(l.entregasLiberadasEm),
+    });
+  }
+  return mapa;
 }
 
 /** Linha de drive_projetos da conta atual (para os outros serviços). */
