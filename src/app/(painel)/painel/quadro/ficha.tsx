@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { ProximoPasso } from "./cartao";
 import { cc, useQ, type AbaFicha } from "./contexto";
 import { COLUNAS, clone, linkSeguro, novoId, quando, type Card, type ColKey, type Mensagem, type Metodo, type Pessoa } from "./metodo";
+import { PreviaLink } from "./previa-link";
 
 /** Campos à espera de gravar ("card:campo" → timer). Fica fora da tela: fechar a ficha não perde o que foi digitado. */
 const espera = new Map<string, ReturnType<typeof setTimeout>>();
@@ -395,33 +396,18 @@ function FichaDentro({ c }: { c: Card }) {
           <h4>
             <Link2 size={13} aria-hidden /> Peça <span>{links.length || ""}</span>
           </h4>
-          {links.map((l, i) => {
-            const u = linkSeguro(l.url);
-            return (
-              <div key={i} className="q-link">
-                {u ? (
-                  <a href={u} target="_blank" rel="noopener noreferrer">
-                    {l.nome || u}
-                  </a>
-                ) : (
-                  <span>{l.nome || "link"}</span>
-                )}
-                <button
-                  type="button"
-                  className="q-x"
-                  data-acao="link-x"
-                  aria-label="Tirar link"
-                  onClick={() => {
-                    const n = clone(links);
-                    n.splice(i, 1);
-                    mudar({ links: n.length ? n : null });
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
+          {links.map((l, i) => (
+            <PreviaLink
+              key={`${l.url}#${i}`}
+              url={l.url}
+              nome={l.nome}
+              onTirar={() => {
+                const n = clone(links);
+                n.splice(i, 1);
+                mudar({ links: n.length ? n : null });
+              }}
+            />
+          ))}
           <form
             className="q-form-lin"
             data-form="link"
@@ -443,13 +429,14 @@ function FichaDentro({ c }: { c: Card }) {
               className="q-in"
               type="text"
               inputMode="url"
-              placeholder="+ colar link da peça (Drive, YouTube, Frame.io…)"
+              placeholder="+ colar link da peça (Drive, YouTube, Vimeo, Frame.io, Dropbox…)"
               aria-label="Link da peça"
               onInput={(ev) => ev.currentTarget.setCustomValidity("")}
             />
           </form>
           <p className="q-mut" style={{ margin: 0, fontSize: 12.5 }}>
-            Por enquanto a peça entra por link. Subir arquivo direto fica para depois.
+            A prévia aparece aqui: vídeo e áudio tocam, foto aparece, PSD e outros arquivos mostram o tipo. No Drive, o arquivo
+            precisa estar compartilhado por link.
           </p>
         </div>
       ) : null}

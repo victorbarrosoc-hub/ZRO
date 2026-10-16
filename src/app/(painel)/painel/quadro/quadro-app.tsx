@@ -384,7 +384,8 @@ function Quadro({ cfg, iniciais, cursor }: Props) {
     // cliques fora: fecham o menu e a ficha; clique no card abre a ficha
     const click = (e: MouseEvent) => {
       const t = e.target instanceof Element ? e.target : null;
-      if (!t) return;
+      // o clique já trocou o próprio elemento (ex.: a capa da peça vira o player): não é "clique fora"
+      if (!t || !t.isConnected) return;
       const { up: upQ, abrirFicha, fecharFicha } = qRef.current;
       const u = uiRef.current;
       const a = t.closest<HTMLElement>("[data-acao]");
