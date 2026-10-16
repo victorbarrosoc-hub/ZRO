@@ -233,7 +233,8 @@ function estadoDoItem(it: ItemFila): string {
     case "preparando":
       return "Preparando";
     case "enviando":
-      return `${porcento(it.enviado, it.tamanho)}%`;
+      // Todos os bytes saíram: falta o Drive confirmar.
+      return it.tamanho > 0 && it.enviado >= it.tamanho ? "Conferindo no Drive…" : `${porcento(it.enviado, it.tamanho)}%`;
     case "pausado":
       return "Pausado";
     case "conferindo":
