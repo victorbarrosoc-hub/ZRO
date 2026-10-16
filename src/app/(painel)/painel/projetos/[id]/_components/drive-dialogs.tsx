@@ -374,19 +374,72 @@ export function RecolherEntregas({ projectId }: { projectId: string }) {
 
 /* ============================== Apagar pasta ============================== */
 
-export function ApagarPasta({ projectId }: { projectId: string }) {
+const PALAVRA_APAGAR = "APAGAR";
+
+function ApagarEnviar({ liberado }: { liberado: boolean }) {
+  const { pending } = useFormStatus();
   return (
-    <ConfirmAction
-      trigger={
+    <Button type="submit" variant="danger" disabled={!liberado || pending}>
+      {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
+      {pending ? "Apagando…" : "Apagar pasta"}
+    </Button>
+  );
+}
+
+/** Trava: o botão só libera com a palavra digitada (o servidor confere de novo). */
+export function ApagarPasta({ projectId, caminho }: { projectId: string; caminho: string | null }) {
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState("");
+  const liberado = texto.trim().toUpperCase() === PALAVRA_APAGAR;
+  return (
+    <Modal
+      open={aberto}
+      onOpenChange={(v) => {
+        setAberto(v);
+        if (!v) setTexto("");
+      }}
+    >
+      <ModalTrigger asChild>
         <Button variant="ghost" size="sm" className="h-10 sm:h-8">
           <Trash2 aria-hidden /> Apagar pasta
         </Button>
-      }
-      title="Apagar a pasta do Drive?"
-      description="Só apaga se estiver vazia. Ela vai para a lixeira do Drive e dá para recuperar por 30 dias. Entregas liberadas são recolhidas."
-      confirmLabel="Apagar pasta"
-      action={apagarPastaAction}
-      fields={{ projectId }}
-    />
+      </ModalTrigger>
+      <ModalContent
+        title="Apagar a pasta do Drive?"
+        description="Só apaga se estiver vazia. Ela vai para a lixeira do Drive e dá para recuperar por 30 dias. Entregas liberadas são recolhidas."
+        size="sm"
+      >
+        <ActionForm
+          action={apagarPastaAction}
+          onSuccess={() => {
+            setAberto(false);
+            setTexto("");
+          }}
+          className="grid gap-5"
+        >
+          <input type="hidden" name="projectId" value={projectId} />
+          {caminho ? <p className="font-mono text-[12px] break-words text-mute">{caminho}</p> : null}
+          <Field label={`Para confirmar, digite ${PALAVRA_APAGAR}`} htmlFor={`apagar-${projectId}`}>
+            <Input
+              id={`apagar-${projectId}`}
+              name="confirmacao"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder={PALAVRA_APAGAR}
+            />
+          </Field>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => setAberto(false)}>
+              Cancelar
+            </Button>
+            <ApagarEnviar liberado={liberado} />
+          </div>
+        </ActionForm>
+      </ModalContent>
+    </Modal>
   );
 }
