@@ -14,7 +14,7 @@ import {
 import { idDePastaDoLink, nomePasta } from "@/lib/drive/nomes";
 import { todayISO } from "@/lib/format";
 import { contaAtual, dadosDaConexao, driveConectado, salvarRaiz } from "@/lib/google/conexao";
-import { acharPastas, arquivoOuNull, caminhoDaPasta, criarPasta, linkPasta } from "@/lib/google/drive";
+import { acharPastas, arquivoOuNull, caminhoDaPasta, criarPasta, linkPasta, listarPasta, lixeira } from "@/lib/google/drive";
 import { GoogleError } from "@/lib/google/erros";
 
 /**
@@ -24,7 +24,7 @@ import { GoogleError } from "@/lib/google/erros";
  * Toda leitura filtra pela conta conectada agora: troca de conta recria a árvore na conta nova.
  */
 
-const { drivePastas, driveProjetos, driveDiarias, driveConexao, projects, clients, events } = schema;
+const { drivePastas, driveProjetos, driveDiarias, driveConexao, driveLotes, driveEnvios, projects, clients, events } = schema;
 
 const TRAVA_MS = 30_000;
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -541,6 +541,91 @@ export async function agendarPastasDoProjeto(projectId: string): Promise<void> {
   }
 }
 
+/* ============================== Apagar ============================== */
+
+/** Linha que ficou sem pasta depois de "Apagar pasta do Drive": para as telas, o projeto não tem pasta. */
+function apagada(l: typeof driveProjetos.$inferSelect): boolean {
+  return !l.pastaId && l.estado === "incompleta" && !l.erro;
+}
+
+/** Tem algum arquivo (não pasta) em qualquer nível? Para no primeiro que achar. */
+async function temArquivo(pastaId: string): Promise<boolean> {
+  const fila = [pastaId];
+  for (let lidas = 0; fila.length; lidas++) {
+    // Árvore grande demais para conferir: trata como cheia (nunca apaga sem ter visto).
+    if (lidas >= 150) return true;
+    let pagina: string | null = null;
+    do {
+      const r = await listarPasta(fila.shift()!, pagina);
+      if (r.itens.some((i) => !i.pasta)) return true;
+      fila.push(...r.itens.filter((i) => i.pasta).map((i) => i.id));
+      pagina = r.proxima;
+    } while (pagina);
+  }
+  return false;
+}
+
+export type ResultadoApagar = { ok: true } | { ok: false; mensagem: string };
+
+/**
+ * "Apagar pasta do Drive": só a árvore que a ZRO criou, vazia (nenhum arquivo em nenhum nível) e sem
+ * envio em andamento. A pasta vai para a lixeira do Drive (o Google guarda 30 dias); nada é apagado
+ * de vez. A linha fica (números das diárias e links seguem valendo) e "Criar pastas" volta a aparecer.
+ */
+export async function apagarPastaDoProjeto(
+  projectId: string,
+  /** Roda depois das conferências e antes da lixeira (recolher as entregas). */
+  antes?: (linha: typeof driveProjetos.$inferSelect) => Promise<ResultadoApagar>,
+): Promise<ResultadoApagar> {
+  try {
+    const linha = await driveProjetoAtual(projectId);
+    if (!linha?.pastaId) return { ok: false, mensagem: "Este projeto não tem pasta no Drive." };
+    if (linha.deLink) return { ok: false, mensagem: "A pasta veio do link do projeto. Para trocar, edite o link do Drive no projeto." };
+    if (linha.estado === "criando") return { ok: false, mensagem: "As pastas ainda estão sendo criadas. Espere terminar." };
+    const pastaId = linha.pastaId;
+
+    const [enviando] = await db
+      .select({ id: driveEnvios.id })
+      .from(driveEnvios)
+      .innerJoin(driveLotes, eq(driveLotes.id, driveEnvios.loteId))
+      .where(and(eq(driveLotes.driveProjetoId, linha.id), eq(driveEnvios.estado, "enviando")))
+      .limit(1);
+    if (enviando) return { ok: false, mensagem: "Tem envio em andamento nesta pasta. Espere terminar ou cancele." };
+
+    const a = await arquivoOuNull(pastaId, "id,mimeType,trashed");
+    if (a && a.pasta && !a.lixeira) {
+      if (await temArquivo(pastaId)) {
+        return { ok: false, mensagem: "A pasta tem arquivos. Para não perder material, apague direto no Drive se for isso mesmo." };
+      }
+    }
+    if (antes) {
+      const r = await antes(linha);
+      if (!r.ok) return r;
+    }
+    if (a && a.pasta && !a.lixeira) await lixeira(pastaId);
+
+    await esquecerPasta(pastaId);
+    await db
+      .update(driveProjetos)
+      .set({ pastaId: null, pastaUrl: null, caminho: null, estado: "incompleta", erro: null, rolos: {}, entregasLiberadasEm: null, entregasLiberadasPorId: null })
+      .where(eq(driveProjetos.id, linha.id));
+    // O link do projeto apontava para a pasta apagada: sai, senão a próxima criação acharia um link quebrado.
+    const projeto = await db.query.projects.findFirst({ where: eq(projects.id, projectId), columns: { driveUrl: true } });
+    if (projeto?.driveUrl && idDePastaDoLink(projeto.driveUrl) === pastaId) {
+      await db.update(projects).set({ driveUrl: null }).where(and(eq(projects.id, projectId), eq(projects.driveUrl, projeto.driveUrl)));
+    }
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof GoogleError) {
+      if (e.motivo === "sem_google" || e.motivo === "sem_config") return { ok: false, mensagem: "Conecte o Google Drive em Ajustes." };
+      if (e.motivo === "reconectar") return { ok: false, mensagem: "A conexão com o Google expirou. Reconecte em Ajustes." };
+      if (e.motivo === "sem_permissao") return { ok: false, mensagem: "A conta conectada não pode apagar esta pasta." };
+    }
+    console.error("[drive]", "apagar_pasta", e instanceof Error ? e.name : "erro");
+    return { ok: false, mensagem: "O Google não respondeu. Tente de novo." };
+  }
+}
+
 /** Pastas do projeto para as telas (conta atual; senão, a mais recente de outra conta). */
 export async function pastasDoProjeto(projectId: string): Promise<DriveProjetoDTO | null> {
   const c = await contaAtual();
@@ -553,7 +638,7 @@ export async function pastasDoProjeto(projectId: string): Promise<DriveProjetoDT
       .orderBy(desc(driveProjetos.criadoEm))
       .limit(1);
   }
-  if (!linha) return null;
+  if (!linha || apagada(linha)) return null;
   const sub = linha.subpastas ?? {};
   const pastas: DriveProjetoDTO["pastas"] = [];
   for (const p of ESTRUTURA) {

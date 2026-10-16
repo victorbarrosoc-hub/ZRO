@@ -15,6 +15,7 @@ import {
   MessageCircle,
   RefreshCw,
   Send,
+  Trash2,
   Undo2,
 } from "lucide-react";
 import { ActionForm, ConfirmAction, fieldError, FormModal, SubmitButton } from "@/components/painel/form";
@@ -24,6 +25,7 @@ import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger, Modal, ModalCo
 import type { ActionResult } from "@/lib/actions";
 import { todayISO } from "@/lib/format";
 import {
+  apagarPastaAction,
   criarPastasAction,
   desativarLinkAction,
   envioDaDiaria,
@@ -365,6 +367,25 @@ export function RecolherEntregas({ projectId }: { projectId: string }) {
       description="O link de download e o acesso por e-mail param de funcionar. Os arquivos continuam no Drive."
       confirmLabel="Recolher"
       action={recolherEntregasAction}
+      fields={{ projectId }}
+    />
+  );
+}
+
+/* ============================== Apagar pasta ============================== */
+
+export function ApagarPasta({ projectId }: { projectId: string }) {
+  return (
+    <ConfirmAction
+      trigger={
+        <Button variant="ghost" size="sm" className="h-10 sm:h-8">
+          <Trash2 aria-hidden /> Apagar pasta
+        </Button>
+      }
+      title="Apagar a pasta do Drive?"
+      description="Só apaga se estiver vazia. Ela vai para a lixeira do Drive e dá para recuperar por 30 dias. Entregas liberadas são recolhidas."
+      confirmLabel="Apagar pasta"
+      action={apagarPastaAction}
       fields={{ projectId }}
     />
   );

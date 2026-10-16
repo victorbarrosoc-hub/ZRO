@@ -129,6 +129,36 @@ describe("pastas", () => {
     assert.equal(amb.mock.listAll().filter((it) => it.name.includes("Teste Link Quebrado")).length, 0);
   });
 
+  test("apagar pasta: com arquivo não apaga; vazia vai para a lixeira e pode ser criada de novo", async () => {
+    const [p] = await amb.db.insert(amb.schema.projects).values({ code: "ZRO-2026-904", title: "Teste Apagar" }).returning();
+    const r = await pastas.garantirPastasDoProjeto(p.id);
+    assert.ok(r.ok, r.ok ? "" : r.mensagem);
+    const raiz = r.ok ? r.pastaId : "";
+    const dto = await pastas.pastasDoProjeto(p.id);
+    const sub = dto!.pastas.find((x) => x.chave === "03 Assets/Do cliente")!;
+
+    const arquivo = amb.mock.addFile("logo.png", sub.id!, { size: 10 });
+    const recusado = await pastas.apagarPastaDoProjeto(p.id);
+    assert.ok(!recusado.ok);
+    assert.equal(amb.mock.getItem(raiz)!.trashed, false);
+
+    const { lixeira } = await import("../../src/lib/google/drive");
+    await lixeira(arquivo.id);
+    let chamou = false;
+    const apagado = await pastas.apagarPastaDoProjeto(p.id, async () => ((chamou = true), { ok: true }));
+    assert.ok(apagado.ok, apagado.ok ? "" : apagado.mensagem);
+    assert.ok(chamou);
+    assert.equal(amb.mock.getItem(raiz)!.trashed, true);
+    assert.equal(await pastas.pastasDoProjeto(p.id), null);
+    const linkDoProjeto = await amb.db.query.projects.findFirst({ where: drizzle.eq(amb.schema.projects.id, p.id) });
+    assert.equal(linkDoProjeto!.driveUrl, null);
+
+    const deNovo = await pastas.garantirPastasDoProjeto(p.id);
+    assert.ok(deNovo.ok, deNovo.ok ? "" : deNovo.mensagem);
+    assert.notEqual(deNovo.ok && deNovo.pastaId, raiz);
+    assert.deepEqual(pastasRepetidas(amb.mock), []);
+  });
+
   test("diárias numeradas pela data e congeladas", async () => {
     const d2 = await pastas.diariaDoEvento(amb.ids.diaria2, { criarPastas: "cenas" });
     const d1 = await pastas.diariaDoEvento(amb.ids.diaria1);
@@ -279,8 +309,8 @@ describe("envio, conferência e fechamento", () => {
 
     // Escolher o mesmo cartão de novo: tudo "já recebido", sem sessão nova.
     const sessoesAntes = amb.mock.stats().uploadSessionsCreated;
-    const de_novo = await envios.iniciarArquivos({ op: "iniciar", loteId, arquivos }, escopo, ORIGEM);
-    assert.ok(de_novo.ok && de_novo.resultados.every((r) => r.ok && r.estado === "concluido" && r.jaRecebido));
+    const deNovo = await envios.iniciarArquivos({ op: "iniciar", loteId, arquivos }, escopo, ORIGEM);
+    assert.ok(deNovo.ok && deNovo.resultados.every((r) => r.ok && r.estado === "concluido" && r.jaRecebido));
     assert.equal(amb.mock.stats().uploadSessionsCreated, sessoesAntes);
   });
 
@@ -418,8 +448,8 @@ describe("escopo e links", () => {
     const revogado = await amb.db.query.driveLinks.findFirst({ where: drizzle.eq(amb.schema.driveLinks.id, linha.id) });
     assert.ok(revogado?.revogadoEm);
     const escopoRevogado = { origem: "freela" as const, link: revogado! };
-    const de_novo = await envios.iniciarArquivos({ op: "iniciar", loteId, arquivos: [{ chave: "b", nome: "C0002.MP4", caminho: "", tamanho: 10, tipo: "video/mp4" }] }, escopoRevogado, ORIGEM);
-    assert.ok(!de_novo.ok && de_novo.erro === "link_inativo");
+    const deNovo = await envios.iniciarArquivos({ op: "iniciar", loteId, arquivos: [{ chave: "b", nome: "C0002.MP4", caminho: "", tamanho: 10, tipo: "video/mp4" }] }, escopoRevogado, ORIGEM);
+    assert.ok(!deNovo.ok && deNovo.erro === "link_inativo");
     await subir(r.sessao, new Uint8Array(1000).fill(5));
     const conf = await envios.conferirEnvios({ op: "conferir", envioIds: [r.envioId] }, escopoRevogado);
     assert.ok(conf.ok && conf.resultados[0].estado === "concluido", JSON.stringify(conf));
