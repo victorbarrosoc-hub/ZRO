@@ -13,6 +13,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { Avatar } from "@/components/painel/avatar";
 import { ActionForm, ConfirmAction, FormModal, SubmitButton } from "@/components/painel/form";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { newCallSheet } from "@/app/(painel)/painel/projetos/[id]/ordem-do-dia/actions";
 import { createEvent, deleteEvent, updateEvent } from "./actions";
 import { EventFields, type EventDefaults } from "./agenda-fields";
+import { DiariaEnvio } from "./diaria-envio";
 import { capitalize, dateRangeLong, dayMonthShort, eventDays, eventEnd, mapsSearchUrl, timeRange } from "./agenda-utils";
 
 type FormState = { mode: "new" | "edit"; defaults: EventDefaults; n: number };
@@ -251,6 +253,11 @@ function EventDetails({
                   </SubmitButton>
                 </ActionForm>
               )}
+            </InfoRow>
+          ) : null}
+          {event.type === "diaria" && event.projectId ? (
+            <InfoRow icon={<Upload />} label="Material">
+              <DiariaEnvio eventId={event.id} />
             </InfoRow>
           ) : null}
         </dl>

@@ -6,12 +6,14 @@ import { TabLinks } from "@/components/painel/bits";
 import { requireUser } from "@/lib/auth/dal";
 import { categoryLabel, stageInfo } from "@/lib/domain";
 import { brl, dateBR, relativeDay, todayISO } from "@/lib/format";
+import { contarLotesDoProjeto } from "@/lib/queries/drive-painel";
 import { getProject, getProjectFormOptions, getTaxRate, summarizeProject } from "@/lib/queries/projects";
 import { cn } from "@/lib/utils";
 import { DeleteProjectButton, DriveLinkButton, EditProjectButton, ProjectStatusMenu } from "../projeto-dialogs";
 import { KeepActiveTabVisible } from "./_components/keep-tab-visible";
 import { ProjectAgendaTab } from "./_tabs/agenda-tab";
 import { ProjectDocumentsTab } from "./_tabs/documentos-tab";
+import { ProjectDriveTab } from "./_tabs/drive-tab";
 import { ProjectDeliverablesTab } from "./_tabs/entregas-tab";
 import { ProjectCrewTab } from "./_tabs/equipe-tab";
 import { ProjectFinanceTab } from "./_tabs/financeiro-tab";
@@ -26,6 +28,7 @@ const TABS = [
   { key: "agenda", label: "Agenda" },
   { key: "financeiro", label: "Financeiro" },
   { key: "documentos", label: "Documentos" },
+  { key: "drive", label: "Drive" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -41,7 +44,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
   const { id } = await params;
   const sp = await searchParams;
   const aba: TabKey = TABS.find((t) => t.key === sp.aba)?.key ?? "visao";
-  const [project, options, taxRate] = await Promise.all([getProject(id), getProjectFormOptions(), getTaxRate()]);
+  const [project, options, taxRate, lotesDrive] = await Promise.all([getProject(id), getProjectFormOptions(), getTaxRate(), contarLotesDoProjeto(id)]);
   if (!project) notFound();
 
   const summary = summarizeProject(project, taxRate);
@@ -55,6 +58,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
     equipe: project.crew.length,
     agenda: project.diarias.length,
     financeiro: project.entries.length,
+    drive: lotesDrive,
   };
 
   return (
@@ -139,6 +143,7 @@ export default async function ProjetoPage({ params, searchParams }: PageProps<"/
         {aba === "agenda" ? <ProjectAgendaTab project={project} summary={summary} /> : null}
         {aba === "financeiro" ? <ProjectFinanceTab project={project} summary={summary} /> : null}
         {aba === "documentos" ? <ProjectDocumentsTab projectId={project.id} /> : null}
+        {aba === "drive" ? <ProjectDriveTab project={project} /> : null}
       </div>
     </div>
   );

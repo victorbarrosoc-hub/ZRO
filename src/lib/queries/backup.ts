@@ -1,4 +1,5 @@
 import "server-only";
+import { getTableColumns } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { databaseConfig, databaseLabel } from "@/lib/db/config";
 import { databaseSummary } from "@/lib/db/summary";
@@ -8,7 +9,8 @@ const s = schema;
 /**
  * Tabelas do backup, na ordem em que uma restauração precisaria gravar
  * (quem é referenciado vem antes de quem referencia).
- * Fora: senhas (users.passwordHash) e tentativas de login.
+ * Fora: senhas, tentativas de login e os segredos do Google (refresh token, token cifrado dos links,
+ * senha dos links, URI das sessões).
  */
 const TABLES = {
   settings: s.settings,
@@ -45,6 +47,13 @@ const TABLES = {
   quadroHistorico: s.quadroHistorico,
 } as const;
 
+/** Drive sem segredo nenhum, na ordem das referências (os links e os envios saem à parte, sem as colunas secretas). */
+const TABLES_DRIVE = {
+  drivePastas: s.drivePastas,
+  driveProjetos: s.driveProjetos,
+  driveDiarias: s.driveDiarias,
+} as const;
+
 /** Tudo o que a ZRO guardou, num objeto só (para baixar como .json). */
 export async function exportAll() {
   const summary = await databaseSummary(db);
@@ -63,6 +72,20 @@ export async function exportAll() {
       createdAt: s.users.createdAt,
     })
     .from(s.users);
+
+  // Google Drive (docs/dev/drive.md §3): depois de projetos, eventos, clientes, freelas e usuários.
+  // As três com segredo saem sem as colunas secretas; tokenHash fica (é só o hash, e é NOT NULL).
+  const { refreshTokenEnc: _refresh, ...conexao } = getTableColumns(s.driveConexao);
+  tables.driveConexao = await db.select(conexao).from(s.driveConexao);
+  for (const [name, table] of Object.entries(TABLES_DRIVE)) {
+    tables[name] = await db.select().from(table);
+  }
+  const { tokenEnc: _token, senhaHash: _senha, ...links } = getTableColumns(s.driveLinks);
+  tables.driveLinks = await db.select(links).from(s.driveLinks);
+  tables.driveLotes = await db.select().from(s.driveLotes);
+  const { sessaoEnc: _sessao, ...envios } = getTableColumns(s.driveEnvios);
+  tables.driveEnvios = await db.select(envios).from(s.driveEnvios);
+  tables.driveCompartilhamentos = await db.select().from(s.driveCompartilhamentos);
 
   return {
     formato: "zro-backup",

@@ -2,6 +2,7 @@ import "server-only";
 import { and, eq, like } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { todayISO } from "@/lib/format";
+import { agendarPastasDoProjeto } from "./drive-pastas";
 
 const { projects, projectTemplates, projectTasks, financeEntries } = schema;
 
@@ -28,7 +29,8 @@ export async function applyTemplate(projectId: string, templateId: string) {
 
 /**
  * Cria um projeto com código automático e, se houver, as tarefas do modelo.
- * Usado por Projetos (novo projeto) e por Orçamentos (ao aprovar).
+ * Usado por Projetos (novo projeto) e por Orçamentos (ao aprovar). Com o Google conectado,
+ * a árvore de pastas do projeto nasce sozinha no Drive (services/drive-pastas.ts).
  */
 export async function createProject(input: {
   title: string;
@@ -69,6 +71,8 @@ export async function createProject(input: {
     templateId = byCategory?.id ?? null;
   }
   if (templateId) await applyTemplate(row.id, templateId);
+  // Pastas no Drive: a linha "criando" agora; o resto depois da resposta (nunca lança).
+  await agendarPastasDoProjeto(row.id);
   return row;
 }
 

@@ -25,6 +25,7 @@ import {
 import { brl, todayISO } from "@/lib/format";
 import { registerPayment } from "@/lib/services/finance";
 import { logProjectActivity } from "@/lib/services/activity";
+import { revogarLinksDe } from "@/lib/services/drive-links";
 import { applyTemplate, createProject, syncProjectReceivable } from "@/lib/services/projects";
 import { syncProjectTeam, teamSyncNote } from "@/lib/services/team";
 
@@ -260,9 +261,12 @@ export async function deleteProject(_prev: ActionResult | null, fd: FormData): P
   const project = await projectById(str(fd, "id"));
   if (!project) return fail("Projeto não encontrado.");
   const crew = await db.select({ freelancerId: projectCrew.freelancerId }).from(projectCrew).where(eq(projectCrew.projectId, project.id));
+  // Links de envio do projeto e das diárias dele param antes (nunca apagados; o que chegou fica no Drive e no banco).
+  await revogarLinksDe({ projectId: project.id });
   // Tarefas, entregas, equipe, agenda e documentos saem junto (cascade). Lançamentos ficam, sem o vínculo.
   await db.delete(projects).where(eq(projects.id, project.id));
   touch(null, { finance: true, agenda: true, clients: [project.clientId], freelancers: crew.map((c) => c.freelancerId) });
+  revalidatePath("/painel/arquivos");
   redirect("/painel/projetos");
 }
 

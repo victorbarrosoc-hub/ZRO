@@ -31,6 +31,10 @@ export default async function PrivacidadePage() {
               Quando você pede um orçamento, guardamos o que você preencher: nome, forma de contato, empresa e os
               detalhes do projeto (tipo, datas, diárias, vídeos, faixa de investimento e a ideia).
             </p>
+            <p className="mt-4">
+              Na área do cliente e nos links de envio da ZRO, guardamos os arquivos enviados, quem enviou (o nome do
+              cadastro ou o que for informado), a data e, no caso de clientes, o aceite.
+            </p>
           </section>
           <section>
             <h2>Para que usamos</h2>
@@ -38,12 +42,19 @@ export default async function PrivacidadePage() {
               Só para responder ao seu pedido, preparar a proposta e conversar sobre o projeto. A base legal é o seu
               consentimento e os procedimentos preliminares a um contrato que você pediu.
             </p>
+            <p className="mt-4">
+              Os arquivos recebidos pela área do cliente e pelos links de envio servem só para produzir e entregar o
+              projeto contratado.
+            </p>
           </section>
           <section>
             <h2>Com quem compartilhamos</h2>
             <p>
               Com ninguém para fins comerciais. Ao final do formulário, a conversa continua no WhatsApp, e a mensagem
               passa pelo serviço da Meta, sujeita à política de privacidade dela.
+            </p>
+            <p className="mt-4">
+              Os arquivos ficam no Google Drive da ZRO, no Google Workspace. O Google é o operador do armazenamento.
             </p>
           </section>
           <section>
@@ -70,6 +81,7 @@ export default async function PrivacidadePage() {
               O site não usa cookies de rastreamento nem de publicidade. Existe apenas um cookie técnico de sessão na
               área interna, usada pelos sócios da ZRO.
             </p>
+            <p className="mt-4">Na área do cliente com senha, um cookie técnico guarda o acesso por 30 dias.</p>
           </section>
         </div>
       </div>

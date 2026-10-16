@@ -43,6 +43,24 @@ export const DEMO_CLEANUP: CleanupStatement[] = [
   {
     sql: `update call_sheets set event_id = null where event_id in (${EVENTS_OUT}) and id not like ${D} and project_id not like ${D}`,
   },
+  /* Drive (docs/dev/drive.md §3): os exemplos não criam linhas drive_*; um link que leve a exemplo para
+     de funcionar e todo vínculo com exemplo vira null. Nada é apagado (o que chegou fica registrado). */
+  {
+    sql: `update drive_links set revogado_em = now() where revogado_em is null and (project_id like ${D} or client_id like ${D} or event_id in (${EVENTS_OUT}))`,
+  },
+  { sql: `update drive_projetos set project_id = null where project_id like ${D}` },
+  { sql: `update drive_projetos set client_id = null where client_id like ${D}` },
+  { sql: `update drive_diarias set event_id = null where event_id in (${EVENTS_OUT})` },
+  { sql: `update drive_diarias set project_id = null where project_id like ${D}` },
+  { sql: `update drive_links set event_id = null where event_id in (${EVENTS_OUT})` },
+  { sql: `update drive_links set project_id = null where project_id like ${D}` },
+  { sql: `update drive_links set client_id = null where client_id like ${D}` },
+  { sql: `update drive_lotes set project_id = null where project_id like ${D}` },
+  { sql: `update drive_lotes set client_id = null where client_id like ${D}` },
+  { sql: `update drive_lotes set event_id = null where event_id in (${EVENTS_OUT})` },
+  { sql: `update drive_lotes set freelancer_id = null where freelancer_id like ${D}` },
+  { sql: `update drive_compartilhamentos set project_id = null where project_id like ${D}` },
+  { sql: `update drive_compartilhamentos set client_id = null where client_id like ${D}` },
 
   /* 2. Apaga, dos filhos para os pais */
   { table: "finance_payments", sql: `delete from finance_payments where id like ${D} or entry_id like ${D}` },
