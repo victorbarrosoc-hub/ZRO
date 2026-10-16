@@ -78,7 +78,22 @@ async function resetPassword(db: DB, u: SeedUser) {
 export async function ensureUsers(db: DB, opts: { allowGenerated: boolean }) {
   const created: { email: string; password: string }[] = [];
   for (const u of seedUsersFromEnv()) {
-    const exists = await db.query.users.findFirst({ where: eq(s.users.email, u.email.toLowerCase()) });
+    let exists = await db.query.users.findFirst({ where: eq(s.users.email, u.email.toLowerCase()) });
+    // E-mail trocado na variável (ex.: o do Edu estava errado): renomeia a conta que já existe
+    // em vez de criar outra. Mesma pessoa = mesmo nome; senha, foto e histórico continuam.
+    if (!exists && process.env[`${u.envPrefix}_EMAIL`]) {
+      // mesmo nome, ou mesmo primeiro nome (o nome pode ter sido ajustado em Minha conta)
+      const outros = seedUsersFromEnv().filter((x) => x.key !== u.key).map((x) => x.email.toLowerCase());
+      const primeiro = (n: string) => n.trim().split(/\s+/)[0]?.toLowerCase();
+      const mesma = (await db.query.users.findMany()).find(
+        (x) => !outros.includes(x.email) && (x.name === u.name || primeiro(x.name) === primeiro(u.name)),
+      );
+      if (mesma) {
+        await db.update(s.users).set({ email: u.email.toLowerCase() }).where(eq(s.users.id, mesma.id));
+        console.log(`✓ E-mail de ${u.name} trocado de ${mesma.email} para ${u.email.toLowerCase()}.`);
+        exists = mesma;
+      }
+    }
     await resetPassword(db, u);
     if (exists) continue;
     let password = u.password;
