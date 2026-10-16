@@ -30,6 +30,7 @@ import { pastasDoProjeto, type DriveProjetoDTO } from "@/lib/services/drive-past
 import { cn } from "@/lib/utils";
 import {
   AcoesLinkDiaria,
+  Andamento,
   AtualizaEnquantoCria,
   CopiarBotao,
   GerarLinkDiaria,
@@ -221,10 +222,10 @@ function PastaDoProjeto({ projectId, dp, conectado }: { projectId: string; dp: D
             ) : null}
 
             {dp.estado === "criando" && !dp.contaAntiga ? (
-              <p className="text-[14px] text-ash" role="status">
-                Criando as pastas…
+              <div>
+                <Andamento texto="Criando as pastas no Drive" />
                 <AtualizaEnquantoCria />
-              </p>
+              </div>
             ) : null}
 
             {(dp.estado === "incompleta" || dp.estado === "erro") && !dp.contaAntiga ? (

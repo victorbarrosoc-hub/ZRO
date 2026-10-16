@@ -97,6 +97,12 @@
   --animate-pulse-light: pulse-light 3.2s ease-in-out infinite;
   --animate-marquee: marquee 40s linear infinite;
   --animate-spin-slow: spin 24s linear infinite;
+  --animate-indeterminate: indeterminate 1.4s var(--ease-out-expo) infinite;
+
+  @keyframes indeterminate {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(300%); }
+  }
 
   @keyframes grain {
     0% { transform: translate3d(0, 0, 0); }
