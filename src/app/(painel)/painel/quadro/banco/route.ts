@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { getSessionUser } from "@/lib/auth/dal";
+import { previaLink } from "../previa-servidor";
 import { quadroCarregar, quadroCriar, quadroDesde, quadroMudar, type Res } from "../servidor";
 
 /**
@@ -52,6 +53,9 @@ export async function POST(request: NextRequest) {
       return json(await quadroCriar(user.id, org, corpo.id, corpo.dados));
     case "mudar":
       return json(await quadroMudar(user.id, org, corpo.id, corpo.campos, corpo.base));
+    case "previa":
+      // título e capa do link da peça (aba "Peça" da ficha)
+      return json(await previaLink(corpo.url));
     default:
       return json({ ok: false, erro: "formato" }, 400);
   }
