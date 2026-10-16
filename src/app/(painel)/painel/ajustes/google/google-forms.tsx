@@ -25,7 +25,7 @@ const semAssinatura = () => () => {};
 export function ConectarGoogle({ rotulo = "Conectar Google", trocar = false }: { rotulo?: string; trocar?: boolean }) {
   // Só o navegador sabe se é o app da tela de início (no servidor: não é).
   const noApp = useSyncExternalStore(semAssinatura, ehAppDaTela, () => false);
-  if (noApp) return <p className="text-[13px] text-ash">Abra pelo navegador do computador para conectar.</p>;
+  if (noApp) return <p className="text-[13px] text-ash">Para conectar, abra esta página no Safari ou no computador (não pelo app da tela de início).</p>;
   return (
     <a href={trocar ? "/api/google/conectar?trocar=1" : "/api/google/conectar"} className={buttonClasses({ variant: "primary" })}>
       {rotulo === "Reconectar" ? <RefreshCw aria-hidden /> : <Plug aria-hidden />} {rotulo}
