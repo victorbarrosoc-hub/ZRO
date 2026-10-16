@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, Ellipsis, Plus, Share, SquarePlus } from "lucide-react";
+import { Check, Copy, Ellipsis, Monitor, Plus, Share, SquarePlus } from "lucide-react";
 import { buttonClasses } from "@/components/ui/button";
 
-type Aparelho = "carregando" | "iphone" | "android" | "computador";
+type Aparelho = "carregando" | "iphone" | "android" | "computador" | "mac-safari";
 type Pedido = { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
 /**
@@ -27,8 +27,9 @@ export function GuiaInstalar({ nome, destino, endereco }: { nome: string; destin
     }
     const ua = navigator.userAgent;
     const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const safariMac = /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg\//.test(ua);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- o aparelho só é conhecido no navegador
-    setAparelho(ios ? "iphone" : /Android/i.test(ua) ? "android" : "computador");
+    setAparelho(ios ? "iphone" : /Android/i.test(ua) ? "android" : safariMac ? "mac-safari" : "computador");
     const aoPedir = (e: Event) => {
       e.preventDefault();
       setPedido(e as unknown as Pedido);
@@ -54,15 +55,27 @@ export function GuiaInstalar({ nome, destino, endereco }: { nome: string; destin
           { icone: <SquarePlus />, texto: "Toque em “Adicionar à tela inicial” (ou “Instalar app”)." },
           { icone: <Plus />, texto: `Confirme. O ícone da ${nome} aparece junto com os seus apps.` },
         ]
-      : [
-          { icone: <Share />, texto: "No Safari, toque em Compartilhar: o quadrado com a seta. No iOS 26, ele fica no botão ••• da barra." },
-          { icone: <SquarePlus />, texto: "Role a lista e toque em “Adicionar à Tela de Início”." },
-          { icone: <Plus />, texto: `Toque em “Adicionar”. O ícone da ${nome} aparece junto com os seus apps.` },
-        ];
+      : aparelho === "mac-safari"
+        ? [
+            { icone: <Ellipsis />, texto: "No Safari, abra o menu Arquivo, na barra do topo da tela." },
+            { icone: <SquarePlus />, texto: "Clique em “Adicionar ao Dock”." },
+            { icone: <Plus />, texto: `Clique em “Adicionar”. A ${nome} abre como app, pelo Dock ou pelo Launchpad.` },
+          ]
+        : aparelho === "computador"
+          ? [
+              { icone: <Monitor />, texto: "Abra no Chrome ou no Edge (Windows ou Mac). No Mac, o Safari também serve." },
+              { icone: <SquarePlus />, texto: "Clique no ícone de instalar no fim da barra de endereço (ou no menu ⋮ → “Instalar página como app”)." },
+              { icone: <Plus />, texto: `Confirme. A ${nome} ganha janela própria e ícone no Dock, na barra de tarefas e no menu Iniciar.` },
+            ]
+          : [
+              { icone: <Share />, texto: "No Safari, toque em Compartilhar: o quadrado com a seta. No iOS 26, ele fica no botão ••• da barra." },
+              { icone: <SquarePlus />, texto: "Role a lista e toque em “Adicionar à Tela de Início”." },
+              { icone: <Plus />, texto: `Toque em “Adicionar”. O ícone da ${nome} aparece junto com os seus apps.` },
+            ];
 
   return (
     <div className="grid gap-6">
-      {aparelho === "android" && pedido ? (
+      {(aparelho === "android" || aparelho === "computador") && pedido ? (
         <button
           type="button"
           className={buttonClasses({ variant: "primary", size: "lg", className: "w-full" })}
@@ -72,13 +85,13 @@ export function GuiaInstalar({ nome, destino, endereco }: { nome: string; destin
             setPedido(null);
           }}
         >
-          <SquarePlus /> Instalar na tela inicial
+          <SquarePlus /> {aparelho === "android" ? "Instalar na tela inicial" : "Instalar no computador"}
         </button>
       ) : null}
 
       {aparelho === "computador" ? (
         <p className="rounded-2xl border border-line bg-white/[0.02] px-5 py-4 text-[14px] leading-relaxed text-ash">
-          Abra este endereço no celular, no Safari (iPhone) ou no Chrome (Android), e siga os passos.
+          No computador, a {nome} vira app com janela própria. Para o celular, abra este mesmo link no Safari (iPhone) ou no Chrome (Android).
         </p>
       ) : null}
 
