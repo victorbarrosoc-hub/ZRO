@@ -56,7 +56,7 @@ Antes de propor ou construir qualquer coisa, leia:
 
 - [x] Contexto, documento-mestre, identidade visual, briefing e referências de UI registrados
 - [x] Stack: Next.js 16 + Tailwind 4 + Drizzle/Postgres (PGlite local, Neon em São Paulo na produção), login próprio com sessão assinada
-- [x] Site público (início, filmes, sobre, Absolute ZRO, privacidade) e funil de orçamento até o WhatsApp
+- [x] Site público (início, Trabalhos, Portfólio, sobre, privacidade) e funil de orçamento até o WhatsApp
 - [x] Área interna: painel, freelas; CRM, projetos, agenda e documentos, orçamentos com PDF, financeiro, processos, site e ajustes
 - [x] Pronto pra Vercel: `vercel.json`, banco preparado no build, sitemap, robots e imagem de compartilhamento (passo a passo no `DEPLOY.md`)
 - [x] Publicado em https://zrofilmes.vercel.app, com WhatsApp, e-mail e filmes do YouTube configurados
@@ -72,7 +72,7 @@ Antes de propor ou construir qualquer coisa, leia:
 - [x] Recorrente automático (`src/lib/services/recurring.ts`): todo mês, ao abrir o painel (ou ao salvar o cliente), gera a cobrança do valor fixo no Financeiro (vence no dia do pagamento) e um card por entrega na coluna Pauta (prazo: fim do mês; id fixo `rec_<cliente>_<AAAAMM>_<n>`). Duas caixas no cadastro ligam/desligam cada parte. A trava é `recurring_runs` (cliente + mês): não duplica; se já existe entrada do cliente no mês com o mesmo valor, não cria outra. Visão geral → Resumo mostra "Contratos recorrentes" (total por mês, diárias, entregas prontas e situação da cobrança)
 - [x] Perfil do usuário com foto e troca do e-mail de acesso (Ajustes → Minha conta, pede a senha atual; abre pelo nome no rodapé do menu)
 - [x] Agenda de cada sócio: tipos "Freela" e "Pessoal" com "De quem é" (`events.owner_id`; vazio = agenda da ZRO). Compromisso pessoal não leva projeto nem equipe; chip tracejado "EDU · PESSOAL", filtro "Todas as agendas / Só a ZRO / Agenda de X" e o nome em "Próximos 7 dias". Cor de marcação opcional por evento (`events.color`, 7 tons em `EVENT_COLORS`; vazio = preto e branco do tipo): tinge o chip com faixa à esquerda, pontinho no celular e na Visão geral
-- [x] Absolute ZRO: identidade e página iguais ao board do Victor (`brand/absolute-zro/referencia-board.png`): A B S O L U T E + ZR próprio com o anel azul, paleta #000/#0B1F2D/#2D7BFF/#F5F7FA, Montserrat, arte do board (eclipse e paisagem) em `public/media/absolute/`, sem mockups
+- [x] Menu do site: Trabalhos (`/filmes`: projetos + seção "Cada frame tem uma temperatura" com o color grading como etapa 06 do processo: bruto, grading, antes e depois, DaVinci e frames; âncora `#cor`) e Portfólio (`/portfolio`: só vídeos, destaque grande + por categoria, abre em tela cheia). A página `/absolute` saiu do menu, do rodapé e da home e redireciona (308) para `/filmes#cor`; arte e texto da Absolute seguem em `public/media/absolute/`, `brand/absolute-zro/` e `docs/marca/absolute-texto.md`
 
 ## Escolhas provisórias (a confirmar com o Victor)
 

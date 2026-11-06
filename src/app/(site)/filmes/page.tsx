@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ColorSection } from "@/components/site/color-section";
 import { FilmGrid } from "@/components/site/film-grid";
 import { LitLines, Reveal } from "@/components/site/reveal";
 import { CATEGORY_KEYS } from "@/lib/domain";
@@ -6,8 +7,8 @@ import { toFilmSummary } from "@/lib/queries/film-summary";
 import { getPublishedFilms } from "@/lib/queries/site";
 
 export const metadata: Metadata = {
-  title: "Filmes",
-  description: "Filmes de marca, campanhas, conteúdo e documentários dirigidos pela ZRO.",
+  title: "Trabalhos",
+  description: "Filmes de marca, campanhas, conteúdo e documentários dirigidos pela ZRO, e como a cor entra no processo.",
 };
 
 export const revalidate = 300;
@@ -22,9 +23,9 @@ export default async function FilmesPage({ searchParams }: PageProps<"/filmes">)
     <div className="container-zro pt-36 pb-32 sm:pt-44">
       <header className="mb-16 grid gap-8 sm:mb-24 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <p className="label mb-6 text-mute">Portfólio</p>
+          <p className="label mb-6 text-mute">Projetos</p>
           <h1 className="text-display text-white">
-            <LitLines lines={["Filmes"]} delay={0.1} />
+            <LitLines lines={["Trabalhos"]} delay={0.1} />
           </h1>
         </div>
         <Reveal delay={0.3}>
@@ -34,6 +35,7 @@ export default async function FilmesPage({ searchParams }: PageProps<"/filmes">)
         </Reveal>
       </header>
       <FilmGrid films={films} initialCategory={initial} />
+      <ColorSection />
     </div>
   );
 }

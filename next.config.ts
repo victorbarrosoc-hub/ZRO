@@ -77,6 +77,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/painel/orcamentos/\\[id\\]/pdf": ["./src/lib/pdf/fonts/*.ttf"],
   },
+  // A Absolute ZRO deixou de ter página: o color grading agora é parte do processo, em Trabalhos.
+  async redirects() {
+    return [{ source: "/absolute", destination: "/filmes#cor", permanent: true }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
