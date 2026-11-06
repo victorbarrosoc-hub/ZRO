@@ -5,7 +5,7 @@ import { mkdirSync } from "node:fs";
 
 const out = process.argv[2];
 const widths = (process.argv[3] ?? "390,1920").split(",").map(Number);
-const pages = ["/", "/filmes", "/filmes/manifesto", "/sobre", "/absolute", "/orcamento", "/privacidade"];
+const pages = ["/", "/filmes", "/filmes/manifesto", "/portfolio", "/sobre", "/orcamento", "/privacidade"];
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch();
 const report = [];

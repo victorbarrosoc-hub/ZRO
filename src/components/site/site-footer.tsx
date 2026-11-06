@@ -67,9 +67,9 @@ export async function SiteFooter() {
             <div>
               <p className="label mb-4 text-mute">Navegue</p>
               <ul className="grid gap-2.5 text-ui text-ash">
-                <li><Link className="transition-colors hover:text-white" href="/filmes">Filmes</Link></li>
+                <li><Link className="transition-colors hover:text-white" href="/filmes">Trabalhos</Link></li>
+                <li><Link className="transition-colors hover:text-white" href="/portfolio">Portfólio</Link></li>
                 <li><Link className="transition-colors hover:text-white" href="/sobre">Sobre</Link></li>
-                <li><Link className="transition-colors hover:text-white" href="/absolute">Absolute ZRO</Link></li>
                 <li><Link className="transition-colors hover:text-white" href="/orcamento">Orçamento</Link></li>
               </ul>
             </div>

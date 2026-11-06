@@ -9,9 +9,9 @@ import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/filmes", label: "Filmes" },
+  { href: "/filmes", label: "Trabalhos" },
+  { href: "/portfolio", label: "Portfólio" },
   { href: "/sobre", label: "Sobre" },
-  { href: "/absolute", label: "Absolute ZRO" },
   { href: "/#contato", label: "Contato" },
 ];
 

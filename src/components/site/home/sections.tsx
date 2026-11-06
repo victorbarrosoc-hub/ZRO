@@ -148,39 +148,6 @@ export function ServicesSection() {
             </Reveal>
           ))}
         </div>
-
-        <Reveal className="mt-16">
-          {/* Cartão no desenho do board da Absolute: painel preto, logo, eclipse à direita. */}
-          <Link
-            href="/absolute"
-            className="group relative grid overflow-hidden rounded-media border border-white/10 bg-black font-absolute transition-colors duration-500 hover:border-abs-blue/45 sm:grid-cols-[minmax(0,1fr)_280px]"
-          >
-            <div className="grid content-center justify-items-start gap-6 p-7 sm:p-10">
-              <Image
-                src="/media/absolute/logo.png"
-                width={1520}
-                height={310}
-                alt="Absolute ZRO · Color grading & finishing"
-                sizes="(min-width: 640px) 520px, 90vw"
-                className="-ml-[3%] h-auto w-full max-w-[520px] mix-blend-screen"
-              />
-              <p className="mt-6 text-[clamp(22px,2.4vw,32px)] leading-tight font-light text-abs-ice">Do bruto ao absoluto.</p>
-              <span className="inline-flex items-center gap-3 text-[13px] text-abs-ice/70 transition-colors group-hover:text-abs-ice">
-                Conhecer a Absolute ZRO
-                <ArrowUpRight className="size-4 transition-transform duration-500 ease-out-expo group-hover:rotate-45" aria-hidden />
-              </span>
-            </div>
-            <div className="relative hidden min-h-[320px] sm:block">
-              <Image
-                src="/media/absolute/eclipse-alta.jpg"
-                alt=""
-                fill
-                sizes="280px"
-                className="object-cover transition-transform duration-[1.2s] ease-out-expo group-hover:scale-105"
-              />
-            </div>
-          </Link>
-        </Reveal>
       </div>
     </section>
   );
@@ -214,7 +181,15 @@ export function ProcessSection() {
                 <span className="text-h3 font-semibold text-white">
                   {stage.label}
                 </span>
-                <span className="col-start-2 text-ui text-ash sm:col-start-3">{stage.hint}</span>
+                <span className="col-start-2 text-ui text-ash sm:col-start-3">
+                  {stage.hint}
+                  {stage.key === "finalizacao" ? (
+                    <Link href="/filmes#cor" className="mt-2 inline-flex items-center gap-1.5 text-white transition-colors hover:text-ash">
+                      Ver o color grading
+                      <ArrowUpRight className="size-3.5" aria-hidden />
+                    </Link>
+                  ) : null}
+                </span>
               </div>
             </Reveal>
           ))}

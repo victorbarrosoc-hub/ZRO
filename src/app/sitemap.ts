@@ -7,8 +7,8 @@ export const revalidate = 3600;
 const PAGES = [
   { path: "", priority: 1 },
   { path: "/filmes", priority: 0.9 },
+  { path: "/portfolio", priority: 0.9 },
   { path: "/sobre", priority: 0.8 },
-  { path: "/absolute", priority: 0.7 },
   { path: "/orcamento", priority: 0.8 },
   { path: "/privacidade", priority: 0.2 },
 ];
